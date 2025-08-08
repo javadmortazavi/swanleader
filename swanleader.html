@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>داشبورد مدیر - Swan Family</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+  <style>
+    body {
+      font-family: Tahoma, sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    canvas {
+      margin-top: 2rem;
+    }
+    #login {
+      max-width: 300px;
+      margin: 10% auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<div id="login">
+  <h3>ورود مدیر</h3>
+  <input type="password" id="adminPass" placeholder="رمز عبور" style="width:100%; padding:0.5rem;">
+  <button onclick="checkLogin()" style="margin-top:1rem; padding:0.5rem; width:100%;">ورود</button>
+</div>
+
+<div class="container" id="dashboard" style="display:none">
+  <h2>داشبورد آماری Swan Family</h2>
+
+  <canvas id="chartProvince"></canvas>
+  <canvas id="chartBirths"></canvas>
+  <canvas id="chartInterests"></canvas>
+  <canvas id="chartCoins"></canvas>
+  <canvas id="chartInstallments"></canvas>
+  <canvas id="chartGrowth"></canvas>
+</div>
+
+<script>
+  const ADMIN_PASSWORD = "swanadmin";
+  Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
+
+  function checkLogin() {
+    const pass = document.getElementById('adminPass').value;
+    if (pass === ADMIN_PASSWORD) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadData();
+    } else {
+      alert("رمز عبور اشتباه است!");
+    }
+  }
+
+  async function loadData() {
+    const data = await Backendless.Data.of("Newbloods").find();
+
+    // استان
+    const provinces = {};
+    data.forEach(d => {
+      const p = d.province || "نامشخص";
+      provinces[p] = (provinces[p] || 0) + 1;
+    });
+    drawChart('chartProvince', 'تعداد نیوبلادها بر اساس استان', Object.keys(provinces), Object.values(provinces));
+
+    // تولد در ماه‌ها
+    const births = Array(12).fill(0);
+    data.forEach(d => {
+      if (d.birthdate) {
+        const m = new Date(d.birthdate).getMonth();
+        births[m]++;
+      }
+    });
+    drawChart('chartBirths', 'تولدها در ماه‌های سال', [...Array(12).keys()].map(m => `ماه ${m+1}`), births);
+
+    // علاقه‌مندی‌ها
+    const interests = { marketing: 0, anatomy: 0, eastern_medicine: 0, ayurveda: 0 };
+    data.forEach(d => {
+      const i = d.interests;
+      if (Array.isArray(i)) i.forEach(val => interests[val]++);
+      else if (typeof i === 'string') interests[i] && interests[i]++;
+    });
+    drawChart('chartInterests', 'تعداد علاقه‌مندان', Object.keys(interests), Object.values(interests));
+
+    // سوان کوین
+    const coins = {};
+    data.forEach(d => {
+      const name = d.name || "بی‌نام";
+      const log = d.coins || [];
+      coins[name] = log.length || 0;
+    });
+    drawChart('chartCoins', 'سوان کوین هر نفر', Object.keys(coins), Object.values(coins));
+
+    // اقساط ماهانه
+    const monthlyInstallments = Array(12).fill(0);
+    data.forEach(d => {
+      const inst = d.installments || [];
+      inst.forEach(item => {
+        if (item.date && item.amount) {
+          const m = new Date(item.date).getMonth();
+          monthlyInstallments[m] += parseInt(item.amount);
+        }
+      });
+    });
+    drawChart('chartInstallments', 'جمع اقساط در ماه', [...Array(12).keys()].map(m => `ماه ${m+1}`), monthlyInstallments);
+
+    // سطح رشد بر اساس استان
+    const growthByProvince = {};
+    data.forEach(d => {
+      const star = d.growth || 0;
+      const p = d.province || "نامشخص";
+      growthByProvince[p] = growthByProvince[p] || [];
+      growthByProvince[p].push(star);
+    });
+    const avgGrowth = {};
+    for (const p in growthByProvince) {
+      const arr = growthByProvince[p];
+      avgGrowth[p] = arr.reduce((a,b) => a+b, 0) / arr.length;
+    }
+    drawChart('chartGrowth', 'میانگین سطح رشد بر اساس استان', Object.keys(avgGrowth), Object.values(avgGrowth));
+  }
+
+  function drawChart(id, label, labels, values) {
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: label,
+          data: values,
+          backgroundColor: 'rgba(0, 150, 136, 0.6)',
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: label }
+        }
+      }
+    });
+  }
+</script>
+</body>
+</html>
