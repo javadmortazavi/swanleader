@@ -5,88 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>فرم ثبت نیوبلاد - Swan Family</title>
   <style>
-    body {
-      font-family: Tahoma, sans-serif;
-      background-color: #f5f5f5;
-      padding: 2rem;
-      direction: rtl;
-    }
-    form {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 8px;
-      max-width: 700px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 1rem;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 0.5rem;
-      margin-top: 0.3rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .installments, .coins-log, .referred-container {
-      margin-top: 1rem;
-    }
-    .installment, .coin-entry, .referred-entry {
-      background: #f0f0f0;
-      padding: 0.5rem;
-      border-radius: 5px;
-      margin-bottom: 0.5rem;
-    }
-    button {
-      margin-top: 1rem;
-      padding: 0.6rem 1.5rem;
-      background-color: #009688;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .stars span {
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: lightgray;
-    }
-    .stars .selected {
-      color: gold;
-    }
+    body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
+    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 800px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { font-weight: bold; display: block; margin-top: 1rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 5px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .installments, .coins-log, .referred-container { margin-top: 1rem; }
+    .installment, .coin-entry, .referred-entry { background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items:center; }
+    .coin-entry { grid-template-columns: 1fr 2fr auto; }
+    .referred-entry { grid-template-columns: 1fr auto; }
+    .receipt-note { font-size: .85rem; color: #555; }
+    button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
+    .stars .selected { color: #f4c430; }
+    .muted { color:#777; font-size:.9rem; }
   </style>
 </head>
 <body>
   <form id="newbloodForm">
     <h2>فرم ثبت نیوبلاد</h2>
 
-    <label>نام و نام خانوادگی:</label>
-    <input type="text" name="name" required />
+    <div class="row">
+      <div>
+        <label>نام و نام خانوادگی:</label>
+        <input type="text" name="name" required />
+      </div>
+      <div>
+        <label>شماره موبایل:</label>
+        <input type="tel" name="mobile" required />
+      </div>
+    </div>
 
-    <label>شماره موبایل:</label>
-    <input type="tel" name="mobile" required />
+    <div class="row">
+      <div>
+        <label>اینستاگرام:</label>
+        <input type="text" name="instagram" />
+      </div>
+      <div>
+        <label>تاریخ تولد:</label>
+        <input type="date" name="birthdate" />
+      </div>
+    </div>
 
-    <label>اینستاگرام:</label>
-    <input type="text" name="instagram" />
+    <div class="row">
+      <div>
+        <label>شغل اول:</label>
+        <input type="text" name="job1" />
+      </div>
+      <div>
+        <label>شغل دوم:</label>
+        <input type="text" name="job2" />
+      </div>
+    </div>
 
-    <label>تاریخ تولد:</label>
-    <input type="date" name="birthdate" />
+    <div class="row">
+      <div>
+        <label>وضعیت تاهل:</label>
+        <select name="marital_status">
+          <option value="">انتخاب کنید</option>
+          <option value="single">مجرد</option>
+          <option value="married">متاهل</option>
+        </select>
+      </div>
+      <div>
+        <label>استان:</label>
+        <input type="text" name="province" />
+      </div>
+    </div>
 
-    <label>شغل اول:</label>
-    <input type="text" name="job1" />
-
-    <label>شغل دوم:</label>
-    <input type="text" name="job2" />
-
-    <label>وضعیت تاهل:</label>
-    <select name="marital_status">
-      <option value="">انتخاب کنید</option>
-      <option value="single">مجرد</option>
-      <option value="married">متاهل</option>
-    </select>
+    <div class="row">
+      <div>
+        <label>شهر محل سکونت:</label>
+        <input type="text" name="city" />
+      </div>
+      <div>
+        <label>معرف یا هماهنگ‌کننده:</label>
+        <input type="text" name="referrer" />
+      </div>
+    </div>
 
     <label>سابقه فعالیت ماساژ:</label>
     <textarea name="massage_experience"></textarea>
@@ -103,25 +99,29 @@
     <label><input type="checkbox" name="interests" value="eastern_medicine" /> طب شرقی</label>
     <label><input type="checkbox" name="interests" value="ayurveda" /> آیورودا</label>
 
-    <label>استان:</label>
-    <input type="text" name="province" />
+    <div class="row">
+      <div>
+        <label>محل دوره:</label>
+        <input type="text" name="course_location" />
+      </div>
+      <div>
+        <label>تاریخ دوره:</label>
+        <input type="date" name="course_date" />
+      </div>
+    </div>
 
-    <label>شهر محل سکونت:</label>
-    <input type="text" name="city" />
+    <div class="row">
+      <div>
+        <label>مبلغ پیش‌پرداخت (تومان):</label>
+        <input type="number" name="prepayment" />
+      </div>
+      <div>
+        <label>سطح رشد:</label>
+        <div class="stars" id="growthLevel"></div>
+      </div>
+    </div>
 
-    <label>معرف یا هماهنگ‌کننده:</label>
-    <input type="text" name="referrer" />
-
-    <label>محل دوره:</label>
-    <input type="text" name="course_location" />
-
-    <label>تاریخ دوره:</label>
-    <input type="date" name="course_date" />
-
-    <label>مبلغ پیش پرداخت:</label>
-    <input type="number" name="prepayment" />
-
-    <label>اقساط:</label>
+    <label>اقساط <span class="muted">(برای هر قسط می‌توانید تصویر/فایل فیش را بارگذاری کنید)</span>:</label>
     <div class="installments" id="installmentsContainer"></div>
     <button type="button" onclick="addInstallment()">افزودن قسط</button>
 
@@ -133,9 +133,6 @@
     <div class="referred-container" id="referredContainer"></div>
     <button type="button" onclick="addReferred()">افزودن نیوبلاد معرفی‌شده</button>
 
-    <label>سطح رشد:</label>
-    <div class="stars" id="growthLevel"></div>
-
     <label>توضیحات:</label>
     <textarea name="notes"></textarea>
 
@@ -144,6 +141,7 @@
 
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
   <script>
+    // Init Backendless
     Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
     const installmentsContainer = document.getElementById('installmentsContainer');
@@ -151,12 +149,14 @@
     const growthLevel = document.getElementById('growthLevel');
     const referredContainer = document.getElementById('referredContainer');
 
+    // ===== UI builders =====
     function addInstallment() {
       const div = document.createElement('div');
       div.className = 'installment';
       div.innerHTML = `
-        <input type="date" placeholder="تاریخ قسط" />
-        <input type="number" placeholder="مبلغ (تومان)" />
+        <input type="date" placeholder="تاریخ قسط" class="inst-date" />
+        <input type="number" placeholder="مبلغ (تومان)" class="inst-amount" />
+        <input type="file" class="inst-receipt" accept="image/*,application/pdf" />
         <button type="button" onclick="this.parentNode.remove()">❌</button>
       `;
       installmentsContainer.appendChild(div);
@@ -166,8 +166,8 @@
       const div = document.createElement('div');
       div.className = 'coin-entry';
       div.innerHTML = `
-        <input type="date" placeholder="تاریخ ثبت سوان‌کوین" />
-        <input type="text" placeholder="توضیح (اختیاری)" />
+        <input type="date" placeholder="تاریخ ثبت سوان‌کوین" class="coin-date" />
+        <input type="text" placeholder="توضیح (اختیاری)" class="coin-note" />
         <button type="button" onclick="this.parentNode.remove()">❌</button>
       `;
       coinsLog.appendChild(div);
@@ -177,12 +177,13 @@
       const div = document.createElement('div');
       div.className = 'referred-entry';
       div.innerHTML = `
-        <input type="text" placeholder="نام نیوبلاد معرفی‌شده" />
+        <input type="text" placeholder="نام نیوبلاد معرفی‌شده" class="ref-name" />
         <button type="button" onclick="this.parentNode.remove()">❌</button>
       `;
       referredContainer.appendChild(div);
     }
 
+    // Stars (growth)
     function setStars() {
       for (let i = 1; i <= 5; i++) {
         const span = document.createElement('span');
@@ -196,29 +197,91 @@
       }
     }
 
+    // Helpers
+    const toDate = (s) => (s ? new Date(s) : null);
+    const toNumber = (n) => (n === '' || n == null ? null : Number(n));
+
+    async function uploadReceipt(file) {
+      // نام یکتا برای فایل
+      const safeName = (file.name || 'receipt').replace(/\s+/g, '_');
+      const filename = `${Date.now()}_${safeName}`;
+      // آپلود به پوشه receipts/
+      const res = await Backendless.Files.upload(file, `receipts/${filename}`, true);
+      // پاسخ SDK ممکن است متفاوت باشد؛ سعی می‌کنیم URL را استخراج کنیم
+      return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
+    }
+
+    // Submit handler with arrays mapping → Backendless
     document.getElementById('newbloodForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      const formData = new FormData(this);
+      // basic fields
+      const fd = new FormData(this);
       const data = {};
-      formData.forEach((value, key) => {
+      fd.forEach((value, key) => {
         if (data[key]) {
-          if (!Array.isArray(data[key])) {
-            data[key] = [data[key]];
-          }
+          if (!Array.isArray(data[key])) data[key] = [data[key]];
           data[key].push(value);
         } else {
           data[key] = value;
         }
       });
 
+      // normalize types
+      data.birthdate = toDate(data.birthdate);
+      data.course_date = toDate(data.course_date);
+      data.prepayment = toNumber(data.prepayment);
+
+      // interests → array
+      data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i => i.value);
+
+      // growth (stars)
+      data.growth = document.querySelectorAll('#growthLevel .selected').length;
+
+      // ==== installments with receipt upload ====
+      const installmentDivs = Array.from(document.querySelectorAll('.installment'));
+      const installmentPromises = installmentDivs.map(async (div) => {
+        const date = toDate(div.querySelector('.inst-date')?.value || null);
+        const amount = toNumber(div.querySelector('.inst-amount')?.value || null);
+        let receipt_url = null;
+        const fileInput = div.querySelector('.inst-receipt');
+        const file = fileInput && fileInput.files && fileInput.files[0];
+        if (file) {
+          try {
+            receipt_url = await uploadReceipt(file);
+          } catch (err) {
+            console.error('خطا در آپلود فیش:', err);
+            alert('آپلود فیش یکی از اقساط ناموفق بود. می‌توانید بعداً از بخش ویرایش دوباره بارگذاری کنید.');
+          }
+        }
+        return { date, amount, receipt_url };
+      });
+
+      const installments = (await Promise.all(installmentPromises))
+        .filter(it => it.date || it.amount || it.receipt_url);
+      data.installments = installments;
+
+      // coins → array of {date, note}
+      data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(div => ({
+        date: toDate(div.querySelector('.coin-date')?.value || null),
+        note: (div.querySelector('.coin-note')?.value || '').trim(),
+      })).filter(x => x.date);
+
+      // referred_people → array of strings
+      data.referred_people = Array.from(document.querySelectorAll('.referred-entry .ref-name')).map(i => i.value.trim()).filter(Boolean);
+
       try {
-        const saved = await Backendless.Data.of("Newbloods").save(data);
-        alert("اطلاعات ذخیره شد.");
+        await Backendless.Data.of('Newbloods').save(data);
+        alert('اطلاعات ذخیره شد.');
         this.reset();
+        installmentsContainer.innerHTML = '';
+        coinsLog.innerHTML = '';
+        referredContainer.innerHTML = '';
+        growthLevel.innerHTML = '';
+        setStars();
       } catch (error) {
-        console.error("خطا در ثبت:", error);
-        alert("مشکلی در ذخیره اطلاعات پیش آمده.");
+        console.error('خطا در ثبت:', error);
+        alert('مشکلی در ذخیره اطلاعات پیش آمده.');
       }
     });
 
