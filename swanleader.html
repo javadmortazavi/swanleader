@@ -3,73 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>داشبورد مدیر - Swan Family</title>
+  <title>Swan Leader Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
   <style>
-    body {
-      font-family: Tahoma, sans-serif;
-      background: #f4f4f4;
-      padding: 2rem;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    canvas {
-      margin-top: 2rem;
-    }
-    #login {
-      max-width: 300px;
-      margin: 10% auto;
-      padding: 2rem;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+    body{font-family:Tahoma,system-ui,sans-serif;background:#f4f4f4;margin:0}
+    #login, .container{max-width:1100px;margin:2rem auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:1.5rem}
+    #login{max-width:360px;margin-top:10vh}
+    input[type=password],button{width:100%;padding:.75rem;border-radius:10px;border:1px solid #dedede}
+    button{border:none;background:#009688;color:#fff;cursor:pointer}
+    h2,h3{margin:.5rem 0 1rem}
+    canvas{margin-top:1.25rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    table{width:100%;border-collapse:collapse;margin-top:1rem}
+    th,td{padding:.6rem .5rem;border-bottom:1px solid #eee;text-align:right}
+    th{background:#fafafa}
+    .muted{color:#666;font-size:.92rem}
   </style>
 </head>
 <body>
+
+<!-- ساده‌ترین دروازه‌ی دسترسی مدیر -->
 <div id="login">
-  <h3>ورود مدیر</h3>
-  <input type="password" id="adminPass" placeholder="رمز عبور" style="width:100%; padding:0.5rem;">
-  <button onclick="checkLogin()" style="margin-top:1rem; padding:0.5rem; width:100%;">ورود</button>
+  <h3>ورود مدیر Swan Leader</h3>
+  <p class="muted">رمز پیش‌فرض: <code>swanadmin</code> — بعداً می‌تونیم لاگین واقعی اضافه کنیم.</p>
+  <input type="password" id="adminPass" placeholder="رمز عبور">
+  <button onclick="checkLogin()" style="margin-top:.75rem">ورود</button>
 </div>
 
 <div class="container" id="dashboard" style="display:none">
   <h2>داشبورد آماری Swan Family</h2>
 
-  <canvas id="chartProvince"></canvas>
-  <canvas id="chartBirths"></canvas>
-  <canvas id="chartInterests"></canvas>
-  <canvas id="chartCoins"></canvas>
-  <canvas id="chartInstallments"></canvas>
-  <canvas id="chartGrowth"></canvas>
+  <div class="grid">
+    <div><canvas id="chartProvince"></canvas></div>
+    <div><canvas id="chartBirths"></canvas></div>
+    <div><canvas id="chartInterests"></canvas></div>
+    <div><canvas id="chartCoins"></canvas></div>
+    <div><canvas id="chartInstallments"></canvas></div>
+    <div><canvas id="chartGrowth"></canvas></div>
+  </div>
+
+  <h3 style="margin-top:2rem">جدول اقساط و فیش‌های پرداختی</h3>
+  <p class="muted">روی «مشاهده فیش» کلیک کنید تا تصویر/فایل رسید در پنجره جدید باز شود.</p>
+  <div style="overflow:auto">
+    <table id="instTable">
+      <thead>
+        <tr>
+          <th>نام</th>
+          <th>استان</th>
+          <th>تاریخ قسط</th>
+          <th>مبلغ (تومان)</th>
+          <th>فیش</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
+  // تنظیمات اتصال
   const ADMIN_PASSWORD = "swanadmin";
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  function checkLogin() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === ADMIN_PASSWORD) {
+  function checkLogin(){
+    const pass = document.getElementById('adminPass').value.trim();
+    if(pass === ADMIN_PASSWORD){
       document.getElementById('login').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
       loadData();
-    } else {
-      alert("رمز عبور اشتباه است!");
+    }else{
+      alert("رمز عبور اشتباه است.");
     }
   }
 
-  async function loadData() {
+  // ابزار رسم چارت
+  function drawChart(id, title, labels, values){
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label: title, data: values }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false }, title: { display: true, text: title } },
+        scales: { x: { ticks: { autoSkip: true, maxRotation: 0 } } }
+      }
+    });
+  }
+
+  // بارگذاری داده‌ها و ساخت آمار
+  async function loadData(){
+    // همه‌ی رکوردها از جدول Newbloods
     const data = await Backendless.Data.of("Newbloods").find();
 
-    // استان
+    // 1) تعداد نیوبلاد بر اساس استان
     const provinces = {};
     data.forEach(d => {
       const p = d.province || "نامشخص";
@@ -77,82 +105,93 @@
     });
     drawChart('chartProvince', 'تعداد نیوبلادها بر اساس استان', Object.keys(provinces), Object.values(provinces));
 
-    // تولد در ماه‌ها
+    // 2) تولدها در ماه‌های سال
     const births = Array(12).fill(0);
     data.forEach(d => {
-      if (d.birthdate) {
+      if(d.birthdate){
         const m = new Date(d.birthdate).getMonth();
         births[m]++;
       }
     });
-    drawChart('chartBirths', 'تولدها در ماه‌های سال', [...Array(12).keys()].map(m => `ماه ${m+1}`), births);
+    drawChart('chartBirths', 'تولدها در ماه‌های سال', [...Array(12).keys()].map(i => `ماه ${i+1}`), births);
 
-    // علاقه‌مندی‌ها
-    const interests = { marketing: 0, anatomy: 0, eastern_medicine: 0, ayurveda: 0 };
+    // 3) علاقه‌مندی‌ها (چک‌باکس‌ها در فرم: marketing, anatomy, eastern_medicine, ayurveda)
+    const interestsMap = { marketing: 0, anatomy: 0, eastern_medicine: 0, ayurveda: 0 };
     data.forEach(d => {
       const i = d.interests;
-      if (Array.isArray(i)) i.forEach(val => interests[val]++);
-      else if (typeof i === 'string') interests[i] && interests[i]++;
+      if(Array.isArray(i)) i.forEach(v => (v in interestsMap) && interestsMap[v]++);
+      else if(typeof i === 'string' && (i in interestsMap)) interestsMap[i]++;
     });
-    drawChart('chartInterests', 'تعداد علاقه‌مندان', Object.keys(interests), Object.values(interests));
+    drawChart('chartInterests', 'تعداد علاقه‌مندان', Object.keys(interestsMap), Object.values(interestsMap));
 
-    // سوان کوین
-    const coins = {};
+    // 4) تعداد سوان‌کوین برای هر نفر (طول آرایه‌ی coins)
+    const coinsPerPerson = {};
     data.forEach(d => {
       const name = d.name || "بی‌نام";
-      const log = d.coins || [];
-      coins[name] = log.length || 0;
+      const log = Array.isArray(d.coins) ? d.coins : [];
+      coinsPerPerson[name] = log.length;
     });
-    drawChart('chartCoins', 'سوان کوین هر نفر', Object.keys(coins), Object.values(coins));
+    drawChart('chartCoins', 'سوان‌کوین هر نفر', Object.keys(coinsPerPerson), Object.values(coinsPerPerson));
 
-    // اقساط ماهانه
+    // 5) جمع اقساط در هر ماه (از installments[].amount بر اساس تاریخ)
     const monthlyInstallments = Array(12).fill(0);
+    // همچنین ساخت ردیف‌های جدول فیش‌ها
+    const instRows = [];
     data.forEach(d => {
-      const inst = d.installments || [];
+      const inst = Array.isArray(d.installments) ? d.installments : [];
       inst.forEach(item => {
-        if (item.date && item.amount) {
-          const m = new Date(item.date).getMonth();
-          monthlyInstallments[m] += parseInt(item.amount);
-        }
+        if(!item || !item.date) return;
+        const dt = new Date(item.date);
+        const month = dt.getMonth();
+        const amt = Number(item.amount || 0);
+        monthlyInstallments[month] += isNaN(amt) ? 0 : amt;
+
+        instRows.push({
+          name: d.name || 'بی‌نام',
+          province: d.province || 'نامشخص',
+          date: dt,
+          amount: amt,
+          receipt_url: item.receipt_url || null
+        });
       });
     });
-    drawChart('chartInstallments', 'جمع اقساط در ماه', [...Array(12).keys()].map(m => `ماه ${m+1}`), monthlyInstallments);
+    drawChart('chartInstallments', 'جمع اقساط در ماه', [...Array(12).keys()].map(i => `ماه ${i+1}`), monthlyInstallments);
 
-    // سطح رشد بر اساس استان
+    // 6) میانگین سطح رشد بر اساس استان (growth: 0..5)
     const growthByProvince = {};
     data.forEach(d => {
-      const star = d.growth || 0;
-      const p = d.province || "نامشخص";
-      growthByProvince[p] = growthByProvince[p] || [];
-      growthByProvince[p].push(star);
+      const g = Number(d.growth || 0);
+      const p = d.province || 'نامشخص';
+      if(!growthByProvince[p]) growthByProvince[p] = [];
+      growthByProvince[p].push(g);
     });
     const avgGrowth = {};
-    for (const p in growthByProvince) {
+    for(const p in growthByProvince){
       const arr = growthByProvince[p];
-      avgGrowth[p] = arr.reduce((a,b) => a+b, 0) / arr.length;
+      avgGrowth[p] = arr.length ? (arr.reduce((a,b)=>a+b,0) / arr.length) : 0;
     }
     drawChart('chartGrowth', 'میانگین سطح رشد بر اساس استان', Object.keys(avgGrowth), Object.values(avgGrowth));
+
+    // 7) جدول اقساط + لینک فیش
+    buildReceiptsTable(instRows);
   }
 
-  function drawChart(id, label, labels, values) {
-    const ctx = document.getElementById(id).getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: label,
-          data: values,
-          backgroundColor: 'rgba(0, 150, 136, 0.6)',
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: label }
-        }
-      }
+  function buildReceiptsTable(rows){
+    rows.sort((a,b) => b.date - a.date); // جدیدترین‌ها بالا
+    const tbody = document.querySelector('#instTable tbody');
+    tbody.innerHTML = '';
+    const fdate = d => new Intl.DateTimeFormat('fa-IR').format(d);
+
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.name}</td>
+        <td>${r.province}</td>
+        <td>${fdate(r.date)}</td>
+        <td>${r.amount ? r.amount.toLocaleString('fa-IR') : '-'}</td>
+        <td>${r.receipt_url ? `<a href="${r.receipt_url}" target="_blank" rel="noopener">مشاهده فیش</a>` : '-'}</td>
+      `;
+      tbody.appendChild(tr);
     });
   }
 </script>
