@@ -1,125 +1,213 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>پنل مدیریت نیوبلادها - Swan Leader</title>
-<style>
-  body { font-family: tahoma, sans-serif; background: #f9f9f9; margin:0; padding:0; }
-  header { background:#222; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { font-size:18px; margin:0; }
-  a.pill, button { background:#0084ff; color:#fff; padding:6px 12px; border-radius:5px; text-decoration:none; border:none; cursor:pointer; }
-  a.pill:hover, button:hover { background:#005fcc; }
-  .hidden { display:none; }
-  main { padding:20px; }
-  table { border-collapse: collapse; width:100%; margin-top:10px; }
-  th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/backendless/8.1.4/backendless.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>پنل استادیار - Swan Family</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+  <style>
+    body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
+    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px}
+    header h1{font-size:18px;margin:0}
+    a.pill,button{background:#009688;color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
+    a.pill:hover,button:hover{opacity:.9}
+    .wrap{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:14px}
+    .hidden{display:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    input,button{padding:.7rem;border:1px solid #dedede;border-radius:10px}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{border-bottom:1px solid #eee;padding:8px;text-align:right}
+    th{background:#fafafa}
+    .muted{color:#666;font-size:.9rem}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  </style>
 </head>
 <body>
 
 <header>
   <h1>پنل استادیار</h1>
   <div>
-    <span id="whoami"></span>
-    <a id="addLink" class="pill" href="#">+ افزودن نیوبلاد</a>
-    <button onclick="logout()">خروج</button>
+    <span id="whoami" class="muted"></span>
+    <a id="addLink" class="pill" href="index.html" target="_blank" rel="noopener">+ افزودن نیوبلاد</a>
+    <button type="button" onclick="logout()">خروج</button>
   </div>
 </header>
 
-<main>
-  <section id="auth">
-    <h2>ورود</h2>
-    <input type="email" id="loginEmail" placeholder="ایمیل"><br><br>
-    <input type="password" id="loginPass" placeholder="رمز عبور"><br><br>
-    <button onclick="login()">ورود</button>
-  </section>
+<div id="auth" class="wrap">
+  <h2>ورود / ثبت‌نام</h2>
+  <p class="muted">برای ثبت و ویرایش نیوبلادها ابتدا وارد شوید.</p>
+  <div class="row">
+    <input id="email" type="email" placeholder="ایمیل">
+    <input id="password" type="password" placeholder="رمز عبور">
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input id="displayName" type="text" placeholder="نام نمایشی (مثلاً: جواد مرتضوی)">
+    <div style="display:flex;gap:8px">
+      <button type="button" onclick="login()">ورود</button>
+      <button type="button" onclick="signup()">ثبت‌نام</button>
+    </div>
+  </div>
+</div>
 
-  <section id="app" class="hidden">
-    <h2>لیست نیوبلادهای من</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>نام</th>
-          <th>تاریخ ثبت</th>
-          <th>استان</th>
-          <th>شهر</th>
-        </tr>
-      </thead>
-      <tbody id="listBody"></tbody>
-    </table>
-  </section>
-</main>
+<div id="app" class="wrap hidden">
+  <div class="topbar">
+    <div>
+      <h2>نیوبلادهای من</h2>
+      <div class="muted">فقط رکوردهایی که شما ثبت کرده‌اید (بر اساس نام نمایشی)</div>
+    </div>
+    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+      <input id="q" placeholder="جستجو: نام، شهر، استان، موبایل">
+      <input id="byProvince" placeholder="فیلتر استان (خالی=همه)">
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>نام</th>
+        <th>موبایل</th>
+        <th>استان / شهر</th>
+        <th>تعداد اقساط</th>
+        <th>سطح رشد</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
 
 <script>
-const APP_ID = "8D939181-02F9-4505-92A9-57A80D713F65";
-const API_KEY = "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8";
-Backendless.initApp(APP_ID, API_KEY);
+  // ===== Backendless Init =====
+  Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-let CURRENT_USER = null;
+  let CURRENT_USER = null;
+  let RAW = [];
 
-async function login(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass = document.getElementById('loginPass').value.trim();
-  try {
-    await Backendless.UserService.login(email, pass, true);
-    afterLogin();
-  } catch(err){
-    alert("خطا در ورود: " + err.message);
+  // اگر فرم در همین ریپو/همین مسیر است:
+  let FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
+  // اگر فرم در ریپوی جداست، این را ست کن:
+  // let FORM_BASE = "https://javadmortazavi.github.io/swan-newblood/";
+
+  // ===== Auth =====
+  async function signup(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const displayName = document.getElementById('displayName').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    if(!displayName) return alert("نام نمایشی را وارد کنید");
+    try{
+      const user = new Backendless.User();
+      user.email = email;
+      user.password = password;
+      user.name = displayName; // اسم نمایشی برای آمار
+      await Backendless.UserService.register(user);
+      // بعد از ثبت‌نام، مستقیم وارد شو
+      await Backendless.UserService.login(email, password, true);
+      await afterLogin();
+    }catch(e){
+      console.error(e);
+      alert("ثبت‌نام/ورود ناموفق: " + (e.message||e));
+    }
   }
-}
 
-async function afterLogin(){
-  document.getElementById('auth').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-
-  CURRENT_USER = await Backendless.UserService.getCurrentUser();
-  const assistantName = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || 'بدون‌نام';
-  document.getElementById('whoami').textContent = "ورود: " + assistantName;
-
-  // مسیر فرم
-  const FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
-  // اگر در ریپوی جداست، این رو دستی بزار:
-  // const FORM_BASE = "https://javadmortazavi.github.io/swan-newblood/";
-
-  const addUrl = new URL('index.html', FORM_BASE);
-  addUrl.searchParams.set('assistant', assistantName);
-  document.getElementById('addLink').href = addUrl.toString();
-
-  loadMine();
-}
-
-async function loadMine(){
-  if(!CURRENT_USER) return;
-  try {
-    const data = await Backendless.Data.of("Newbloods")
-      .find({ where: `assistant='${CURRENT_USER.name || CURRENT_USER.email}'` });
-    renderList(data);
-  } catch(err){
-    console.error(err);
+  async function login(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    try{
+      await Backendless.UserService.login(email, password, true);
+      await afterLogin();
+    }catch(e){
+      console.error(e);
+      alert("ورود ناموفق: " + (e.message||e));
+    }
   }
-}
 
-function renderList(list){
-  const tbody = document.getElementById('listBody');
-  tbody.innerHTML = "";
-  list.forEach(item=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${item.name || ''}</td>
-      <td>${item.created ? new Date(item.created).toLocaleDateString('fa-IR') : ''}</td>
-      <td>${item.province || ''}</td>
-      <td>${item.city || ''}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-function logout(){
-  Backendless.UserService.logout().then(()=>{
+  async function logout(){
+    try{ await Backendless.UserService.logout(); }catch(_){}
     location.reload();
-  });
-}
+  }
+
+  // ===== After Login =====
+  async function afterLogin(){
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+
+    CURRENT_USER = await Backendless.UserService.getCurrentUser();
+    const assistantName = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || 'بدون‌نام';
+    document.getElementById('whoami').textContent = "ورود: " + assistantName;
+
+    // لینک «افزودن نیوبلاد» به index.html با پارامتر assistant
+    const addUrl = new URL('index.html', FORM_BASE);
+    addUrl.searchParams.set('assistant', assistantName);
+    const addLink = document.getElementById('addLink');
+    addLink.href = addUrl.toString();
+    // اگر می‌خواهی در همان تب باز شود:
+    // addLink.target = "_self";
+
+    // ورودی‌های جستجو/فیلتر
+    document.getElementById('q').addEventListener('input', renderList);
+    document.getElementById('byProvince').addEventListener('input', renderList);
+
+    await loadMine();
+  }
+
+  // ===== Load My Records =====
+  async function loadMine(){
+    const name = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || '';
+    if(!name){ RAW = []; return renderList(); }
+
+    // جلوگیری از شکستن where توسط کاراکتر '
+    const safeName = name.replace(/'/g, "''");
+    const qb = Backendless.DataQueryBuilder.create()
+                .setWhereClause(`assistant = '${safeName}'`)
+                .setPageSize(100);
+    try{
+      RAW = await Backendless.Data.of('Newbloods').find(qb);
+      renderList();
+    }catch(e){
+      console.error(e);
+      alert("خواندن داده‌ها ناموفق بود.");
+    }
+  }
+
+  function renderList(){
+    const q = (document.getElementById('q').value||'').trim();
+    const p = (document.getElementById('byProvince').value||'').trim();
+    const hit = (s)=> (s||'').toString().includes(q);
+    const list = RAW.filter(r=>{
+      const okQ = !q || hit(r.name)||hit(r.mobile)||hit(r.city)||hit(r.province);
+      const okP = !p || (r.province||'')===p;
+      return okQ && okP;
+    });
+
+    const tb = document.getElementById('rows');
+    tb.innerHTML = '';
+    list.forEach(r=>{
+      const instCount = Array.isArray(r.installments) ? r.installments.length : 0;
+      const grow = Number(r.growth||0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${esc(r.name||'-')}</td>
+        <td>${esc(r.mobile||'-')}</td>
+        <td>${esc(r.province||'-')} / ${esc(r.city||'-')}</td>
+        <td>${instCount}</td>
+        <td>${'★'.repeat(grow)}${'☆'.repeat(Math.max(0,5-grow))}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+  // اگر جلسه‌ی قبلی وجود دارد، خودکار وارد شو
+  (async ()=>{
+    try{
+      const cu = await Backendless.UserService.getCurrentUser();
+      if(cu){
+        await afterLogin();
+      }
+    }catch(_){}
+  })();
 </script>
 
 </body>
