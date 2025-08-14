@@ -17,16 +17,30 @@
     }
     .coin-entry { grid-template-columns: 1fr 2fr auto; }
     .referred-entry { grid-template-columns: 1fr auto; }
-    .receipt-note { font-size: .85rem; color: #555; }
+    .muted { color:#777; font-size:.9rem; }
     button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 6px; cursor: pointer; }
     .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
     .stars .selected { color: #f4c430; }
-    .muted { color:#777; font-size:.9rem; }
   </style>
 </head>
 <body>
   <form id="newbloodForm">
     <h2>فرم ثبت نیوبلاد</h2>
+
+    <!-- استادیارِ ثبت‌کننده (اولین فیلد) -->
+    <div class="row">
+      <div>
+        <label>استادیارِ ثبت‌کننده:</label>
+        <select name="assistant" required>
+          <option value="">انتخاب کنید</option>
+          <option value="جواد مرتضوی">جواد مرتضوی</option>
+          <option value="استادیار ۱">استادیار ۱</option>
+          <option value="استادیار ۲">استادیار ۲</option>
+          <option value="استادیار ۳">استادیار ۳</option>
+        </select>
+      </div>
+      <div></div>
+    </div>
 
     <div class="row">
       <div>
@@ -71,34 +85,20 @@
         </select>
       </div>
       <div>
-        <label>استادیارِ ثبت‌کننده:</label>
-        <select name="assistant" required>
-          <option value="">انتخاب کنید</option>
-          <option value="جواد مرتضوی">جواد مرتضوی</option>
-          <option value="استادیار ۱">استادیار ۱</option>
-          <option value="استادیار ۲">استادیار ۲</option>
-          <option value="استادیار ۳">استادیار ۳</option>
-        </select>
+        <label>استان:</label>
+        <input type="text" name="province" />
       </div>
     </div>
 
     <div class="row">
-      <div>
-        <label>استان:</label>
-        <input type="text" name="province" />
-      </div>
       <div>
         <label>شهر محل سکونت:</label>
         <input type="text" name="city" />
       </div>
-    </div>
-
-    <div class="row">
       <div>
         <label>معرف یا هماهنگ‌کننده:</label>
         <input type="text" name="referrer" />
       </div>
-      <div></div>
     </div>
 
     <label>سابقه فعالیت ماساژ:</label>
