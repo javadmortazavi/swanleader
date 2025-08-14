@@ -33,8 +33,7 @@
         <label>استادیارِ ثبت‌کننده:</label>
         <select name="assistant" required>
           <option value="">انتخاب کنید</option>
-          <!-- گزینه‌ها می‌تونن دستی باشن؛
-               همچنین پایین صفحه به صورت داینامیک از جدول Assistants لود می‌کنیم -->
+          <!-- می‌تونی گزینه‌های دستی داشته باشی؛ پایین‌تر داینامیک هم Load می‌کنیم (اختیاری) -->
           <option value="جواد مرتضوی">جواد مرتضوی</option>
           <option value="استادیار ۱">استادیار ۱</option>
           <option value="استادیار ۲">استادیار ۲</option>
@@ -233,7 +232,6 @@
       const sel = document.querySelector('select[name="assistant"]');
       if(sel && fromURL){
         const nameFromURL = decodeURIComponent(fromURL).replace(/_/g,' ').trim();
-
         // اگر گزینه موجود نبود، بساز
         let opt = Array.from(sel.options).find(o => o.value === nameFromURL);
         if(!opt){
@@ -243,10 +241,8 @@
           sel.appendChild(opt);
         }
         sel.value = nameFromURL;
-
         // قفل کن
         sel.disabled = true;
-
         // hidden برای اطمینان از ارسال مقدار
         const hidden = document.createElement('input');
         hidden.type = 'hidden';
@@ -310,9 +306,9 @@
       // رشد (ستاره‌ها)
       data.growth = document.querySelectorAll('#growthLevel .selected').length;
 
-      // اقساط با آپلود فیش
+      // اقساط با آپلود فیش → ذخیره در "instalments"
       const installmentDivs = Array.from(document.querySelectorAll('.installment'));
-      const installmentPromises = installmentDivs.map(async (div) => {
+      const instalmentPromises = installmentDivs.map(async (div) => {
         const date = toDate(div.querySelector('.inst-date')?.value || null);
         const amount = toNumber(div.querySelector('.inst-amount')?.value || null);
         let receipt_url = null;
@@ -324,7 +320,7 @@
         }
         return { date, amount, receipt_url };
       });
-      data.installments = (await Promise.all(installmentPromises))
+      data.instalments = (await Promise.all(instalmentPromises))
         .filter(it => it.date || it.amount || it.receipt_url);
 
       // کوین‌ها
