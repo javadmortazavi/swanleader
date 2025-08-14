@@ -6,7 +6,7 @@
   <title>فرم ثبت نیوبلاد - Swan Family</title>
   <style>
     body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
-    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,.08); }
     label { font-weight: bold; display: block; margin-top: 1rem; }
     input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 6px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
@@ -27,12 +27,14 @@
   <form id="newbloodForm">
     <h2>فرم ثبت نیوبلاد</h2>
 
-    <!-- استادیارِ ثبت‌کننده (اولین فیلد) -->
+    <!-- ۱) استادیارِ ثبت‌کننده (اولین فیلد) -->
     <div class="row">
       <div>
         <label>استادیارِ ثبت‌کننده:</label>
         <select name="assistant" required>
           <option value="">انتخاب کنید</option>
+          <!-- گزینه‌ها می‌تونن دستی باشن؛
+               همچنین پایین صفحه به صورت داینامیک از جدول Assistants لود می‌کنیم -->
           <option value="جواد مرتضوی">جواد مرتضوی</option>
           <option value="استادیار ۱">استادیار ۱</option>
           <option value="استادیار ۲">استادیار ۲</option>
@@ -166,40 +168,6 @@
     const growthLevel = document.getElementById('growthLevel');
     const referredContainer = document.getElementById('referredContainer');
 
-    // ساخت UI اقساط/کوین/معرفی‌شده‌ها
-    function addInstallment() {
-      const div = document.createElement('div');
-      div.className = 'installment';
-      div.innerHTML = `
-        <input type="date" placeholder="تاریخ قسط" class="inst-date" />
-        <input type="number" placeholder="مبلغ (تومان)" class="inst-amount" />
-        <input type="file" class="inst-receipt" accept="image/*,application/pdf" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      installmentsContainer.appendChild(div);
-    }
-
-    function addCoin() {
-      const div = document.createElement('div');
-      div.className = 'coin-entry';
-      div.innerHTML = `
-        <input type="date" placeholder="تاریخ ثبت سوان‌کوین" class="coin-date" />
-        <input type="text" placeholder="توضیح (اختیاری)" class="coin-note" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      coinsLog.appendChild(div);
-    }
-
-    function addReferred() {
-      const div = document.createElement('div');
-      div.className = 'referred-entry';
-      div.innerHTML = `
-        <input type="text" placeholder="نام نیوبلاد معرفی‌شده" class="ref-name" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      referredContainer.appendChild(div);
-    }
-
     // ستاره‌های سطح رشد
     function setStars() {
       growthLevel.innerHTML = '';
@@ -215,6 +183,38 @@
       }
     }
 
+    // UI: اقساط/کوین/معرفی‌شده‌ها
+    function addInstallment() {
+      const div = document.createElement('div');
+      div.className = 'installment';
+      div.innerHTML = `
+        <input type="date" placeholder="تاریخ قسط" class="inst-date" />
+        <input type="number" placeholder="مبلغ (تومان)" class="inst-amount" />
+        <input type="file" class="inst-receipt" accept="image/*,application/pdf" />
+        <button type="button" onclick="this.parentNode.remove()">❌</button>
+      `;
+      installmentsContainer.appendChild(div);
+    }
+    function addCoin() {
+      const div = document.createElement('div');
+      div.className = 'coin-entry';
+      div.innerHTML = `
+        <input type="date" placeholder="تاریخ ثبت سوان‌کوین" class="coin-date" />
+        <input type="text" placeholder="توضیح (اختیاری)" class="coin-note" />
+        <button type="button" onclick="this.parentNode.remove()">❌</button>
+      `;
+      coinsLog.appendChild(div);
+    }
+    function addReferred() {
+      const div = document.createElement('div');
+      div.className = 'referred-entry';
+      div.innerHTML = `
+        <input type="text" placeholder="نام نیوبلاد معرفی‌شده" class="ref-name" />
+        <button type="button" onclick="this.parentNode.remove()">❌</button>
+      `;
+      referredContainer.appendChild(div);
+    }
+
     // کمکی‌ها
     const toDate = (s) => (s ? new Date(s) : null);
     const toNumber = (n) => (n === '' || n == null ? null : Number(n));
@@ -225,6 +225,63 @@
       const res = await Backendless.Files.upload(file, `receipts/${filename}`, true);
       return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
     }
+
+    // 1) پر کردن خودکار استادیار از URL و قفل‌کردن
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(location.search);
+      const fromURL = params.get('assistant'); // ممکنه فارسی باشه
+      const sel = document.querySelector('select[name="assistant"]');
+      if(sel && fromURL){
+        const nameFromURL = decodeURIComponent(fromURL).replace(/_/g,' ').trim();
+
+        // اگر گزینه موجود نبود، بساز
+        let opt = Array.from(sel.options).find(o => o.value === nameFromURL);
+        if(!opt){
+          opt = document.createElement('option');
+          opt.value = nameFromURL;
+          opt.textContent = nameFromURL;
+          sel.appendChild(opt);
+        }
+        sel.value = nameFromURL;
+
+        // قفل کن
+        sel.disabled = true;
+
+        // hidden برای اطمینان از ارسال مقدار
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'assistant';
+        hidden.value = nameFromURL;
+        sel.parentNode.appendChild(hidden);
+      }
+    });
+
+    // 2) (اختیاری) لود داینامیک لیست استادیارها از جدول Assistants
+    async function loadAssistantsIntoSelect() {
+      const sel = document.querySelector('select[name="assistant"]');
+      if(!sel) return;
+      try{
+        const query = Backendless.DataQueryBuilder.create()
+          .setWhereClause('isActive = true')
+          .setSortBy(['order ASC', 'name ASC'])
+          .setPageSize(100);
+        const list = await Backendless.Data.of('Assistants').find(query);
+        const current = sel.value;
+        list.forEach(a=>{
+          const exists = Array.from(sel.options).some(o=>o.value===a.name);
+          if(!exists){
+            const opt = document.createElement('option');
+            opt.value = a.name;
+            opt.textContent = a.name;
+            sel.appendChild(opt);
+          }
+        });
+        if(current) sel.value = current;
+      }catch(e){
+        console.warn('Assistants load failed (optional):', e);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', loadAssistantsIntoSelect);
 
     // ارسال فرم
     document.getElementById('newbloodForm').addEventListener('submit', async function(e) {
