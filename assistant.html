@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>پنل استادیار - Swan Family</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+  <style>
+    body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
+    .container{max-width:1100px;margin:2rem auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:1.25rem}
+    h2,h3{margin:.5rem 0 1rem}
+    input,button,select,textarea{padding:.65rem;border-radius:10px;border:1px solid #dedede}
+    button{border:none;background:#009688;color:#fff;cursor:pointer}
+    .auth{max-width:420px;margin:8vh auto;background:#fff;padding:1.25rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .list{margin-top:1rem}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right;vertical-align:top}
+    th{background:#fafafa}
+    .topbar{display:flex;gap:.5rem;justify-content:space-between;align-items:center;margin-bottom:1rem}
+    .hidden{display:none}
+    .pill{background:#eef7f6;padding:.25rem .5rem;border-radius:999px;font-size:.85rem}
+    .muted{color:#666;font-size:.92rem}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:1rem}
+    .modal .card{background:#fff;max-width:900px;width:100%;border-radius:12px;padding:1rem;max-height:90vh;overflow:auto}
+    .inst{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.5rem;align-items:center;background:#f4f4f4;border-radius:8px;padding:.5rem;margin-bottom:.5rem}
+    .stars span{font-size:1.6rem;cursor:pointer;color:#c9c9c9}
+    .stars .selected{color:#f4c430}
+  </style>
+</head>
+<body>
+
+<div id="auth" class="auth">
+  <h2>ورود/ثبت‌نام استادیار</h2>
+  <p class="muted">ابتدا وارد شوید تا فقط نیوبلادهای خودتان را مدیریت کنید.</p>
+  <div class="row">
+    <input id="email" type="email" placeholder="ایمیل">
+    <input id="password" type="password" placeholder="رمز عبور">
+  </div>
+  <div class="row" style="margin-top:.75rem">
+    <button onclick="login()">ورود</button>
+    <button onclick="signup()">ثبت‌نام</button>
+  </div>
+</div>
+
+<div id="app" class="container hidden">
+  <div class="topbar">
+    <div>
+      <h2>پنل استادیار</h2>
+      <div class="muted" id="whoami"></div>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <a id="addLink" class="pill" href="#" target="_blank" rel="noopener">+ افزودن نیوبلاد</a>
+      <button onclick="logout()">خروج</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="row">
+      <input id="q" placeholder="جستجو: نام، شهر، استان، موبایل">
+      <select id="byProvince">
+        <option value="">همه استان‌ها</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="list">
+    <table>
+      <thead>
+        <tr>
+          <th>نام</th>
+          <th>استان/شهر</th>
+          <th>موبایل</th>
+          <th>تعداد اقساط</th>
+          <th>رشد</th>
+          <th>عملیات</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ویرایش -->
+<div id="editModal" class="modal">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3>ویرایش نیوبلاد</h3>
+      <button onclick="closeEdit()">بستن</button>
+    </div>
+    <div id="editBody"></div>
+    <div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">
+      <button onclick="saveEdit()">ذخیره تغییرات</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Backendless init
+  Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
+
+  let CURRENT_USER = null;
+  let RAW = [];
+  let CURRENT_EDIT = null; // رکورد در حال ویرایش
+
+  // ---- Auth ----
+  async function login(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    try{
+      CURRENT_USER = await Backendless.UserService.login(email, password, true);
+      afterLogin();
+    }catch(e){
+      console.error(e);
+      alert("ورود ناموفق. ایمیل/رمز را چک کنید.");
+    }
+  }
+
+  async function signup(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    try{
+      const user = new Backendless.User();
+      user.email = email;
+      user.password = password;
+      // نام نمایشی استادیار (قبل از @)
+      user.name = email.split('@')[0];
+      await Backendless.UserService.register(user);
+      alert("ثبت‌نام شد. اکنون وارد شوید.");
+    }catch(e){
+      console.error(e);
+      alert("ثبت‌نام ناموفق. شاید کاربر از قبل وجود دارد.");
+    }
+  }
+
+  async function logout(){
+    try{ await Backendless.UserService.logout(); }catch(_){}
+    location.reload();
+  }
+
+  async function afterLogin(){
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+
+    // اطلاعات کاربر
+    CURRENT_USER = await Backendless.UserService.getCurrentUser();
+    const assistantName = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || 'بدون‌نام';
+    document.getElementById('whoami').textContent = "ورود: " + assistantName;
+
+    // لینک افزودن نیوبلاد با پرشدن خودکار فیلد استادیار
+    const addUrl = new URL(location.origin + location.pathname.replace(/assistant\\.html$/,'') + "index.html", location.href);
+    addUrl.searchParams.set('assistant', encodeURIComponent(assistantName));
+    document.getElementById('addLink').href = addUrl.toString();
+
+    await loadMine();
+    document.getElementById('q').addEventListener('input', renderList);
+    document.getElementById('byProvince').addEventListener('change', renderList);
+  }
+
+  // ---- Load only my records (assistant) ----
+  async function loadMine(){
+    const assistantName = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || '';
+    const where = assistantName ? `assistant = '${assistantName.replace(/'/g,"''")}'` : '1=2';
+    const qb = Backendless.DataQueryBuilder.create().setWhereClause(where).setPageSize(100);
+    RAW = await Backendless.Data.of('Newbloods').find(qb);
+
+    // پر کردن فیلتر استان
+    const pros = [...new Set(RAW.map(r => r.province).filter(Boolean))];
+    const sel = document.getElementById('byProvince');
+    sel.innerHTML = `<option value="">همه استان‌ها</option>` + pros.map(p=>`<option>${p}</option>`).join('');
+
+    renderList();
+  }
+
+  function renderList(){
+    const q = document.getElementById('q').value.trim();
+    const filterProvince = document.getElementById('byProvince').value.trim();
+    const t = document.getElementById('rows');
+    t.innerHTML = '';
+
+    const hit = (s) => (s||'').toString().includes(q);
+    const list = RAW.filter(r=>{
+      const okQ = !q || hit(r.name) || hit(r.mobile) || hit(r.city) || hit(r.province);
+      const okP = !filterProvince || r.province === filterProvince;
+      return okQ && okP;
+    });
+
+    list.forEach(r=>{
+      const tr = document.createElement('tr');
+      const instCount = Array.isArray(r.installments) ? r.installments.length : 0;
+      const grow = r.growth || 0;
+      tr.innerHTML = `
+        <td>${esc(r.name||'بی‌نام')}</td>
+        <td>${esc(r.province||'-')}/${esc(r.city||'-')}</td>
+        <td>${esc(r.mobile||'-')}</td>
+        <td>${instCount}</td>
+        <td>${'★'.repeat(grow)}${'☆'.repeat(5-grow)}</td>
+        <td><button onclick="openEdit('${r.objectId}')">ویرایش</button></td>
+      `;
+      t.appendChild(tr);
+    });
+  }
+
+  function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+  // ---- Edit Modal ----
+  function openEdit(id){
+    const rec = RAW.find(x=>x.objectId===id);
+    if(!rec) return;
+
+    CURRENT_EDIT = JSON.parse(JSON.stringify(rec)); // کپی عمیق
+    const el = document.getElementById('editBody');
+    el.innerHTML = '';
+
+    // اطلاعات پایه
+    el.appendChild(block(`
+      <div class="row">
+        <div>
+          <label>نام و نام خانوادگی</label>
+          <input id="ed_name" value="${esc(rec.name||'')}">
+        </div>
+        <div>
+          <label>شماره موبایل</label>
+          <input id="ed_mobile" value="${esc(rec.mobile||'')}">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>استان</label>
+          <input id="ed_province" value="${esc(rec.province||'')}">
+        </div>
+        <div>
+          <label>شهر</label>
+          <input id="ed_city" value="${esc(rec.city||'')}">
+        </div>
+      </div>
+      <div>
+        <label>توضیحات</label>
+        <textarea id="ed_notes">${esc(rec.notes||'')}</textarea>
+      </div>
+    `));
+
+    // سطح رشد با ستاره
+    const starsDiv = document.createElement('div');
+    starsDiv.innerHTML = `<label>سطح رشد</label><div class="stars" id="ed_stars"></div>`;
+    el.appendChild(starsDiv);
+    buildStars('ed_stars', Number(rec.growth||0));
+
+    // اقساط + آپلود/تعویض فیش
+    const wrapInst = document.createElement('div');
+    wrapInst.innerHTML = `<label>اقساط</label><div id="ed_inst"></div><button onclick="addInstRow()" type="button">+ قسط جدید</button>`;
+    el.appendChild(wrapInst);
+    renderInstRows(rec.installments||[]);
+
+    document.getElementById('editModal').style.display='flex';
+  }
+
+  function closeEdit(){
+    CURRENT_EDIT = null;
+    document.getElementById('editModal').style.display='none';
+  }
+
+  function block(html){ const d=document.createElement('div'); d.innerHTML=html; return d; }
+
+  function buildStars(holderId, value){
+    const holder = document.getElementById(holderId);
+    holder.innerHTML='';
+    for(let i=1;i<=5;i++){
+      const s=document.createElement('span'); s.textContent='★';
+      if(i<=value) s.className='selected';
+      s.onclick=()=>{ Array.from(holder.children).forEach((c,idx)=>c.className=(idx<i)?'selected':''); };
+      holder.appendChild(s);
+    }
+  }
+
+  function renderInstRows(inst){
+    const cont = document.getElementById('ed_inst');
+    cont.innerHTML='';
+    inst.forEach((it,idx)=>cont.appendChild(instRow(it, idx)));
+  }
+
+  function instRow(it={}, idx){
+    const div = document.createElement('div');
+    div.className='inst';
+    const dval = it.date ? new Date(it.date) : null;
+    const dateStr = dval ? new Date(dval).toISOString().slice(0,10) : '';
+    div.innerHTML = `
+      <input type="date" value="${dateStr}" data-k="date">
+      <input type="number" placeholder="مبلغ" value="${it.amount||''}" data-k="amount">
+      <div>
+        <input type="file" data-k="file" accept="image/*,application/pdf">
+        ${it.receipt_url ? `<div class="muted">فیش فعلی: <a href="${it.receipt_url}" target="_blank">مشاهده</a></div>` : `<div class="muted">فیش ندارد</div>`}
+      </div>
+      <button type="button" onclick="this.parentNode.remove()">❌</button>
+    `;
+    return div;
+  }
+
+  function addInstRow(){
+    const cont = document.getElementById('ed_inst');
+    cont.appendChild(instRow({}, cont.children.length));
+  }
+
+  async function uploadReceipt(file){
+    const safe=(file.name||'receipt').replace(/\s+/g,'_');
+    const name = `${Date.now()}_${safe}`;
+    const res = await Backendless.Files.upload(file, `receipts/${name}`, true);
+    return res?.fileURL || res?.url || (typeof res==='string'?res:null);
+  }
+
+  async function saveEdit(){
+    if(!CURRENT_EDIT) return;
+
+    // خواندن فیلدهای عمومی
+    CURRENT_EDIT.name     = document.getElementById('ed_name').value.trim();
+    CURRENT_EDIT.mobile   = document.getElementById('ed_mobile').value.trim();
+    CURRENT_EDIT.province = document.getElementById('ed_province').value.trim();
+    CURRENT_EDIT.city     = document.getElementById('ed_city').value.trim();
+    CURRENT_EDIT.notes    = document.getElementById('ed_notes').value.trim();
+    CURRENT_EDIT.growth   = document.querySelectorAll('#ed_stars .selected').length;
+
+    // اقساط
+    const rows = Array.from(document.querySelectorAll('#ed_inst .inst'));
+    const out = [];
+    for(const r of rows){
+      const date = r.querySelector('[data-k="date"]').value || null;
+      const amount = r.querySelector('[data-k="amount"]').value || null;
+      const file = r.querySelector('[data-k="file"]').files?.[0];
+      let receipt_url = null;
+
+      // اگر فایل جدید انتخاب شده، آپلودش کن؛ اگر نه، لینک قبلی (اگر داشت) را نگه داریم
+      const prevLinkTag = r.querySelector('.muted a');
+      const prev = prevLinkTag ? prevLinkTag.getAttribute('href') : null;
+
+      if(file){
+        try{ receipt_url = await uploadReceipt(file); }
+        catch(e){ console.error('آپلود فیش ناموفق:', e); alert('آپلود یکی از فیش‌ها ناموفق بود.'); }
+      }else{
+        receipt_url = prev || null;
+      }
+
+      if(date || amount || receipt_url){
+        out.push({
+          date: date ? new Date(date) : null,
+          amount: amount ? Number(amount) : null,
+          receipt_url
+        });
+      }
+    }
+    CURRENT_EDIT.installments = out;
+
+    try{
+      await Backendless.Data.of('Newbloods').save(CURRENT_EDIT);
+      alert('ذخیره شد.');
+      closeEdit();
+      await loadMine();
+    }catch(e){
+      console.error(e);
+      alert('ذخیره ناموفق. مجدد تلاش کنید.');
+    }
+  }
+
+  // اگر قبلاً لاگین بوده:
+  (async ()=>{
+    try{
+      const cu = await Backendless.UserService.getCurrentUser();
+      if(cu){ CURRENT_USER = cu; afterLogin(); }
+    }catch(_){}
+  })();
+</script>
+</body>
+</html>
