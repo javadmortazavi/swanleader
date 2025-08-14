@@ -6,16 +6,19 @@
   <title>فرم ثبت نیوبلاد - Swan Family</title>
   <style>
     body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
-    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 800px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     label { font-weight: bold; display: block; margin-top: 1rem; }
-    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 5px; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 6px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .installments, .coins-log, .referred-container { margin-top: 1rem; }
-    .installment, .coin-entry, .referred-entry { background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items:center; }
+    .installment, .coin-entry, .referred-entry {
+      background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem;
+      display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items:center;
+    }
     .coin-entry { grid-template-columns: 1fr 2fr auto; }
     .referred-entry { grid-template-columns: 1fr auto; }
     .receipt-note { font-size: .85rem; color: #555; }
-    button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 6px; cursor: pointer; }
     .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
     .stars .selected { color: #f4c430; }
     .muted { color:#777; font-size:.9rem; }
@@ -60,7 +63,7 @@
 
     <div class="row">
       <div>
-        <label>وضعیت تاهل:</label>
+        <label>وضعیت تأهل:</label>
         <select name="marital_status">
           <option value="">انتخاب کنید</option>
           <option value="single">مجرد</option>
@@ -68,20 +71,34 @@
         </select>
       </div>
       <div>
-        <label>استان:</label>
-        <input type="text" name="province" />
+        <label>استادیارِ ثبت‌کننده:</label>
+        <select name="assistant" required>
+          <option value="">انتخاب کنید</option>
+          <option value="جواد مرتضوی">جواد مرتضوی</option>
+          <option value="استادیار ۱">استادیار ۱</option>
+          <option value="استادیار ۲">استادیار ۲</option>
+          <option value="استادیار ۳">استادیار ۳</option>
+        </select>
       </div>
     </div>
 
     <div class="row">
       <div>
+        <label>استان:</label>
+        <input type="text" name="province" />
+      </div>
+      <div>
         <label>شهر محل سکونت:</label>
         <input type="text" name="city" />
       </div>
+    </div>
+
+    <div class="row">
       <div>
         <label>معرف یا هماهنگ‌کننده:</label>
         <input type="text" name="referrer" />
       </div>
+      <div></div>
     </div>
 
     <label>سابقه فعالیت ماساژ:</label>
@@ -141,7 +158,7 @@
 
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
   <script>
-    // Init Backendless
+    // اتصال Backendless
     Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
     const installmentsContainer = document.getElementById('installmentsContainer');
@@ -149,7 +166,7 @@
     const growthLevel = document.getElementById('growthLevel');
     const referredContainer = document.getElementById('referredContainer');
 
-    // ===== UI builders =====
+    // ساخت UI اقساط/کوین/معرفی‌شده‌ها
     function addInstallment() {
       const div = document.createElement('div');
       div.className = 'installment';
@@ -183,8 +200,9 @@
       referredContainer.appendChild(div);
     }
 
-    // Stars (growth)
+    // ستاره‌های سطح رشد
     function setStars() {
+      growthLevel.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
         const span = document.createElement('span');
         span.innerText = '★';
@@ -197,25 +215,22 @@
       }
     }
 
-    // Helpers
+    // کمکی‌ها
     const toDate = (s) => (s ? new Date(s) : null);
     const toNumber = (n) => (n === '' || n == null ? null : Number(n));
 
     async function uploadReceipt(file) {
-      // نام یکتا برای فایل
       const safeName = (file.name || 'receipt').replace(/\s+/g, '_');
       const filename = `${Date.now()}_${safeName}`;
-      // آپلود به پوشه receipts/
       const res = await Backendless.Files.upload(file, `receipts/${filename}`, true);
-      // پاسخ SDK ممکن است متفاوت باشد؛ سعی می‌کنیم URL را استخراج کنیم
       return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
     }
 
-    // Submit handler with arrays mapping → Backendless
+    // ارسال فرم
     document.getElementById('newbloodForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      // basic fields
+      // فیلدهای ساده
       const fd = new FormData(this);
       const data = {};
       fd.forEach((value, key) => {
@@ -227,18 +242,18 @@
         }
       });
 
-      // normalize types
-      data.birthdate = toDate(data.birthdate);
+      // انواع درست
+      data.birthdate   = toDate(data.birthdate);
       data.course_date = toDate(data.course_date);
-      data.prepayment = toNumber(data.prepayment);
+      data.prepayment  = toNumber(data.prepayment);
 
-      // interests → array
+      // علاقه‌مندی‌ها → آرایه
       data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i => i.value);
 
-      // growth (stars)
+      // رشد (ستاره‌ها)
       data.growth = document.querySelectorAll('#growthLevel .selected').length;
 
-      // ==== installments with receipt upload ====
+      // اقساط با آپلود فیش
       const installmentDivs = Array.from(document.querySelectorAll('.installment'));
       const installmentPromises = installmentDivs.map(async (div) => {
         const date = toDate(div.querySelector('.inst-date')?.value || null);
@@ -247,28 +262,23 @@
         const fileInput = div.querySelector('.inst-receipt');
         const file = fileInput && fileInput.files && fileInput.files[0];
         if (file) {
-          try {
-            receipt_url = await uploadReceipt(file);
-          } catch (err) {
-            console.error('خطا در آپلود فیش:', err);
-            alert('آپلود فیش یکی از اقساط ناموفق بود. می‌توانید بعداً از بخش ویرایش دوباره بارگذاری کنید.');
-          }
+          try { receipt_url = await uploadReceipt(file); }
+          catch (err) { console.error('خطا در آپلود فیش:', err); alert('آپلود فیش یکی از اقساط ناموفق بود.'); }
         }
         return { date, amount, receipt_url };
       });
-
-      const installments = (await Promise.all(installmentPromises))
+      data.installments = (await Promise.all(installmentPromises))
         .filter(it => it.date || it.amount || it.receipt_url);
-      data.installments = installments;
 
-      // coins → array of {date, note}
+      // کوین‌ها
       data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(div => ({
         date: toDate(div.querySelector('.coin-date')?.value || null),
         note: (div.querySelector('.coin-note')?.value || '').trim(),
       })).filter(x => x.date);
 
-      // referred_people → array of strings
-      data.referred_people = Array.from(document.querySelectorAll('.referred-entry .ref-name')).map(i => i.value.trim()).filter(Boolean);
+      // معرفی‌شده‌ها
+      data.referred_people = Array.from(document.querySelectorAll('.referred-entry .ref-name'))
+        .map(i => i.value.trim()).filter(Boolean);
 
       try {
         await Backendless.Data.of('Newbloods').save(data);
@@ -277,7 +287,6 @@
         installmentsContainer.innerHTML = '';
         coinsLog.innerHTML = '';
         referredContainer.innerHTML = '';
-        growthLevel.innerHTML = '';
         setStars();
       } catch (error) {
         console.error('خطا در ثبت:', error);
