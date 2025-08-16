@@ -2,10 +2,16 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Swan Leader Dashboard</title>
+  <title>Swan Leader Dashboard (شمسی)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+  <!-- jalaali-js برای تبدیل تاریخ -->
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
+
   <style>
     body{font-family:Tahoma,system-ui,sans-serif;background:#f4f4f4;margin:0}
     #login,.container{max-width:1100px;margin:2rem auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:1.25rem}
@@ -13,13 +19,13 @@
     input[type=password],select,button{width:100%;padding:.75rem;border-radius:10px;border:1px solid #dedede}
     button{border:none;background:#009688;color:#fff;cursor:pointer}
     h2,h3{margin:.5rem 0 1rem}
+    .filters{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
     @media (max-width:900px){.grid{grid-template-columns:1fr}}
     canvas{margin-top:1rem}
     table{width:100%;border-collapse:collapse;margin-top:1rem}
     th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right}
     th{background:#fafafa}
-    .filters{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
     .muted{color:#666;font-size:.92rem}
   </style>
 </head>
@@ -27,7 +33,7 @@
 
 <div id="login">
   <h3>ورود مدیر Swan Leader</h3>
-  <p class="muted">رمز پیش‌فرض: <code>swanadmin</code> (بعداً می‌تونیم احراز هویت واقعی بگذاریم)</p>
+  <p class="muted">رمز پیش‌فرض: <code>swanadmin</code> (بعداً می‌تونیم احراز هویت واقعی بذاریم)</p>
   <input id="adminPass" type="password" placeholder="رمز عبور">
   <button style="margin-top:.75rem" onclick="checkLogin()">ورود</button>
 </div>
@@ -43,15 +49,21 @@
   <div class="grid">
     <div><canvas id="chartProvince"></canvas></div>
     <div><canvas id="chartBirths"></canvas></div>
+
     <div><canvas id="chartInterests"></canvas></div>
     <div><canvas id="chartCoins"></canvas></div>
+
     <div><canvas id="chartInstallments"></canvas></div>
     <div><canvas id="chartGrowth"></canvas></div>
+
+    <!-- ✅ نمودار جدید: تعداد دوره‌ها به تفکیک ماه شمسی (course_date) -->
+    <div style="grid-column:1 / -1"><canvas id="chartCoursesByMonth"></canvas></div>
+
     <div style="grid-column:1 / -1"><canvas id="chartAssistant"></canvas></div>
   </div>
 
   <h3 style="margin-top:2rem">جدول اقساط و فیش‌های پرداختی</h3>
-  <p class="muted">روی «مشاهده فیش» کلیک کنید تا تصویر/فایل رسید باز شود.</p>
+  <p class="muted">تاریخ‌ها شمسی نمایش داده می‌شوند. روی «مشاهده فیش» کلیک کنید.</p>
   <div style="overflow:auto">
     <table id="instTable">
       <thead>
@@ -59,7 +71,7 @@
           <th>نام</th>
           <th>استان</th>
           <th>استادیار</th>
-          <th>تاریخ قسط</th>
+          <th>تاریخ قسط (شمسی)</th>
           <th>مبلغ (تومان)</th>
           <th>فیش</th>
         </tr>
@@ -70,12 +82,14 @@
 </div>
 
 <script>
-  // ---- پیکربندی اتصال
+  // ===== تنظیم اتصال
   const ADMIN_PASSWORD = "swanadmin";
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
   let RAW = [];
   const charts = {};
+  const JMONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+
   function checkLogin(){
     const p = document.getElementById('adminPass').value.trim();
     if(p === ADMIN_PASSWORD){
@@ -89,7 +103,7 @@
     }
   }
 
-  // ---- ابزار چارت
+  // ===== ابزار چارت
   function drawChart(id, title, labels, values){
     const ctx = document.getElementById(id).getContext('2d');
     if(charts[id]) charts[id].destroy();
@@ -104,9 +118,26 @@
     });
   }
 
+  // ===== کمک تاریخ: میلادی → رشته شمسی YYYY/MM/DD
+  function gDateToJalaliStr(d){
+    if(!d) return '-';
+    const gy = d.getFullYear(), gm = d.getMonth()+1, gd = d.getDate();
+    const j = window.jalaali.toJalaali(gy, gm, gd);
+    const pad = n => String(n).padStart(2,'0');
+    return `${j.jy}/${pad(j.jm)}/${pad(j.jd)}`;
+  }
+
+  // گرفتن شماره ماه شمسی از تاریخ میلادی
+  function gDateToJalaliMonthIndex(d){ // 0..11
+    const gy = d.getFullYear(), gm = d.getMonth()+1, gd = d.getDate();
+    const j = window.jalaali.toJalaali(gy, gm, gd);
+    return (j.jm - 1);
+  }
+
+  // ===== بارگذاری داده‌ها
   async function loadData(){
     RAW = await Backendless.Data.of("Newbloods").find();
-    // پر کردن فیلترها
+    // فیلترها
     fillFilter('filterProvince', uniq(RAW.map(d=>d.province).filter(Boolean)));
     fillFilter('filterAssistant', uniq(RAW.map(d=>d.assistant).filter(Boolean)));
     renderAll();
@@ -136,17 +167,18 @@
     });
     drawChart('chartProvince','تعداد نیوبلادها بر اساس استان', Object.keys(provinces), Object.values(provinces));
 
-    // 2) تولدها در ماه‌های سال
-    const births = Array(12).fill(0);
+    // 2) تولدها در ماه‌های شمسی
+    const birthsJ = Array(12).fill(0);
     data.forEach(d=>{
       if(d.birthdate){
-        const m = new Date(d.birthdate).getMonth();
-        births[m]++;
+        const dt = new Date(d.birthdate);
+        const jm = gDateToJalaliMonthIndex(dt);
+        birthsJ[jm]++;
       }
     });
-    drawChart('chartBirths','تولدها در ماه‌های سال', [...Array(12).keys()].map(i=>`ماه ${i+1}`), births);
+    drawChart('chartBirths','تولدها در ماه‌های شمسی', JMONTHS, birthsJ);
 
-    // 3) علاقه‌مندی‌ها (marketing, anatomy, eastern_medicine, ayurveda)
+    // 3) علاقه‌مندی‌ها
     const interestMap = { marketing:0, anatomy:0, eastern_medicine:0, ayurveda:0 };
     data.forEach(d=>{
       const arr = Array.isArray(d.interests) ? d.interests : [];
@@ -154,7 +186,7 @@
     });
     drawChart('chartInterests','تعداد علاقه‌مندان', Object.keys(interestMap), Object.values(interestMap));
 
-    // 4) سوان‌کوین هر نفر (طول آرایه coins)
+    // 4) سوان‌کوین هر نفر (تعداد آیتم‌های آرایه coins)
     const coinsCount = {};
     data.forEach(d=>{
       const name = d.name || 'بی‌نام';
@@ -163,17 +195,17 @@
     });
     drawChart('chartCoins','سوان‌کوین هر نفر', Object.keys(coinsCount), Object.values(coinsCount));
 
-    // 5) جمع اقساط در هر ماه + جدول فیش‌ها (از instalments)
-    const monthly = Array(12).fill(0);
+    // 5) جمع اقساط در هر ماه شمسی + جدول فیش‌ها
+    const monthlyJ = Array(12).fill(0);
     const rows = [];
     data.forEach(d=>{
       const inst = Array.isArray(d.instalments) ? d.instalments : [];
       inst.forEach(it=>{
         if(!it || !it.date) return;
         const dt = new Date(it.date);
-        const m = dt.getMonth();
+        const jm = gDateToJalaliMonthIndex(dt);
         const amt = Number(it.amount||0);
-        monthly[m] += isNaN(amt) ? 0 : amt;
+        monthlyJ[jm] += isNaN(amt) ? 0 : amt;
         rows.push({
           name: d.name || 'بی‌نام',
           province: d.province || 'نامشخص',
@@ -184,10 +216,21 @@
         });
       });
     });
-    drawChart('chartInstallments','جمع اقساط در ماه', [...Array(12).keys()].map(i=>`ماه ${i+1}`), monthly);
+    drawChart('chartInstallments','جمع اقساط به تفکیک ماه شمسی', JMONTHS, monthlyJ);
     buildReceiptsTable(rows);
 
-    // 6) میانگین سطح رشد بر اساس استان (growth: 0..5)
+    // ✅ 6) دوره‌ها به تفکیک ماه شمسی (course_date)
+    const courseMonthlyJ = Array(12).fill(0);
+    data.forEach(d=>{
+      if(d.course_date){
+        const dt = new Date(d.course_date);
+        const jm = gDateToJalaliMonthIndex(dt);
+        courseMonthlyJ[jm]++;
+      }
+    });
+    drawChart('chartCoursesByMonth','تعداد دوره‌ها به تفکیک ماه شمسی (متاثر از فیلترها)', JMONTHS, courseMonthlyJ);
+
+    // 7) میانگین سطح رشد بر اساس استان (growth: 0..5)
     const growthByProvince = {};
     data.forEach(d=>{
       const g = Number(d.growth||0);
@@ -201,7 +244,7 @@
     }
     drawChart('chartGrowth','میانگین سطح رشد بر اساس استان', Object.keys(avgGrowth), Object.values(avgGrowth));
 
-    // 7) تعداد نیوبلاد بر اساس استادیار
+    // 8) تعداد نیوبلاد بر اساس استادیار
     const byAssistant = {};
     data.forEach(d=>{
       const a = d.assistant || 'نامشخص';
@@ -214,14 +257,13 @@
     const tbody = document.querySelector('#instTable tbody');
     tbody.innerHTML = '';
     rows.sort((a,b)=> b.date - a.date);
-    const fdate = d => new Intl.DateTimeFormat('fa-IR').format(d);
     rows.forEach(r=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${esc(r.name)}</td>
         <td>${esc(r.province)}</td>
         <td>${esc(r.assistant)}</td>
-        <td>${fdate(r.date)}</td>
+        <td>${gDateToJalaliStr(r.date)}</td>
         <td>${r.amount ? r.amount.toLocaleString('fa-IR') : '-'}</td>
         <td>${r.receipt_url ? `<a href="${r.receipt_url}" target="_blank" rel="noopener">مشاهده فیش</a>` : '-'}</td>
       `;
