@@ -35,7 +35,7 @@
   <h1>پنل استادیار</h1>
   <div class="actions">
     <span id="whoami" class="muted"></span>
-    <!-- دکمه افزودن قبل از لاگین مخفی است -->
+    <!-- دکمه افزودن قبل از لاگین پنهان است -->
     <a id="addLink" class="btn hidden" href="#">+ افزودن نیوبلاد</a>
     <button type="button" onclick="logout()">خروج</button>
   </div>
@@ -93,12 +93,10 @@
   let CURRENT_USER = null;
   let RAW = [];
 
-  // ✅ آدرس قطعی فرم روی Vercel تا نسخه‌ی صحیح index باز شود:
-  // اگر فرم و پنل روی همین دامنه‌اند، می‌توانی به جای آدرس ثابت از auto-base استفاده کنی.
-  // const FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
-  const FORM_BASE = "https://swanfamily.vercel.app/"; // ← این خط را نگه دار تا حتماً index جدید باز شود
+  // ✅ آدرس قطعی فرم روی Vercel (تا حتماً index اصلی باز شود)
+  const FORM_BASE = "https://swanfamily.vercel.app/";
 
-  // ===== Auth =====
+  // ===== ثبت‌نام/ورود =====
   async function signup(){
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
@@ -109,7 +107,7 @@
       const user = new Backendless.User();
       user.email = email;
       user.password = password;
-      user.name = displayName; // ← نام نمایشی
+      user.name = displayName; // نام نمایشی
       await Backendless.UserService.register(user);
       await Backendless.UserService.login(email, password, true);
       await afterLogin();
@@ -137,34 +135,35 @@
     location.reload();
   }
 
-  // ===== After Login =====
+  // ===== بعد از ورود =====
   async function afterLogin(){
     document.getElementById('auth').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
 
     CURRENT_USER = await Backendless.UserService.getCurrentUser();
-    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name، نه ایمیل
+    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name
     document.getElementById('whoami').textContent = "ورود: " + assistantName;
 
-    // لینک افزودن نیوبلاد → index.html?assistant=NAME (+ پارامتر نسخه برای دور زدن کش)
-    const addUrl = new URL('index.html', FORM_BASE);
-    addUrl.searchParams.set('assistant', assistantName);
-    addUrl.searchParams.set('v', '2'); // جلوگیری از کش نسخه قدیمی
+    // 👇 باز کردن index اصلی + پارامتر ضدکش
     const addLink = document.getElementById('addLink');
-    addLink.href = addUrl.toString();
-    addLink.classList.remove('hidden');  // ✅ بعد از لاگین نشان بده
-    // اگر می‌خواهی در همان تب باز شود:
-    // addLink.target = "_self";
+    addLink.onclick = (e)=>{
+      e.preventDefault();
+      const url = new URL('index.html', FORM_BASE);
+      url.searchParams.set('assistant', assistantName);
+      url.searchParams.set('v', Date.now().toString()); // جلوگیری از کش
+      window.location.href = url.toString();
+    };
+    addLink.classList.remove('hidden');  // دکمه بعد از لاگین نمایش داده شود
 
     // رویدادهای جستجو/فیلتر
     document.getElementById('q').addEventListener('input', renderList);
     document.getElementById('byProvince').addEventListener('input', renderList);
 
-    // لود داده‌ها
+    // بارگذاری رکوردهای من
     await loadMine();
   }
 
-  // ===== Load my records =====
+  // ===== دریافت رکوردهای من =====
   async function loadMine(){
     const name = (CURRENT_USER && CURRENT_USER.name) || '';
     if(!name){ RAW = []; return renderList(); }
@@ -183,7 +182,7 @@
     }
   }
 
-  // ===== Render =====
+  // ===== نمایش لیست =====
   function renderList(){
     const q = (document.getElementById('q').value||'').trim();
     const p = (document.getElementById('byProvince').value||'').trim();
@@ -198,7 +197,7 @@
     const tb = document.getElementById('rows');
     tb.innerHTML = '';
     list.forEach(r=>{
-      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← نام ستون شما
+      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← ستون شما
       const grow = Number(r.growth||0);
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -215,7 +214,7 @@
 
   function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
-  // اگر سشن قبلی وجود داشت، خودکار وارد شو (ولی دکمه افزودن تا بعد از afterLogin پنهانه)
+  // اگر سشن قبلی وجود داشت، خودکار وارد شو (اما دکمه افزودن تا afterLogin پنهان است)
   (async ()=>{
     try{
       const cu = await Backendless.UserService.getCurrentUser();
