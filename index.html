@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>فرم ثبت نیوبلاد - Swan Family</title>
+  <title>فرم ثبت نیوبلاد - Swan Family (با تقویم شمسی)</title>
+
+  <!-- استایل فرم -->
   <style>
     body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
     form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,.08); }
@@ -21,7 +23,16 @@
     button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 6px; cursor: pointer; }
     .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
     .stars .selected { color: #f4c430; }
+    /* ظاهر ورودی تاریخ شمسی */
+    .pdate-input { direction: ltr; text-align: center; }
   </style>
+
+  <!-- jQuery + jalaali-js + Persian Datepicker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-date/dist/persian-date.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
 </head>
 <body>
   <form id="newbloodForm">
@@ -60,8 +71,8 @@
         <input type="text" name="instagram" />
       </div>
       <div>
-        <label>تاریخ تولد:</label>
-        <input type="date" name="birthdate" />
+        <label>تاریخ تولد (شمسی):</label>
+        <input type="text" id="birthdate_j" class="pdate-input" placeholder="۱۴۰۴/۰۱/۱۵" />
       </div>
     </div>
 
@@ -123,8 +134,8 @@
         <input type="text" name="course_location" />
       </div>
       <div>
-        <label>تاریخ دوره:</label>
-        <input type="date" name="course_date" />
+        <label>تاریخ دوره (شمسی):</label>
+        <input type="text" id="course_date_j" class="pdate-input" placeholder="۱۴۰۴/۰۲/۲۰" />
       </div>
     </div>
 
@@ -157,9 +168,11 @@
     <button type="submit">ثبت اطلاعات</button>
   </form>
 
+  <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+
   <script>
-    // اتصال Backendless
+    // ===== اتصال Backendless =====
     Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
     const installmentsContainer = document.getElementById('installmentsContainer');
@@ -167,7 +180,7 @@
     const growthLevel = document.getElementById('growthLevel');
     const referredContainer = document.getElementById('referredContainer');
 
-    // ستاره‌های سطح رشد
+    // ===== ستاره‌های سطح رشد =====
     function setStars() {
       growthLevel.innerHTML = '';
       for (let i = 1; i <= 5; i++) {
@@ -182,28 +195,39 @@
       }
     }
 
-    // UI: اقساط/کوین/معرفی‌شده‌ها
+    // ===== UI: اضافه‌کردن ردیف‌ها =====
+    function initPersianOn(el) {
+      // راه‌اندازی Persian Datepicker روی یک input
+      $(el).persianDatepicker({ format: 'YYYY/MM/DD' });
+    }
+
     function addInstallment() {
       const div = document.createElement('div');
       div.className = 'installment';
+      // تاریخ قسط با شمسی
       div.innerHTML = `
-        <input type="date" placeholder="تاریخ قسط" class="inst-date" />
+        <input type="text" placeholder="تاریخ قسط (شمسی)" class="inst-date pdate-input" />
         <input type="number" placeholder="مبلغ (تومان)" class="inst-amount" />
         <input type="file" class="inst-receipt" accept="image/*,application/pdf" />
         <button type="button" onclick="this.parentNode.remove()">❌</button>
       `;
       installmentsContainer.appendChild(div);
+      // فعال‌سازی تاریخ‌نما
+      initPersianOn($(div).find('.inst-date'));
     }
+
     function addCoin() {
       const div = document.createElement('div');
       div.className = 'coin-entry';
       div.innerHTML = `
-        <input type="date" placeholder="تاریخ ثبت سوان‌کوین" class="coin-date" />
+        <input type="text" placeholder="تاریخ ثبت سوان‌کوین (شمسی)" class="coin-date pdate-input" />
         <input type="text" placeholder="توضیح (اختیاری)" class="coin-note" />
         <button type="button" onclick="this.parentNode.remove()">❌</button>
       `;
       coinsLog.appendChild(div);
+      initPersianOn($(div).find('.coin-date'));
     }
+
     function addReferred() {
       const div = document.createElement('div');
       div.className = 'referred-entry';
@@ -214,8 +238,22 @@
       referredContainer.appendChild(div);
     }
 
-    // کمکی‌ها
-    const toDate = (s) => (s ? new Date(s) : null);
+    // ===== کمک: تبدیل تاریخ شمسی → میلادی (Date) =====
+    // ورودی: "YYYY/MM/DD" مثل "1403/07/21"
+    // خروجی: شیء Date میلادی (local)
+    function jalaliStrToGregorianDate(str) {
+      if (!str) return null;
+      const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (!m) return null;
+      const jy = parseInt(m[1],10);
+      const jm = parseInt(m[2],10);
+      const jd = parseInt(m[3],10);
+      const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
+      if (!g || !g.gy) return null;
+      return new Date(g.gy, (g.gm-1), g.gd);
+    }
+
+    // ===== کمکی‌ها =====
     const toNumber = (n) => (n === '' || n == null ? null : Number(n));
 
     async function uploadReceipt(file) {
@@ -225,8 +263,12 @@
       return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
     }
 
-    // 1) پر کردن خودکار استادیار از URL و قفل‌کردن
+    // ===== پر کردن خودکار استادیار از URL و قفل‌کردن =====
     document.addEventListener('DOMContentLoaded', () => {
+      // فعال‌سازی تقویم شمسی روی فیلدهای ثابت
+      $("#birthdate_j").persianDatepicker({ format: 'YYYY/MM/DD' });
+      $("#course_date_j").persianDatepicker({ format: 'YYYY/MM/DD' });
+
       const params = new URLSearchParams(location.search);
       const fromURL = params.get('assistant'); // ممکنه فارسی باشه
       const sel = document.querySelector('select[name="assistant"]');
@@ -252,7 +294,7 @@
       }
     });
 
-    // 2) (اختیاری) لود داینامیک لیست استادیارها از جدول Assistants
+    // (اختیاری) لود داینامیک لیست استادیارها از جدول Assistants
     async function loadAssistantsIntoSelect() {
       const sel = document.querySelector('select[name="assistant"]');
       if(!sel) return;
@@ -279,11 +321,11 @@
     }
     document.addEventListener('DOMContentLoaded', loadAssistantsIntoSelect);
 
-    // ارسال فرم
+    // ===== ارسال فرم =====
     document.getElementById('newbloodForm').addEventListener('submit', async function(e) {
       e.preventDefault();
 
-      // فیلدهای ساده
+      // گرفتن فیلدهای ساده (non-date)
       const fd = new FormData(this);
       const data = {};
       fd.forEach((value, key) => {
@@ -295,21 +337,26 @@
         }
       });
 
-      // انواع درست
-      data.birthdate   = toDate(data.birthdate);
-      data.course_date = toDate(data.course_date);
-      data.prepayment  = toNumber(data.prepayment);
-
       // علاقه‌مندی‌ها → آرایه
       data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i => i.value);
 
       // رشد (ستاره‌ها)
       data.growth = document.querySelectorAll('#growthLevel .selected').length;
 
+      // تاریخ‌های شمسی → میلادی
+      const birth_j  = document.getElementById('birthdate_j').value.trim();
+      const course_j = document.getElementById('course_date_j').value.trim();
+      data.birthdate   = jalaliStrToGregorianDate(birth_j);
+      data.course_date = jalaliStrToGregorianDate(course_j);
+
+      // مبلغ پیش‌پرداخت
+      data.prepayment = toNumber(data.prepayment);
+
       // اقساط با آپلود فیش → ذخیره در "instalments"
       const installmentDivs = Array.from(document.querySelectorAll('.installment'));
       const instalmentPromises = installmentDivs.map(async (div) => {
-        const date = toDate(div.querySelector('.inst-date')?.value || null);
+        const date_j = (div.querySelector('.inst-date')?.value || '').trim();
+        const date   = jalaliStrToGregorianDate(date_j);
         const amount = toNumber(div.querySelector('.inst-amount')?.value || null);
         let receipt_url = null;
         const fileInput = div.querySelector('.inst-receipt');
@@ -323,9 +370,9 @@
       data.instalments = (await Promise.all(instalmentPromises))
         .filter(it => it.date || it.amount || it.receipt_url);
 
-      // کوین‌ها
+      // کوین‌ها با تاریخ شمسی
       data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(div => ({
-        date: toDate(div.querySelector('.coin-date')?.value || null),
+        date: jalaliStrToGregorianDate((div.querySelector('.coin-date')?.value || '').trim()),
         note: (div.querySelector('.coin-note')?.value || '').trim(),
       })).filter(x => x.date);
 
@@ -341,12 +388,16 @@
         coinsLog.innerHTML = '';
         referredContainer.innerHTML = '';
         setStars();
+        // بازنشانی datepicker‌های ثابت
+        $("#birthdate_j").val('');
+        $("#course_date_j").val('');
       } catch (error) {
         console.error('خطا در ثبت:', error);
         alert('مشکلی در ذخیره اطلاعات پیش آمده.');
       }
     });
 
+    // ===== شروع =====
     setStars();
   </script>
 </body>
