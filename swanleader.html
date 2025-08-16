@@ -1,275 +1,225 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>Swan Leader Dashboard (شمسی)</title>
+  <meta charset="UTF-8" />
+  <title>پنل استادیار - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
-  <!-- jalaali-js برای تبدیل تاریخ -->
-  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
-
   <style>
-    body{font-family:Tahoma,system-ui,sans-serif;background:#f4f4f4;margin:0}
-    #login,.container{max-width:1100px;margin:2rem auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:1.25rem}
-    #login{max-width:360px;margin-top:10vh}
-    input[type=password],select,button{width:100%;padding:.75rem;border-radius:10px;border:1px solid #dedede}
-    button{border:none;background:#009688;color:#fff;cursor:pointer}
-    h2,h3{margin:.5rem 0 1rem}
-    .filters{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    canvas{margin-top:1rem}
-    table{width:100%;border-collapse:collapse;margin-top:1rem}
-    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right}
+    :root { --brand:#009688; }
+    *{box-sizing:border-box}
+    body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
+    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;gap:10px}
+    header h1{font-size:18px;margin:0}
+    a.btn,button{background:var(--brand);color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
+    a.btn:hover,button:hover{opacity:.92}
+    .wrap{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:14px}
+    .hidden{display:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    input,select{padding:.7rem;border:1px solid #dedede;border-radius:10px;width:100%}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
     th{background:#fafafa}
+    .topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
     .muted{color:#666;font-size:.92rem}
+    @media (max-width:900px){ .row{grid-template-columns:1fr} }
+    @media (max-width:700px){
+      header{flex-direction:column;align-items:stretch}
+      header .actions{display:flex;gap:8px;flex-wrap:wrap}
+    }
   </style>
 </head>
 <body>
 
-<div id="login">
-  <h3>ورود مدیر Swan Leader</h3>
-  <p class="muted">رمز پیش‌فرض: <code>swanadmin</code> (بعداً می‌تونیم احراز هویت واقعی بذاریم)</p>
-  <input id="adminPass" type="password" placeholder="رمز عبور">
-  <button style="margin-top:.75rem" onclick="checkLogin()">ورود</button>
+<header>
+  <h1>پنل استادیار</h1>
+  <div class="actions">
+    <span id="whoami" class="muted"></span>
+    <a id="addLink" class="btn" href="index.html">+ افزودن نیوبلاد</a>
+    <button type="button" onclick="logout()">خروج</button>
+  </div>
+</header>
+
+<!-- ورود/ثبت‌نام -->
+<div id="auth" class="wrap">
+  <h2>ورود / ثبت‌نام</h2>
+  <p class="muted">برای ثبت و مدیریت نیوبلادها ابتدا وارد شوید.</p>
+  <div class="row" style="margin-top:10px">
+    <input id="email" type="email" placeholder="ایمیل">
+    <input id="password" type="password" placeholder="رمز عبور">
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input id="displayName" type="text" placeholder="نام نمایشی (مثال: جواد مرتضوی)">
+    <div style="display:flex;gap:8px;align-items:center">
+      <button type="button" onclick="login()">ورود</button>
+      <button type="button" onclick="signup()">ثبت‌نام</button>
+    </div>
+  </div>
 </div>
 
-<div id="dashboard" class="container" style="display:none">
-  <h2>داشبورد آماری Swan Family</h2>
-
-  <div class="filters">
-    <select id="filterProvince"><option value="">فیلتر استان: همه</option></select>
-    <select id="filterAssistant"><option value="">فیلتر استادیار: همه</option></select>
+<!-- اپلیکیشن -->
+<div id="app" class="wrap hidden">
+  <div class="topbar">
+    <div>
+      <h2>نیوبلادهای من</h2>
+      <div class="muted">فقط رکوردهایی که با نام نمایشی شما ثبت شده‌اند.</div>
+    </div>
+    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center;min-width:280px">
+      <input id="q" placeholder="جستجو: نام، موبایل، شهر، استان">
+      <input id="byProvince" placeholder="فیلتر استان (خالی=همه)">
+    </div>
   </div>
 
-  <div class="grid">
-    <div><canvas id="chartProvince"></canvas></div>
-    <div><canvas id="chartBirths"></canvas></div>
-
-    <div><canvas id="chartInterests"></canvas></div>
-    <div><canvas id="chartCoins"></canvas></div>
-
-    <div><canvas id="chartInstallments"></canvas></div>
-    <div><canvas id="chartGrowth"></canvas></div>
-
-    <!-- ✅ نمودار جدید: تعداد دوره‌ها به تفکیک ماه شمسی (course_date) -->
-    <div style="grid-column:1 / -1"><canvas id="chartCoursesByMonth"></canvas></div>
-
-    <div style="grid-column:1 / -1"><canvas id="chartAssistant"></canvas></div>
-  </div>
-
-  <h3 style="margin-top:2rem">جدول اقساط و فیش‌های پرداختی</h3>
-  <p class="muted">تاریخ‌ها شمسی نمایش داده می‌شوند. روی «مشاهده فیش» کلیک کنید.</p>
-  <div style="overflow:auto">
-    <table id="instTable">
-      <thead>
-        <tr>
-          <th>نام</th>
-          <th>استان</th>
-          <th>استادیار</th>
-          <th>تاریخ قسط (شمسی)</th>
-          <th>مبلغ (تومان)</th>
-          <th>فیش</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>نام</th>
+        <th>موبایل</th>
+        <th>استان / شهر</th>
+        <th>تعداد اقساط</th>
+        <th>سطح رشد</th>
+        <th>تاریخ ایجاد</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
 </div>
 
 <script>
-  // ===== تنظیم اتصال
-  const ADMIN_PASSWORD = "swanadmin";
+  // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
+  let CURRENT_USER = null;
   let RAW = [];
-  const charts = {};
-  const JMONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
 
-  function checkLogin(){
-    const p = document.getElementById('adminPass').value.trim();
-    if(p === ADMIN_PASSWORD){
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'block';
-      loadData();
-      document.getElementById('filterProvince').addEventListener('change', renderAll);
-      document.getElementById('filterAssistant').addEventListener('change', renderAll);
-    }else{
-      alert('رمز عبور اشتباه است');
+  // اگر فرم و پنل در یک سایت/ریپو هستند، فرم‌بیِس را خودکار از مسیر فعلی می‌سازیم
+  let FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
+  // اگر فرم روی سایت جداست، این خط را از حالت کامنت خارج و دامنه فرم را ست کن:
+  // let FORM_BASE = "https://YOUR-FORM-DOMAIN.vercel.app/";
+
+  // ===== Auth =====
+  async function signup(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const displayName = document.getElementById('displayName').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    if(!displayName) return alert("نام نمایشی را وارد کنید");
+    try{
+      const user = new Backendless.User();
+      user.email = email;
+      user.password = password;
+      user.name = displayName; // ← نام نمایشی
+      await Backendless.UserService.register(user);
+      await Backendless.UserService.login(email, password, true);
+      await afterLogin();
+    }catch(e){
+      console.error(e);
+      alert("ثبت‌نام/ورود ناموفق: " + (e.message||e));
     }
   }
 
-  // ===== ابزار چارت
-  function drawChart(id, title, labels, values){
-    const ctx = document.getElementById(id).getContext('2d');
-    if(charts[id]) charts[id].destroy();
-    charts[id] = new Chart(ctx, {
-      type: 'bar',
-      data: { labels, datasets: [{ label: title, data: values }] },
-      options: {
-        responsive:true,
-        plugins:{ legend:{display:false}, title:{display:true,text:title} },
-        scales:{ x:{ ticks:{autoSkip:true,maxRotation:0} } }
-      }
-    });
-  }
-
-  // ===== کمک تاریخ: میلادی → رشته شمسی YYYY/MM/DD
-  function gDateToJalaliStr(d){
-    if(!d) return '-';
-    const gy = d.getFullYear(), gm = d.getMonth()+1, gd = d.getDate();
-    const j = window.jalaali.toJalaali(gy, gm, gd);
-    const pad = n => String(n).padStart(2,'0');
-    return `${j.jy}/${pad(j.jm)}/${pad(j.jd)}`;
-  }
-
-  // گرفتن شماره ماه شمسی از تاریخ میلادی
-  function gDateToJalaliMonthIndex(d){ // 0..11
-    const gy = d.getFullYear(), gm = d.getMonth()+1, gd = d.getDate();
-    const j = window.jalaali.toJalaali(gy, gm, gd);
-    return (j.jm - 1);
-  }
-
-  // ===== بارگذاری داده‌ها
-  async function loadData(){
-    RAW = await Backendless.Data.of("Newbloods").find();
-    // فیلترها
-    fillFilter('filterProvince', uniq(RAW.map(d=>d.province).filter(Boolean)));
-    fillFilter('filterAssistant', uniq(RAW.map(d=>d.assistant).filter(Boolean)));
-    renderAll();
-  }
-
-  function fillFilter(id, items){
-    const el = document.getElementById(id);
-    el.innerHTML = `<option value="">همه</option>` + items.map(x=>`<option>${esc(x)}</option>`).join('');
-  }
-  function uniq(a){ return [...new Set(a)]; }
-  function esc(s){ return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
-
-  function applyFilters(list){
-    const fp = document.getElementById('filterProvince').value;
-    const fa = document.getElementById('filterAssistant').value;
-    return list.filter(d => (!fp || d.province===fp) && (!fa || d.assistant===fa));
-  }
-
-  function renderAll(){
-    const data = applyFilters(RAW);
-
-    // 1) تعداد نیوبلاد بر اساس استان
-    const provinces = {};
-    data.forEach(d => {
-      const p = d.province || "نامشخص";
-      provinces[p] = (provinces[p] || 0) + 1;
-    });
-    drawChart('chartProvince','تعداد نیوبلادها بر اساس استان', Object.keys(provinces), Object.values(provinces));
-
-    // 2) تولدها در ماه‌های شمسی
-    const birthsJ = Array(12).fill(0);
-    data.forEach(d=>{
-      if(d.birthdate){
-        const dt = new Date(d.birthdate);
-        const jm = gDateToJalaliMonthIndex(dt);
-        birthsJ[jm]++;
-      }
-    });
-    drawChart('chartBirths','تولدها در ماه‌های شمسی', JMONTHS, birthsJ);
-
-    // 3) علاقه‌مندی‌ها
-    const interestMap = { marketing:0, anatomy:0, eastern_medicine:0, ayurveda:0 };
-    data.forEach(d=>{
-      const arr = Array.isArray(d.interests) ? d.interests : [];
-      arr.forEach(k => (k in interestMap) && (interestMap[k]++));
-    });
-    drawChart('chartInterests','تعداد علاقه‌مندان', Object.keys(interestMap), Object.values(interestMap));
-
-    // 4) سوان‌کوین هر نفر (تعداد آیتم‌های آرایه coins)
-    const coinsCount = {};
-    data.forEach(d=>{
-      const name = d.name || 'بی‌نام';
-      const coins = Array.isArray(d.coins) ? d.coins : [];
-      coinsCount[name] = coins.length;
-    });
-    drawChart('chartCoins','سوان‌کوین هر نفر', Object.keys(coinsCount), Object.values(coinsCount));
-
-    // 5) جمع اقساط در هر ماه شمسی + جدول فیش‌ها
-    const monthlyJ = Array(12).fill(0);
-    const rows = [];
-    data.forEach(d=>{
-      const inst = Array.isArray(d.instalments) ? d.instalments : [];
-      inst.forEach(it=>{
-        if(!it || !it.date) return;
-        const dt = new Date(it.date);
-        const jm = gDateToJalaliMonthIndex(dt);
-        const amt = Number(it.amount||0);
-        monthlyJ[jm] += isNaN(amt) ? 0 : amt;
-        rows.push({
-          name: d.name || 'بی‌نام',
-          province: d.province || 'نامشخص',
-          assistant: d.assistant || 'نامشخص',
-          date: dt,
-          amount: amt,
-          receipt_url: it.receipt_url || null
-        });
-      });
-    });
-    drawChart('chartInstallments','جمع اقساط به تفکیک ماه شمسی', JMONTHS, monthlyJ);
-    buildReceiptsTable(rows);
-
-    // ✅ 6) دوره‌ها به تفکیک ماه شمسی (course_date)
-    const courseMonthlyJ = Array(12).fill(0);
-    data.forEach(d=>{
-      if(d.course_date){
-        const dt = new Date(d.course_date);
-        const jm = gDateToJalaliMonthIndex(dt);
-        courseMonthlyJ[jm]++;
-      }
-    });
-    drawChart('chartCoursesByMonth','تعداد دوره‌ها به تفکیک ماه شمسی (متاثر از فیلترها)', JMONTHS, courseMonthlyJ);
-
-    // 7) میانگین سطح رشد بر اساس استان (growth: 0..5)
-    const growthByProvince = {};
-    data.forEach(d=>{
-      const g = Number(d.growth||0);
-      const p = d.province || 'نامشخص';
-      (growthByProvince[p] ||= []).push(g);
-    });
-    const avgGrowth = {};
-    for(const p in growthByProvince){
-      const arr = growthByProvince[p];
-      avgGrowth[p] = arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+  async function login(){
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
+    try{
+      await Backendless.UserService.login(email, password, true);
+      await afterLogin();
+    }catch(e){
+      console.error(e);
+      alert("ورود ناموفق: " + (e.message||e));
     }
-    drawChart('chartGrowth','میانگین سطح رشد بر اساس استان', Object.keys(avgGrowth), Object.values(avgGrowth));
-
-    // 8) تعداد نیوبلاد بر اساس استادیار
-    const byAssistant = {};
-    data.forEach(d=>{
-      const a = d.assistant || 'نامشخص';
-      byAssistant[a] = (byAssistant[a]||0)+1;
-    });
-    drawChart('chartAssistant','تعداد نیوبلادها بر اساس استادیار', Object.keys(byAssistant), Object.values(byAssistant));
   }
 
-  function buildReceiptsTable(rows){
-    const tbody = document.querySelector('#instTable tbody');
-    tbody.innerHTML = '';
-    rows.sort((a,b)=> b.date - a.date);
-    rows.forEach(r=>{
+  async function logout(){
+    try{ await Backendless.UserService.logout(); }catch(_){}
+    location.reload();
+  }
+
+  // ===== After Login =====
+  async function afterLogin(){
+    document.getElementById('auth').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+
+    CURRENT_USER = await Backendless.UserService.getCurrentUser();
+    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name، نه ایمیل
+    document.getElementById('whoami').textContent = "ورود: " + assistantName;
+
+    // لینک افزودن نیوبلاد → index.html?assistant=NAME
+    const addUrl = new URL('index.html', FORM_BASE);
+    addUrl.searchParams.set('assistant', assistantName);
+    const addLink = document.getElementById('addLink');
+    addLink.href = addUrl.toString();
+    // اگر می‌خواهی در همان تب باز شود:
+    // addLink.target = "_self";
+
+    // رویدادهای جستجو/فیلتر
+    document.getElementById('q').addEventListener('input', renderList);
+    document.getElementById('byProvince').addEventListener('input', renderList);
+
+    // لود داده‌ها
+    await loadMine();
+  }
+
+  // ===== Load my records =====
+  async function loadMine(){
+    const name = (CURRENT_USER && CURRENT_USER.name) || '';
+    if(!name){ RAW = []; return renderList(); }
+
+    const safe = name.replace(/'/g, "''");
+    const qb = Backendless.DataQueryBuilder.create()
+               .setWhereClause(`assistant = '${safe}'`)
+               .setSortBy(['created DESC'])
+               .setPageSize(100);
+    try{
+      RAW = await Backendless.Data.of('Newbloods').find(qb);
+      renderList();
+    }catch(e){
+      console.error(e);
+      alert('خواندن داده‌ها ناموفق بود.');
+    }
+  }
+
+  // ===== Render =====
+  function renderList(){
+    const q = (document.getElementById('q').value||'').trim();
+    const p = (document.getElementById('byProvince').value||'').trim();
+
+    const hit = (s)=> (s||'').toString().includes(q);
+    const list = RAW.filter(r=>{
+      const okQ = !q || hit(r.name)||hit(r.mobile)||hit(r.city)||hit(r.province);
+      const okP = !p || (r.province||'')===p;
+      return okQ && okP;
+    });
+
+    const tb = document.getElementById('rows');
+    tb.innerHTML = '';
+    list.forEach(r=>{
+      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← نام ستون شما
+      const grow = Number(r.growth||0);
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${esc(r.name)}</td>
-        <td>${esc(r.province)}</td>
-        <td>${esc(r.assistant)}</td>
-        <td>${gDateToJalaliStr(r.date)}</td>
-        <td>${r.amount ? r.amount.toLocaleString('fa-IR') : '-'}</td>
-        <td>${r.receipt_url ? `<a href="${r.receipt_url}" target="_blank" rel="noopener">مشاهده فیش</a>` : '-'}</td>
+        <td>${esc(r.name||'-')}</td>
+        <td>${esc(r.mobile||'-')}</td>
+        <td>${esc(r.province||'-')} / ${esc(r.city||'-')}</td>
+        <td>${instCount}</td>
+        <td>${'★'.repeat(grow)}${'☆'.repeat(Math.max(0,5-grow))}</td>
+        <td>${r.created ? new Date(r.created).toLocaleDateString('fa-IR') : '-'}</td>
       `;
-      tbody.appendChild(tr);
+      tb.appendChild(tr);
     });
   }
+
+  function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+  // اگر سشن قبلی وجود داشت، خودکار وارد شو
+  (async ()=>{
+    try{
+      const cu = await Backendless.UserService.getCurrentUser();
+      if(cu){ await afterLogin(); }
+    }catch(_){}
+  })();
 </script>
+
 </body>
 </html>
