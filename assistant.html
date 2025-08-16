@@ -35,7 +35,8 @@
   <h1>پنل استادیار</h1>
   <div class="actions">
     <span id="whoami" class="muted"></span>
-    <a id="addLink" class="btn" href="index.html">+ افزودن نیوبلاد</a>
+    <!-- دکمه افزودن قبل از لاگین مخفی است -->
+    <a id="addLink" class="btn hidden" href="#">+ افزودن نیوبلاد</a>
     <button type="button" onclick="logout()">خروج</button>
   </div>
 </header>
@@ -92,10 +93,10 @@
   let CURRENT_USER = null;
   let RAW = [];
 
-  // اگر فرم و پنل در یک سایت/ریپو هستند، فرم‌بیِس را خودکار از مسیر فعلی می‌سازیم
-  let FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
-  // اگر فرم روی سایت جداست، این خط را از حالت کامنت خارج و دامنه فرم را ست کن:
-  // let FORM_BASE = "https://YOUR-FORM-DOMAIN.vercel.app/";
+  // ✅ آدرس قطعی فرم روی Vercel تا نسخه‌ی صحیح index باز شود:
+  // اگر فرم و پنل روی همین دامنه‌اند، می‌توانی به جای آدرس ثابت از auto-base استفاده کنی.
+  // const FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
+  const FORM_BASE = "https://swanfamily.vercel.app/"; // ← این خط را نگه دار تا حتماً index جدید باز شود
 
   // ===== Auth =====
   async function signup(){
@@ -145,11 +146,13 @@
     const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name، نه ایمیل
     document.getElementById('whoami').textContent = "ورود: " + assistantName;
 
-    // لینک افزودن نیوبلاد → index.html?assistant=NAME
+    // لینک افزودن نیوبلاد → index.html?assistant=NAME (+ پارامتر نسخه برای دور زدن کش)
     const addUrl = new URL('index.html', FORM_BASE);
     addUrl.searchParams.set('assistant', assistantName);
+    addUrl.searchParams.set('v', '2'); // جلوگیری از کش نسخه قدیمی
     const addLink = document.getElementById('addLink');
     addLink.href = addUrl.toString();
+    addLink.classList.remove('hidden');  // ✅ بعد از لاگین نشان بده
     // اگر می‌خواهی در همان تب باز شود:
     // addLink.target = "_self";
 
@@ -212,7 +215,7 @@
 
   function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
-  // اگر سشن قبلی وجود داشت، خودکار وارد شو
+  // اگر سشن قبلی وجود داشت، خودکار وارد شو (ولی دکمه افزودن تا بعد از afterLogin پنهانه)
   (async ()=>{
     try{
       const cu = await Backendless.UserService.getCurrentUser();
