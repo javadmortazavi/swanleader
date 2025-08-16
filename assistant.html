@@ -6,57 +6,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
   <style>
+    :root { --brand:#009688; }
+    *{box-sizing:border-box}
     body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
-    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px}
+    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;gap:10px}
     header h1{font-size:18px;margin:0}
-    a.pill,button{background:#009688;color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
-    a.pill:hover,button:hover{opacity:.9}
+    a.btn,button{background:var(--brand);color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
+    a.btn:hover,button:hover{opacity:.92}
     .wrap{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:14px}
     .hidden{display:none}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    input,button{padding:.7rem;border:1px solid #dedede;border-radius:10px}
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{border-bottom:1px solid #eee;padding:8px;text-align:right}
+    input,select{padding:.7rem;border:1px solid #dedede;border-radius:10px;width:100%}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
     th{background:#fafafa}
-    .muted{color:#666;font-size:.9rem}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+    .muted{color:#666;font-size:.92rem}
+    @media (max-width:900px){ .row{grid-template-columns:1fr} }
+    @media (max-width:700px){
+      header{flex-direction:column;align-items:stretch}
+      header .actions{display:flex;gap:8px;flex-wrap:wrap}
+    }
   </style>
 </head>
 <body>
 
 <header>
   <h1>پنل استادیار</h1>
-  <div>
+  <div class="actions">
     <span id="whoami" class="muted"></span>
-    <a id="addLink" class="pill" href="index.html" target="_blank" rel="noopener">+ افزودن نیوبلاد</a>
+    <a id="addLink" class="btn" href="index.html">+ افزودن نیوبلاد</a>
     <button type="button" onclick="logout()">خروج</button>
   </div>
 </header>
 
+<!-- ورود/ثبت‌نام -->
 <div id="auth" class="wrap">
   <h2>ورود / ثبت‌نام</h2>
-  <p class="muted">برای ثبت و ویرایش نیوبلادها ابتدا وارد شوید.</p>
-  <div class="row">
+  <p class="muted">برای ثبت و مدیریت نیوبلادها ابتدا وارد شوید.</p>
+  <div class="row" style="margin-top:10px">
     <input id="email" type="email" placeholder="ایمیل">
     <input id="password" type="password" placeholder="رمز عبور">
   </div>
   <div class="row" style="margin-top:10px">
-    <input id="displayName" type="text" placeholder="نام نمایشی (مثلاً: جواد مرتضوی)">
-    <div style="display:flex;gap:8px">
+    <input id="displayName" type="text" placeholder="نام نمایشی (مثال: جواد مرتضوی)">
+    <div style="display:flex;gap:8px;align-items:center">
       <button type="button" onclick="login()">ورود</button>
       <button type="button" onclick="signup()">ثبت‌نام</button>
     </div>
   </div>
 </div>
 
+<!-- اپلیکیشن -->
 <div id="app" class="wrap hidden">
   <div class="topbar">
     <div>
       <h2>نیوبلادهای من</h2>
-      <div class="muted">فقط رکوردهایی که شما ثبت کرده‌اید (بر اساس نام نمایشی)</div>
+      <div class="muted">فقط رکوردهایی که با نام نمایشی شما ثبت شده‌اند.</div>
     </div>
-    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center">
-      <input id="q" placeholder="جستجو: نام، شهر، استان، موبایل">
+    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center;min-width:280px">
+      <input id="q" placeholder="جستجو: نام، موبایل، شهر، استان">
       <input id="byProvince" placeholder="فیلتر استان (خالی=همه)">
     </div>
   </div>
@@ -69,6 +78,7 @@
         <th>استان / شهر</th>
         <th>تعداد اقساط</th>
         <th>سطح رشد</th>
+        <th>تاریخ ایجاد</th>
       </tr>
     </thead>
     <tbody id="rows"></tbody>
@@ -76,16 +86,16 @@
 </div>
 
 <script>
-  // ===== Backendless Init =====
+  // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
   let CURRENT_USER = null;
   let RAW = [];
 
-  // اگر فرم در همین ریپو/همین مسیر است:
+  // اگر فرم و پنل در یک سایت/ریپو هستند، فرم‌بیِس را خودکار از مسیر فعلی می‌سازیم
   let FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
-  // اگر فرم در ریپوی جداست، این را ست کن:
-  // let FORM_BASE = "https://javadmortazavi.github.io/swan-newblood/";
+  // اگر فرم روی سایت جداست، این خط را از حالت کامنت خارج و دامنه فرم را ست کن:
+  // let FORM_BASE = "https://YOUR-FORM-DOMAIN.vercel.app/";
 
   // ===== Auth =====
   async function signup(){
@@ -98,9 +108,8 @@
       const user = new Backendless.User();
       user.email = email;
       user.password = password;
-      user.name = displayName; // اسم نمایشی برای آمار
+      user.name = displayName; // ← نام نمایشی
       await Backendless.UserService.register(user);
-      // بعد از ثبت‌نام، مستقیم وارد شو
       await Backendless.UserService.login(email, password, true);
       await afterLogin();
     }catch(e){
@@ -133,10 +142,10 @@
     document.getElementById('app').classList.remove('hidden');
 
     CURRENT_USER = await Backendless.UserService.getCurrentUser();
-    const assistantName = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || 'بدون‌نام';
+    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name، نه ایمیل
     document.getElementById('whoami').textContent = "ورود: " + assistantName;
 
-    // لینک «افزودن نیوبلاد» به index.html با پارامتر assistant
+    // لینک افزودن نیوبلاد → index.html?assistant=NAME
     const addUrl = new URL('index.html', FORM_BASE);
     addUrl.searchParams.set('assistant', assistantName);
     const addLink = document.getElementById('addLink');
@@ -144,35 +153,38 @@
     // اگر می‌خواهی در همان تب باز شود:
     // addLink.target = "_self";
 
-    // ورودی‌های جستجو/فیلتر
+    // رویدادهای جستجو/فیلتر
     document.getElementById('q').addEventListener('input', renderList);
     document.getElementById('byProvince').addEventListener('input', renderList);
 
+    // لود داده‌ها
     await loadMine();
   }
 
-  // ===== Load My Records =====
+  // ===== Load my records =====
   async function loadMine(){
-    const name = (CURRENT_USER && (CURRENT_USER.name || CURRENT_USER.email)) || '';
+    const name = (CURRENT_USER && CURRENT_USER.name) || '';
     if(!name){ RAW = []; return renderList(); }
 
-    // جلوگیری از شکستن where توسط کاراکتر '
-    const safeName = name.replace(/'/g, "''");
+    const safe = name.replace(/'/g, "''");
     const qb = Backendless.DataQueryBuilder.create()
-                .setWhereClause(`assistant = '${safeName}'`)
-                .setPageSize(100);
+               .setWhereClause(`assistant = '${safe}'`)
+               .setSortBy(['created DESC'])
+               .setPageSize(100);
     try{
       RAW = await Backendless.Data.of('Newbloods').find(qb);
       renderList();
     }catch(e){
       console.error(e);
-      alert("خواندن داده‌ها ناموفق بود.");
+      alert('خواندن داده‌ها ناموفق بود.');
     }
   }
 
+  // ===== Render =====
   function renderList(){
     const q = (document.getElementById('q').value||'').trim();
     const p = (document.getElementById('byProvince').value||'').trim();
+
     const hit = (s)=> (s||'').toString().includes(q);
     const list = RAW.filter(r=>{
       const okQ = !q || hit(r.name)||hit(r.mobile)||hit(r.city)||hit(r.province);
@@ -183,7 +195,7 @@
     const tb = document.getElementById('rows');
     tb.innerHTML = '';
     list.forEach(r=>{
-      const instCount = Array.isArray(r.installments) ? r.installments.length : 0;
+      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← نام ستون شما
       const grow = Number(r.growth||0);
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -192,6 +204,7 @@
         <td>${esc(r.province||'-')} / ${esc(r.city||'-')}</td>
         <td>${instCount}</td>
         <td>${'★'.repeat(grow)}${'☆'.repeat(Math.max(0,5-grow))}</td>
+        <td>${r.created ? new Date(r.created).toLocaleDateString('fa-IR') : '-'}</td>
       `;
       tb.appendChild(tr);
     });
@@ -199,13 +212,11 @@
 
   function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
-  // اگر جلسه‌ی قبلی وجود دارد، خودکار وارد شو
+  // اگر سشن قبلی وجود داشت، خودکار وارد شو
   (async ()=>{
     try{
       const cu = await Backendless.UserService.getCurrentUser();
-      if(cu){
-        await afterLogin();
-      }
+      if(cu){ await afterLogin(); }
     }catch(_){}
   })();
 </script>
