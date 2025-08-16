@@ -1,404 +1,178 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>فرم ثبت نیوبلاد - Swan Family (با تقویم شمسی)</title>
+  <meta charset="UTF-8">
+  <title>فرم ثبت نیوبلاد</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- استایل فرم -->
+  <!-- کتابخانه تقویم شمسی -->
+  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.css">
+
   <style>
     body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
     form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,.08); }
     label { font-weight: bold; display: block; margin-top: 1rem; }
     input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 6px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
     .installments, .coins-log, .referred-container { margin-top: 1rem; }
+
+    /* بلوک‌های داخلی */
     .installment, .coin-entry, .referred-entry {
       background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem;
-      display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: .5rem; align-items:center;
+      display: grid; gap: .5rem; align-items:center;
     }
-    .coin-entry { grid-template-columns: 1fr 2fr auto; }
+    .installment { grid-template-columns: repeat(4, minmax(160px, 1fr)); }
+    .coin-entry  { grid-template-columns: minmax(160px,1fr) minmax(220px,2fr) auto; }
     .referred-entry { grid-template-columns: 1fr auto; }
+
     .muted { color:#777; font-size:.9rem; }
     button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 6px; cursor: pointer; }
+
     .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
     .stars .selected { color: #f4c430; }
-    /* ظاهر ورودی تاریخ شمسی */
-    .pdate-input { direction: ltr; text-align: center; }
-  </style>
 
-  <!-- jQuery + jalaali-js + Persian Datepicker -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-date/dist/persian-date.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
+    /* ورودی تاریخ */
+    .pdate-input { direction: ltr; text-align: center; }
+    input[type="file"] { width: 100%; }
+
+    /* واکنش‌گرا */
+    @media (max-width: 900px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .installment { grid-template-columns: 1fr; }
+      .coin-entry  { grid-template-columns: 1fr; }
+      .referred-entry { grid-template-columns: 1fr; }
+      .installment > button,
+      .coin-entry  > button,
+      .referred-entry > button {
+        width: 100%; order: 99; margin-top: .25rem;
+      }
+    }
+  </style>
 </head>
 <body>
+
+  <h2 style="text-align:center">فرم ثبت نیوبلاد</h2>
+
   <form id="newbloodForm">
-    <h2>فرم ثبت نیوبلاد</h2>
+    <label>نام و نام خانوادگی</label>
+    <input type="text" name="name" required>
 
-    <!-- ۱) استادیارِ ثبت‌کننده (اولین فیلد) -->
-    <div class="row">
-      <div>
-        <label>استادیارِ ثبت‌کننده:</label>
-        <select name="assistant" required>
-          <option value="">انتخاب کنید</option>
-          <!-- می‌تونی گزینه‌های دستی داشته باشی؛ پایین‌تر داینامیک هم Load می‌کنیم (اختیاری) -->
-          <option value="جواد مرتضوی">جواد مرتضوی</option>
-          <option value="استادیار ۱">استادیار ۱</option>
-          <option value="استادیار ۲">استادیار ۲</option>
-          <option value="استادیار ۳">استادیار ۳</option>
-        </select>
-      </div>
-      <div></div>
-    </div>
+    <label>موبایل</label>
+    <input type="text" name="mobile" required>
+
+    <label>اینستاگرام</label>
+    <input type="text" name="instagram">
 
     <div class="row">
       <div>
-        <label>نام و نام خانوادگی:</label>
-        <input type="text" name="name" required />
+        <label>تاریخ تولد</label>
+        <input type="text" id="birthdate" class="pdate-input" name="birthdate">
       </div>
       <div>
-        <label>شماره موبایل:</label>
-        <input type="tel" name="mobile" required />
+        <label>تاریخ دوره</label>
+        <input type="text" id="course_date" class="pdate-input" name="course_date">
       </div>
     </div>
 
-    <div class="row">
-      <div>
-        <label>اینستاگرام:</label>
-        <input type="text" name="instagram" />
-      </div>
-      <div>
-        <label>تاریخ تولد (شمسی):</label>
-        <input type="text" id="birthdate_j" class="pdate-input" placeholder="۱۴۰۴/۰۱/۱۵" />
-      </div>
+    <label>محل دوره</label>
+    <input type="text" name="course_location">
+
+    <label>استان</label>
+    <input type="text" name="province">
+
+    <label>شهر</label>
+    <input type="text" name="city">
+
+    <label>سطح رشد</label>
+    <div class="stars" id="growthStars">
+      <span data-val="1">★</span>
+      <span data-val="2">★</span>
+      <span data-val="3">★</span>
+      <span data-val="4">★</span>
+      <span data-val="5">★</span>
+    </div>
+    <input type="hidden" name="growth" id="growthInput" value="0">
+
+    <!-- اقساط -->
+    <div class="installments">
+      <label>اقساط</label>
+      <div id="installmentsList"></div>
+      <button type="button" onclick="addInstallment()">+ افزودن قسط</button>
     </div>
 
-    <div class="row">
-      <div>
-        <label>شغل اول:</label>
-        <input type="text" name="job1" />
-      </div>
-      <div>
-        <label>شغل دوم:</label>
-        <input type="text" name="job2" />
-      </div>
+    <!-- سوان کوین -->
+    <div class="coins-log">
+      <label>سوان کوین</label>
+      <div id="coinsList"></div>
+      <button type="button" onclick="addCoin()">+ افزودن کوین</button>
     </div>
 
-    <div class="row">
-      <div>
-        <label>وضعیت تأهل:</label>
-        <select name="marital_status">
-          <option value="">انتخاب کنید</option>
-          <option value="single">مجرد</option>
-          <option value="married">متاهل</option>
-        </select>
-      </div>
-      <div>
-        <label>استان:</label>
-        <input type="text" name="province" />
-      </div>
-    </div>
+    <label>پیش‌پرداخت</label>
+    <input type="number" step="0.01" name="prepayment">
 
-    <div class="row">
-      <div>
-        <label>شهر محل سکونت:</label>
-        <input type="text" name="city" />
-      </div>
-      <div>
-        <label>معرف یا هماهنگ‌کننده:</label>
-        <input type="text" name="referrer" />
-      </div>
-    </div>
-
-    <label>سابقه فعالیت ماساژ:</label>
-    <textarea name="massage_experience"></textarea>
-
-    <label>مهارت‌هایی که به کار تیم سوان کمک می‌کنند:</label>
-    <textarea name="skills"></textarea>
-
-    <label>نحوه آشنایی با خانواده سوان:</label>
-    <textarea name="how_met"></textarea>
-
-    <label>علاقه‌مندی‌ها:</label>
-    <label><input type="checkbox" name="interests" value="marketing" /> بازاریابی</label>
-    <label><input type="checkbox" name="interests" value="anatomy" /> آناتومی</label>
-    <label><input type="checkbox" name="interests" value="eastern_medicine" /> طب شرقی</label>
-    <label><input type="checkbox" name="interests" value="ayurveda" /> آیورودا</label>
-
-    <div class="row">
-      <div>
-        <label>محل دوره:</label>
-        <input type="text" name="course_location" />
-      </div>
-      <div>
-        <label>تاریخ دوره (شمسی):</label>
-        <input type="text" id="course_date_j" class="pdate-input" placeholder="۱۴۰۴/۰۲/۲۰" />
-      </div>
-    </div>
-
-    <div class="row">
-      <div>
-        <label>مبلغ پیش‌پرداخت (تومان):</label>
-        <input type="number" name="prepayment" />
-      </div>
-      <div>
-        <label>سطح رشد:</label>
-        <div class="stars" id="growthLevel"></div>
-      </div>
-    </div>
-
-    <label>اقساط <span class="muted">(برای هر قسط می‌توانید تصویر/فایل فیش را بارگذاری کنید)</span>:</label>
-    <div class="installments" id="installmentsContainer"></div>
-    <button type="button" onclick="addInstallment()">افزودن قسط</button>
-
-    <label>سوان کوین:</label>
-    <div class="coins-log" id="coinsLog"></div>
-    <button type="button" onclick="addCoin()">افزودن سوان کوین</button>
-
-    <label>نیوبلادهایی که معرفی کرده:</label>
-    <div class="referred-container" id="referredContainer"></div>
-    <button type="button" onclick="addReferred()">افزودن نیوبلاد معرفی‌شده</button>
-
-    <label>توضیحات:</label>
+    <label>یادداشت</label>
     <textarea name="notes"></textarea>
 
-    <button type="submit">ثبت اطلاعات</button>
+    <button type="submit">ثبت</button>
   </form>
 
-  <!-- Backendless SDK -->
-  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
-
   <script>
-    // ===== اتصال Backendless =====
-    Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
-
-    const installmentsContainer = document.getElementById('installmentsContainer');
-    const coinsLog = document.getElementById('coinsLog');
-    const growthLevel = document.getElementById('growthLevel');
-    const referredContainer = document.getElementById('referredContainer');
-
-    // ===== ستاره‌های سطح رشد =====
-    function setStars() {
-      growthLevel.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const span = document.createElement('span');
-        span.innerText = '★';
-        span.onclick = () => {
-          document.querySelectorAll('#growthLevel span').forEach((s, index) => {
-            s.className = index < i ? 'selected' : '';
-          });
-        };
-        growthLevel.appendChild(span);
-      }
-    }
-
-    // ===== UI: اضافه‌کردن ردیف‌ها =====
-    function initPersianOn(el) {
-      // راه‌اندازی Persian Datepicker روی یک input
-      $(el).persianDatepicker({ format: 'YYYY/MM/DD' });
-    }
-
-    function addInstallment() {
-      const div = document.createElement('div');
-      div.className = 'installment';
-      // تاریخ قسط با شمسی
-      div.innerHTML = `
-        <input type="text" placeholder="تاریخ قسط (شمسی)" class="inst-date pdate-input" />
-        <input type="number" placeholder="مبلغ (تومان)" class="inst-amount" />
-        <input type="file" class="inst-receipt" accept="image/*,application/pdf" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      installmentsContainer.appendChild(div);
-      // فعال‌سازی تاریخ‌نما
-      initPersianOn($(div).find('.inst-date'));
-    }
-
-    function addCoin() {
-      const div = document.createElement('div');
-      div.className = 'coin-entry';
-      div.innerHTML = `
-        <input type="text" placeholder="تاریخ ثبت سوان‌کوین (شمسی)" class="coin-date pdate-input" />
-        <input type="text" placeholder="توضیح (اختیاری)" class="coin-note" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      coinsLog.appendChild(div);
-      initPersianOn($(div).find('.coin-date'));
-    }
-
-    function addReferred() {
-      const div = document.createElement('div');
-      div.className = 'referred-entry';
-      div.innerHTML = `
-        <input type="text" placeholder="نام نیوبلاد معرفی‌شده" class="ref-name" />
-        <button type="button" onclick="this.parentNode.remove()">❌</button>
-      `;
-      referredContainer.appendChild(div);
-    }
-
-    // ===== کمک: تبدیل تاریخ شمسی → میلادی (Date) =====
-    // ورودی: "YYYY/MM/DD" مثل "1403/07/21"
-    // خروجی: شیء Date میلادی (local)
-    function jalaliStrToGregorianDate(str) {
-      if (!str) return null;
-      const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-      if (!m) return null;
-      const jy = parseInt(m[1],10);
-      const jm = parseInt(m[2],10);
-      const jd = parseInt(m[3],10);
-      const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
-      if (!g || !g.gy) return null;
-      return new Date(g.gy, (g.gm-1), g.gd);
-    }
-
-    // ===== کمکی‌ها =====
-    const toNumber = (n) => (n === '' || n == null ? null : Number(n));
-
-    async function uploadReceipt(file) {
-      const safeName = (file.name || 'receipt').replace(/\s+/g, '_');
-      const filename = `${Date.now()}_${safeName}`;
-      const res = await Backendless.Files.upload(file, `receipts/${filename}`, true);
-      return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
-    }
-
-    // ===== پر کردن خودکار استادیار از URL و قفل‌کردن =====
-    document.addEventListener('DOMContentLoaded', () => {
-      // فعال‌سازی تقویم شمسی روی فیلدهای ثابت
-      $("#birthdate_j").persianDatepicker({ format: 'YYYY/MM/DD' });
-      $("#course_date_j").persianDatepicker({ format: 'YYYY/MM/DD' });
-
-      const params = new URLSearchParams(location.search);
-      const fromURL = params.get('assistant'); // ممکنه فارسی باشه
-      const sel = document.querySelector('select[name="assistant"]');
-      if(sel && fromURL){
-        const nameFromURL = decodeURIComponent(fromURL).replace(/_/g,' ').trim();
-        // اگر گزینه موجود نبود، بساز
-        let opt = Array.from(sel.options).find(o => o.value === nameFromURL);
-        if(!opt){
-          opt = document.createElement('option');
-          opt.value = nameFromURL;
-          opt.textContent = nameFromURL;
-          sel.appendChild(opt);
-        }
-        sel.value = nameFromURL;
-        // قفل کن
-        sel.disabled = true;
-        // hidden برای اطمینان از ارسال مقدار
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = 'assistant';
-        hidden.value = nameFromURL;
-        sel.parentNode.appendChild(hidden);
-      }
+    // فعال‌سازی تاریخ شمسی
+    ['#birthdate','#course_date'].forEach(sel=>{
+      new persianDate().toLocale('fa');
+      $(sel).persianDatepicker({
+        format: 'YYYY/MM/DD',
+        autoClose: true
+      });
     });
 
-    // (اختیاری) لود داینامیک لیست استادیارها از جدول Assistants
-    async function loadAssistantsIntoSelect() {
-      const sel = document.querySelector('select[name="assistant"]');
-      if(!sel) return;
-      try{
-        const query = Backendless.DataQueryBuilder.create()
-          .setWhereClause('isActive = true')
-          .setSortBy(['order ASC', 'name ASC'])
-          .setPageSize(100);
-        const list = await Backendless.Data.of('Assistants').find(query);
-        const current = sel.value;
-        list.forEach(a=>{
-          const exists = Array.from(sel.options).some(o=>o.value===a.name);
-          if(!exists){
-            const opt = document.createElement('option');
-            opt.value = a.name;
-            opt.textContent = a.name;
-            sel.appendChild(opt);
-          }
-        });
-        if(current) sel.value = current;
-      }catch(e){
-        console.warn('Assistants load failed (optional):', e);
-      }
-    }
-    document.addEventListener('DOMContentLoaded', loadAssistantsIntoSelect);
+    // ستاره‌های رشد
+    const stars = document.querySelectorAll('#growthStars span');
+    const growthInput = document.getElementById('growthInput');
+    stars.forEach(star=>{
+      star.addEventListener('click', ()=>{
+        const val = star.getAttribute('data-val');
+        growthInput.value = val;
+        stars.forEach(s=>s.classList.remove('selected'));
+        for(let i=0;i<val;i++) stars[i].classList.add('selected');
+      });
+    });
 
-    // ===== ارسال فرم =====
-    document.getElementById('newbloodForm').addEventListener('submit', async function(e) {
+    // داینامیک اقساط
+    function addInstallment(){
+      const div=document.createElement('div');
+      div.className='installment';
+      div.innerHTML=`
+        <input type="text" placeholder="تاریخ قسط" class="pdate-input">
+        <input type="number" placeholder="مبلغ">
+        <input type="file">
+        <button type="button" onclick="this.parentElement.remove()">حذف</button>`;
+      document.getElementById('installmentsList').appendChild(div);
+      $(div.querySelector('.pdate-input')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    }
+
+    // داینامیک کوین
+    function addCoin(){
+      const div=document.createElement('div');
+      div.className='coin-entry';
+      div.innerHTML=`
+        <input type="text" placeholder="تاریخ" class="pdate-input">
+        <input type="text" placeholder="توضیح">
+        <button type="button" onclick="this.parentElement.remove()">حذف</button>`;
+      document.getElementById('coinsList').appendChild(div);
+      $(div.querySelector('.pdate-input')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    }
+
+    // ثبت فرم
+    document.getElementById('newbloodForm').addEventListener('submit', e=>{
       e.preventDefault();
-
-      // گرفتن فیلدهای ساده (non-date)
-      const fd = new FormData(this);
-      const data = {};
-      fd.forEach((value, key) => {
-        if (data[key]) {
-          if (!Array.isArray(data[key])) data[key] = [data[key]];
-          data[key].push(value);
-        } else {
-          data[key] = value;
-        }
-      });
-
-      // علاقه‌مندی‌ها → آرایه
-      data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i => i.value);
-
-      // رشد (ستاره‌ها)
-      data.growth = document.querySelectorAll('#growthLevel .selected').length;
-
-      // تاریخ‌های شمسی → میلادی
-      const birth_j  = document.getElementById('birthdate_j').value.trim();
-      const course_j = document.getElementById('course_date_j').value.trim();
-      data.birthdate   = jalaliStrToGregorianDate(birth_j);
-      data.course_date = jalaliStrToGregorianDate(course_j);
-
-      // مبلغ پیش‌پرداخت
-      data.prepayment = toNumber(data.prepayment);
-
-      // اقساط با آپلود فیش → ذخیره در "instalments"
-      const installmentDivs = Array.from(document.querySelectorAll('.installment'));
-      const instalmentPromises = installmentDivs.map(async (div) => {
-        const date_j = (div.querySelector('.inst-date')?.value || '').trim();
-        const date   = jalaliStrToGregorianDate(date_j);
-        const amount = toNumber(div.querySelector('.inst-amount')?.value || null);
-        let receipt_url = null;
-        const fileInput = div.querySelector('.inst-receipt');
-        const file = fileInput && fileInput.files && fileInput.files[0];
-        if (file) {
-          try { receipt_url = await uploadReceipt(file); }
-          catch (err) { console.error('خطا در آپلود فیش:', err); alert('آپلود فیش یکی از اقساط ناموفق بود.'); }
-        }
-        return { date, amount, receipt_url };
-      });
-      data.instalments = (await Promise.all(instalmentPromises))
-        .filter(it => it.date || it.amount || it.receipt_url);
-
-      // کوین‌ها با تاریخ شمسی
-      data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(div => ({
-        date: jalaliStrToGregorianDate((div.querySelector('.coin-date')?.value || '').trim()),
-        note: (div.querySelector('.coin-note')?.value || '').trim(),
-      })).filter(x => x.date);
-
-      // معرفی‌شده‌ها
-      data.referred_people = Array.from(document.querySelectorAll('.referred-entry .ref-name'))
-        .map(i => i.value.trim()).filter(Boolean);
-
-      try {
-        await Backendless.Data.of('Newbloods').save(data);
-        alert('اطلاعات ذخیره شد.');
-        this.reset();
-        installmentsContainer.innerHTML = '';
-        coinsLog.innerHTML = '';
-        referredContainer.innerHTML = '';
-        setStars();
-        // بازنشانی datepicker‌های ثابت
-        $("#birthdate_j").val('');
-        $("#course_date_j").val('');
-      } catch (error) {
-        console.error('خطا در ثبت:', error);
-        alert('مشکلی در ذخیره اطلاعات پیش آمده.');
-      }
+      alert('اطلاعات ذخیره شد (اینجا اتصال به Backendless باید انجام شود)');
     });
-
-    // ===== شروع =====
-    setStars();
   </script>
 </body>
 </html>
