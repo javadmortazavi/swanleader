@@ -30,6 +30,7 @@
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:.65rem 1.2rem;cursor:pointer}
     button.secondary{background:#607d8b}
+    button.warn{background:#e53935}
 
     .stars span{font-size:1.6rem;cursor:pointer;color:#c9c9c9}
     .stars .selected{color:#f4c430}
@@ -50,6 +51,9 @@
     .ok{background:#e0f7f4;color:#00695c}
     .err{background:#ffebee;color:#c62828}
 
+    .backup-bar{max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .backup-bar small{color:#666}
+
     @media (max-width:900px){ .row{grid-template-columns:1fr} }
     @media (max-width:700px){
       .installment,.coin-entry,.referred-entry{grid-template-columns:1fr}
@@ -62,6 +66,13 @@
 <header>
   <h1>فرم ثبت نیوبلاد</h1>
 </header>
+
+<!-- نوار بکاپ دستی (همه می‌بینند؛ اگر خواستی شرطی‌اش می‌کنیم که فقط ادمین ببیند) -->
+<div class="backup-bar">
+  <button type="button" class="secondary" onclick="backupJSON()">دانلود بکاپ JSON</button>
+  <button type="button" class="secondary" onclick="backupCSV()">دانلود بکاپ CSV</button>
+  <small>برای بکاپِ خودکار روزانه، اسکریپت GitHub Actions پایین همین صفحه را ببین.</small>
+</div>
 
 <form id="newbloodForm">
   <!-- استادیار ثبت‌کننده -->
@@ -160,6 +171,10 @@
     </div>
   </div>
 
+  <!-- ✅ پیش‌پرداخت منتقل شد بالای اقساط -->
+  <label>پیش‌پرداخت (تومان)</label>
+  <input type="number" name="prepayment" min="0" step="1">
+
   <label>سطح رشد</label>
   <div class="stars" id="growthStars">
     <span data-val="1">★</span>
@@ -184,17 +199,6 @@
   <label>نیوبلادهایی که معرفی کرده</label>
   <div class="referred" id="refContainer"></div>
   <button type="button" class="secondary" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
-
-  <div class="row">
-    <div>
-      <label>پیش‌پرداخت (تومان)</label>
-      <input type="number" name="prepayment" min="0" step="1">
-    </div>
-    <div>
-      <label>اینستاگرام (تکرار فیلد اختیاری برای راحتی دسترسی)</label>
-      <input type="text" name="instagram_dup" placeholder="@username">
-    </div>
-  </div>
 
   <label>یادداشت</label>
   <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
@@ -306,7 +310,6 @@
     fd.forEach((v,k)=> data[k]=v);
 
     // تاریخ‌ها: شمسی → میلادی
-    data.birthdate   = jalaliStrToDate(document.getElementById('birthdate_j').value || document.getElementById('birthdate_j')?.value);
     data.birthdate   = jalaliStrToDate($('#birthdate_j').val());
     data.course_date = jalaliStrToDate($('#course_date_j').val());
 
@@ -356,6 +359,59 @@
       msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err);
     }
   });
+
+  // ====== بکاپ دستی: JSON & CSV ======
+  async function fetchAllNewbloods(){
+    const store = [];
+    let page = 0, pageSize = 100, chunk = [];
+    const tb = Backendless.Data.of('Newbloods');
+    do{
+      const qb = Backendless.DataQueryBuilder.create()
+                  .setPageSize(pageSize).setOffset(page*pageSize)
+                  .setSortBy(['created DESC']);
+      chunk = await tb.find(qb);
+      store.push(...chunk);
+      page++;
+    }while(chunk.length === pageSize);
+    return store;
+  }
+
+  function download(filename, text, mime='application/json'){
+    const blob = new Blob([text], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    URL.revokeObjectURL(url); a.remove();
+  }
+
+  async function backupJSON(){
+    try{
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
+      download(fname, JSON.stringify(data, null, 2), 'application/json');
+    }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
+  }
+
+  function toCSV(arr){
+    if(!arr.length) return '';
+    const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
+    const esc = v => {
+      if(v==null) return '';
+      const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      return `"${s.replace(/"/g,'""')}"`;
+    };
+    const head = cols.map(esc).join(',');
+    const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
+    return head + '\n' + rows;
+  }
+
+  async function backupCSV(){
+    try{
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
+      download(fname, toCSV(data), 'text/csv;charset=utf-8');
+    }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
+  }
 </script>
 
 </body>
