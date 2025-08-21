@@ -1,0 +1,35 @@
+name: Daily Backendless Backup
+
+on:
+  schedule:
+    - cron: "0 21 * * *"   # هر شب حدود 00:00-01:00 ایران (21:00 UTC)
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm i node-fetch@3
+
+      - name: Run backup
+        env:
+          APP_ID: ${{ secrets.BACKENDLESS_APP_ID }}
+          REST_KEY: ${{ secrets.BACKENDLESS_REST_API_KEY }}
+        run: node backup.js
+
+      - name: Commit & push
+        run: |
+          git config user.name "backup-bot"
+          git config user.email "backup@example.com"
+          git add backups/
+          git commit -m "daily backup $(date -u +"%Y-%m-%dT%H:%M:%SZ")" || echo "Nothing to commit"
+          git push
