@@ -1,233 +1,431 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>فرم ثبت نیوبلاد</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>فرم ثبت نیوبلاد - Swan Family</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Backendless SDK -->
+  <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 
-  <!-- تقویم شمسی -->
-  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.js"></script>
+  <!-- jQuery + Persian Datepicker (شمسی) + jalaali-js -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/persian-date/dist/persian-date.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.css">
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
   <style>
-    body { font-family: Tahoma, sans-serif; background-color: #f5f5f5; padding: 2rem; direction: rtl; }
-    form { background: #fff; padding: 2rem; border-radius: 8px; max-width: 900px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,.08); }
-    label { font-weight: bold; display: block; margin-top: 1rem; }
-    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 6px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    :root{ --brand:#009688 }
+    *{box-sizing:border-box}
+    body{font-family:Tahoma,system-ui,sans-serif;background:#f5f5f5;margin:0;padding:0}
+    header{background:#222;color:#fff;text-align:center;padding:12px}
+    header h1{margin:0;font-size:18px}
+    form{background:#fff;max-width:980px;margin:18px auto;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+    label{display:block;margin-top:12px;font-weight:700}
+    input,select,textarea{width:100%;padding:.6rem;border:1px solid #dedede;border-radius:10px;margin-top:6px}
+    textarea{min-height:90px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .muted{color:#666;font-size:.9rem}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:.65rem 1.2rem;cursor:pointer}
+    button.secondary{background:#607d8b}
 
-    .installments, .coins-log, .referred-container { margin-top: 1rem; }
+    .stars span{font-size:1.6rem;cursor:pointer;color:#c9c9c9}
+    .stars .selected{color:#f4c430}
 
-    /* بلوک‌های داخلی */
-    .installment, .coin-entry, .referred-entry {
-      background: #f0f0f0; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem;
-      display: grid; gap: .5rem; align-items:center;
+    .installments,.coins-log,.referred{margin-top:6px}
+    .installment,.coin-entry,.referred-entry{
+      background:#f0f0f0;border-radius:10px;padding:.7rem;display:grid;gap:.5rem;align-items:center;margin:.4rem 0
     }
-    .installment { grid-template-columns: repeat(4, minmax(160px, 1fr)); }
-    .coin-entry  { grid-template-columns: minmax(160px,1fr) minmax(220px,2fr) auto; }
-    .referred-entry { grid-template-columns: 1fr auto; }
+    .installment{grid-template-columns:repeat(4, minmax(160px,1fr))}
+    .coin-entry{grid-template-columns:minmax(160px,1fr) minmax(220px,2fr) auto}
+    .referred-entry{grid-template-columns:1fr auto}
+    .installment>button,.coin-entry>button,.referred-entry>button{background:#e53935}
 
-    .muted { color:#777; font-size:.9rem; }
-    button { margin-top: 1rem; padding: 0.6rem 1.5rem; background-color: #009688; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .pdate-input{direction:ltr;text-align:center}
+    input[type="file"]{width:100%}
 
-    .stars span { font-size: 1.6rem; cursor: pointer; color: #c9c9c9; }
-    .stars .selected { color: #f4c430; }
+    .msg{margin-top:12px;padding:.7rem;border-radius:10px;display:none}
+    .ok{background:#e0f7f4;color:#00695c}
+    .err{background:#ffebee;color:#c62828}
 
-    .pdate-input { direction: ltr; text-align: center; }
-    input[type="file"] { width: 100%; }
+    /* نوار بکاپ فقط برای ادمین؛ پیش‌فرض پنهان */
+    .backup-bar{display:none;max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
+    .backup-bar small{color:#666}
 
-    /* واکنش‌گرا */
-    @media (max-width: 900px) {
-      .row { grid-template-columns: 1fr; }
+    @media (max-width:900px){ .row{grid-template-columns:1fr} }
+    @media (max-width:700px){
+      .installment,.coin-entry,.referred-entry{grid-template-columns:1fr}
+      .installment>button,.coin-entry>button,.referred-entry>button{width:100%;order:99}
     }
-    @media (max-width: 700px) {
-      .installment { grid-template-columns: 1fr; }
-      .coin-entry  { grid-template-columns: 1fr; }
-      .referred-entry { grid-template-columns: 1fr; }
-      .installment > button,
-      .coin-entry  > button,
-      .referred-entry > button {
-        width: 100%; order: 99; margin-top: .25rem;
-      }
-    }
-
-    /* فقط برای ادمین */
-    #backupSection { display: none; margin: 2rem auto; max-width: 800px; padding: 1rem; background: #fff; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,.1); }
   </style>
 </head>
 <body>
 
-  <h2 style="text-align:center">فرم ثبت نیوبلاد</h2>
+<header>
+  <h1>فرم ثبت نیوبلاد</h1>
+</header>
 
-  <form id="newbloodForm">
-    <label>نام و نام خانوادگی</label>
-    <input type="text" name="name" required>
+<!-- نوار بکاپ (فقط وقتی ادمین لاگین است نمایش داده می‌شود) -->
+<div class="backup-bar" id="backupBar">
+  <button type="button" class="secondary" onclick="backupJSON()">دانلود بکاپ JSON</button>
+  <button type="button" class="secondary" onclick="backupCSV()">دانلود بکاپ CSV</button>
+  <small>بکاپ خودکار روزانه با GitHub Actions در ریپو تنظیم می‌شود.</small>
+</div>
 
-    <label>موبایل</label>
-    <input type="text" name="mobile" required>
+<form id="newbloodForm">
+  <!-- استادیار ثبت‌کننده -->
+  <label>استادیار ثبت‌کننده</label>
+  <select id="assistantSel" name="assistant" required>
+    <option value="">— انتخاب کنید —</option>
+    <option value="جواد مرتضوی">جواد مرتضوی</option>
+    <option value="استادیار ۱">استادیار ۱</option>
+    <option value="استادیار ۲">استادیار ۲</option>
+  </select>
 
-    <label>اینستاگرام</label>
-    <input type="text" name="instagram">
-
-    <div class="row">
-      <div>
-        <label>تاریخ تولد</label>
-        <input type="text" id="birthdate" class="pdate-input" name="birthdate">
-      </div>
-      <div>
-        <label>تاریخ دوره</label>
-        <input type="text" id="course_date" class="pdate-input" name="course_date">
-      </div>
+  <div class="row">
+    <div>
+      <label>نام و نام خانوادگی</label>
+      <input type="text" name="name" required>
     </div>
-
-    <label>محل دوره</label>
-    <input type="text" name="course_location">
-
-    <label>استان</label>
-    <input type="text" name="province">
-
-    <label>شهر</label>
-    <input type="text" name="city">
-
-    <label>شغل‌ها</label>
-    <input type="text" name="jobs" placeholder="مثال: مربی یوگا، تراپیست">
-
-    <label>مهارت‌ها</label>
-    <input type="text" name="skills" placeholder="مثال: ماساژ، مدیتیشن">
-
-    <label>نحوه آشنایی</label>
-    <input type="text" name="referral_source" placeholder="مثال: اینستاگرام، دوستان">
-
-    <label>علاقه‌مندی‌ها</label>
-    <input type="text" name="interests" placeholder="مثال: آیورودا، سفر، موسیقی">
-
-    <label>معرفی‌شده‌ها</label>
-    <div id="referredList"></div>
-    <button type="button" onclick="addReferred()">+ افزودن معرفی‌شده</button>
-
-    <label>سطح رشد</label>
-    <div class="stars" id="growthStars">
-      <span data-val="1">★</span>
-      <span data-val="2">★</span>
-      <span data-val="3">★</span>
-      <span data-val="4">★</span>
-      <span data-val="5">★</span>
+    <div>
+      <label>موبایل</label>
+      <input type="tel" name="mobile" required>
     </div>
-    <input type="hidden" name="growth" id="growthInput" value="0">
-
-    <!-- پیش‌پرداخت -->
-    <label>پیش‌پرداخت</label>
-    <input type="number" step="0.01" name="prepayment">
-
-    <!-- اقساط -->
-    <div class="installments">
-      <label>اقساط</label>
-      <div id="installmentsList"></div>
-      <button type="button" onclick="addInstallment()">+ افزودن قسط</button>
-    </div>
-
-    <!-- سوان کوین -->
-    <div class="coins-log">
-      <label>سوان کوین</label>
-      <div id="coinsList"></div>
-      <button type="button" onclick="addCoin()">+ افزودن کوین</button>
-    </div>
-
-    <label>یادداشت</label>
-    <textarea name="notes"></textarea>
-
-    <button type="submit">ثبت</button>
-  </form>
-
-  <!-- بخش بکاپ (فقط ادمین) -->
-  <div id="backupSection">
-    <h3>📦 پشتیبان‌گیری روزانه</h3>
-    <button onclick="downloadBackup()">دریافت فایل JSON</button>
-    <pre id="backupLog" style="background:#eee;padding:1rem;border-radius:6px;max-height:200px;overflow:auto;"></pre>
   </div>
 
-  <script>
-    // فعال‌سازی تاریخ شمسی
-    ['#birthdate','#course_date'].forEach(sel=>{
-      $(sel).persianDatepicker({
-        format: 'YYYY/MM/DD',
-        autoClose: true
-      });
-    });
+  <div class="row">
+    <div>
+      <label>اینستاگرام</label>
+      <input type="text" name="instagram" placeholder="@username">
+    </div>
+    <div>
+      <label>وضعیت تأهل</label>
+      <select name="marital_status">
+        <option value="">انتخاب کنید</option>
+        <option value="single">مجرد</option>
+        <option value="married">متأهل</option>
+      </select>
+    </div>
+  </div>
 
-    // ستاره‌های رشد
+  <div class="row">
+    <div>
+      <label>شغل اول</label>
+      <input type="text" name="job1">
+    </div>
+    <div>
+      <label>شغل دوم</label>
+      <input type="text" name="job2">
+    </div>
+  </div>
+
+  <label>سابقهٔ فعالیت ماساژ</label>
+  <textarea name="massage_experience" placeholder="مختصر توضیح دهید..."></textarea>
+
+  <label>مهارت‌هایی که به کار تیم سوان کمک می‌کند</label>
+  <textarea name="skills" placeholder="مثلاً: عکاسی، تدوین، تدریس، مدیریت شبکه‌های اجتماعی و..."></textarea>
+
+  <label>نحوهٔ آشنایی با خانوادهٔ سوان</label>
+  <textarea name="how_met" placeholder="مثلاً: معرفی دوست، اینستاگرام، شرکت در رویداد و..."></textarea>
+
+  <!-- علاقه‌مندی‌ها: فقط سه تیک خواسته‌شده -->
+  <label>علاقه‌مندی‌ها</label>
+  <div class="row">
+    <label><input type="checkbox" name="interests" value="anatomy"> آناتومی</label>
+    <label><input type="checkbox" name="interests" value="ayurveda"> آیورودا</label>
+    <label><input type="checkbox" name="interests" value="marketing"> بازاریابی</label>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>تاریخ تولد (شمسی)</label>
+      <input type="text" id="birthdate_j" class="pdate-input" placeholder="۱۴۰۴/۰۱/۱۵">
+    </div>
+    <div>
+      <label>تاریخ دوره (شمسی)</label>
+      <input type="text" id="course_date_j" class="pdate-input" placeholder="۱۴۰۴/۰۲/۲۰">
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>محل دوره</label>
+      <input type="text" name="course_location">
+    </div>
+    <div>
+      <label>معرف / هماهنگ‌کننده</label>
+      <input type="text" name="referrer">
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>استان</label>
+      <input type="text" name="province">
+    </div>
+    <div>
+      <label>شهر</label>
+      <input type="text" name="city">
+    </div>
+  </div>
+
+  <!-- پیش‌پرداخت بالای اقساط -->
+  <label>پیش‌پرداخت (تومان)</label>
+  <input type="number" name="prepayment" min="0" step="1">
+
+  <label>سطح رشد</label>
+  <div class="stars" id="growthStars">
+    <span data-val="1">★</span>
+    <span data-val="2">★</span>
+    <span data-val="3">★</span>
+    <span data-val="4">★</span>
+    <span data-val="5">★</span>
+  </div>
+  <input type="hidden" name="growth" id="growthVal" value="0">
+
+  <!-- اقساط -->
+  <label>اقساط <span class="muted">(برای هر قسط می‌توانید فیش پرداختی آپلود کنید)</span></label>
+  <div class="installments" id="instContainer"></div>
+  <button type="button" class="secondary" onclick="addInstallment()">+ افزودن قسط</button>
+
+  <!-- سوان کوین -->
+  <label>سوان کوین</label>
+  <div class="coins-log" id="coinsContainer"></div>
+  <button type="button" class="secondary" onclick="addCoin()">+ افزودن کوین</button>
+
+  <!-- معرفی‌شده‌ها: فقط نام نیوبلادهای معرفی‌شده -->
+  <label>نیوبلادهایی که معرفی کرده</label>
+  <div class="referred" id="refContainer"></div>
+  <button type="button" class="secondary" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
+
+  <label>یادداشت</label>
+  <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
+
+  <div class="actions">
+    <button type="submit">ثبت</button>
+    <a class="secondary" href="/assistant" style="text-decoration:none;padding:.65rem 1.2rem;border-radius:10px;color:#fff">بازگشت به پنل استادیار</a>
+  </div>
+
+  <div id="msg" class="msg"></div>
+</form>
+
+<script>
+  // ===== تنظیمات ادمین =====
+  const ADMIN_NAME  = "جواد مرتضوی";
+  const ADMIN_EMAIL = "j.mortazavi7@gmail.com";
+
+  // ===== Backendless =====
+  Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
+
+  // بعد از لود، اگر ادمین لاگین بود، نوار بکاپ را نشان بده
+  (async function showBackupIfAdmin(){
+    try{
+      const u = await Backendless.UserService.getCurrentUser();
+      const isAdmin = !!u && ((u.name||"")===ADMIN_NAME || (u.email||"")===ADMIN_EMAIL);
+      if(isAdmin){ document.getElementById('backupBar').style.display = 'flex'; }
+    }catch(_){}
+  })();
+
+  // ===== Persian datepickers =====
+  $('#birthdate_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
+  $('#course_date_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
+
+  // ===== Growth stars =====
+  (function initStars(){
     const stars = document.querySelectorAll('#growthStars span');
-    const growthInput = document.getElementById('growthInput');
-    stars.forEach(star=>{
-      star.addEventListener('click', ()=>{
-        const val = star.getAttribute('data-val');
-        growthInput.value = val;
-        stars.forEach(s=>s.classList.remove('selected'));
-        for(let i=0;i<val;i++) stars[i].classList.add('selected');
-      });
+    const out = document.getElementById('growthVal');
+    stars.forEach(s=>{
+      s.onclick=()=>{
+        const v = +s.dataset.val;
+        out.value = v;
+        stars.forEach((el,i)=> el.classList.toggle('selected', i < v));
+      };
     });
+  })();
 
-    // داینامیک اقساط
-    function addInstallment(){
-      const div=document.createElement('div');
-      div.className='installment';
-      div.innerHTML=`
-        <input type="text" placeholder="تاریخ قسط" class="pdate-input">
-        <input type="number" placeholder="مبلغ">
-        <input type="file">
-        <button type="button" onclick="this.parentElement.remove()">حذف</button>`;
-      document.getElementById('installmentsList').appendChild(div);
-      $(div.querySelector('.pdate-input')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+  // ===== Assistant from URL; lock & hidden =====
+  (function initAssistant(){
+    const sel = document.getElementById('assistantSel');
+    const p = new URLSearchParams(location.search).get('assistant');
+    if(p){
+      const name = decodeURIComponent(p).replace(/_/g,' ').trim();
+      let opt = Array.from(sel.options).find(o=>o.value===name);
+      if(!opt){ opt = new Option(name,name); sel.add(opt); }
+      sel.value = name;
+      sel.disabled = true;
+      const hid = document.createElement('input');
+      hid.type='hidden'; hid.name='assistant'; hid.value=name;
+      sel.parentNode.appendChild(hid);
     }
+  })();
 
-    // داینامیک کوین
-    function addCoin(){
-      const div=document.createElement('div');
-      div.className='coin-entry';
-      div.innerHTML=`
-        <input type="text" placeholder="تاریخ" class="pdate-input">
-        <input type="text" placeholder="توضیح">
-        <button type="button" onclick="this.parentElement.remove()">حذف</button>`;
-      document.getElementById('coinsList').appendChild(div);
-      $(div.querySelector('.pdate-input')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
-    }
+  // ===== Helpers =====
+  function jalaliStrToDate(str){
+    if(!str) return null;
+    const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if(!m) return null;
+    const jy=+m[1], jm=+m[2], jd=+m[3];
+    const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
+    return new Date(g.gy, g.gm-1, g.gd);
+  }
+  const toNumber = v => (v===''||v==null ? null : Number(v));
+
+  async function uploadReceipt(file){
+    const safe = (file.name||'receipt').replace(/\s+/g,'_');
+    const fname = `${Date.now()}_${safe}`;
+    const res = await Backendless.Files.upload(file, `receipts/${fname}`, true);
+    return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
+  }
+
+  // ===== Dynamic rows =====
+  function addInstallment(){
+    const div=document.createElement('div');
+    div.className='installment';
+    div.innerHTML=`
+      <input type="text" class="pdate-input inst-date" placeholder="تاریخ قسط (شمسی)">
+      <input type="number" class="inst-amount" placeholder="مبلغ (تومان)">
+      <input type="file" class="inst-file" accept="image/*,application/pdf">
+      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+    document.getElementById('instContainer').appendChild(div);
+    $(div.querySelector('.inst-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+  }
+
+  function addCoin(){
+    const div=document.createElement('div');
+    div.className='coin-entry';
+    div.innerHTML=`
+      <input type="text" class="pdate-input coin-date" placeholder="تاریخ کوین (شمسی)">
+      <input type="text" class="coin-note" placeholder="توضیح (اختیاری)">
+      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+    document.getElementById('coinsContainer').appendChild(div);
+    $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+  }
+
+  function addReferred(){
+    const div=document.createElement('div');
+    div.className='referred-entry';
+    div.innerHTML=`
+      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده">
+      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+    document.getElementById('refContainer').appendChild(div);
+  }
+
+  // ===== Submit =====
+  document.getElementById('newbloodForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ذخیره...';
+
+    const fd = new FormData(e.target);
+    const data = {};
+    fd.forEach((v,k)=> data[k]=v);
+
+    // تاریخ‌ها: شمسی → میلادی
+    data.birthdate   = jalaliStrToDate($('#birthdate_j').val());
+    data.course_date = jalaliStrToDate($('#course_date_j').val());
+
+    // سطح رشد / پیش‌پرداخت
+    data.growth = toNumber(document.getElementById('growthVal').value) || 0;
+    data.prepayment = toNumber(data.prepayment);
+
+    // علاقه‌مندی‌ها → آرایه (فقط سه مورد)
+    data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
+
+    // اقساط (با آپلود فیش)
+    const instRows = Array.from(document.querySelectorAll('.installment'));
+    const instPromises = instRows.map(async row=>{
+      const date = jalaliStrToDate($(row).find('.inst-date').val());
+      const amount = toNumber($(row).find('.inst-amount').val());
+      const file = row.querySelector('.inst-file')?.files?.[0];
+      let receipt_url = null;
+      if(file){ try{ receipt_url = await uploadReceipt(file); }catch(e){ console.warn('upload failed',e); } }
+      return (date || amount || receipt_url) ? { date, amount, receipt_url } : null;
+    });
+    data.instalments = (await Promise.all(instPromises)).filter(Boolean);
+
+    // کوین‌ها
+    data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(row=>{
+      const date = jalaliStrToDate($(row).find('.coin-date').val());
+      const note = ($(row).find('.coin-note').val()||'').trim();
+      return date ? { date, note } : null;
+    }).filter(Boolean);
 
     // معرفی‌شده‌ها
-    function addReferred(){
-      const div=document.createElement('div');
-      div.className='referred-entry';
-      div.innerHTML=`
-        <input type="text" placeholder="نام معرفی‌شده">
-        <button type="button" onclick="this.parentElement.remove()">حذف</button>`;
-      document.getElementById('referredList').appendChild(div);
-    }
+    data.referred_people = Array.from(document.querySelectorAll('.ref-name'))
+      .map(i=>i.value.trim()).filter(Boolean);
 
-    // ثبت فرم
-    document.getElementById('newbloodForm').addEventListener('submit', e=>{
-      e.preventDefault();
-      alert('اطلاعات ذخیره شد (اینجا اتصال به Backendless باید انجام شود)');
-    });
-
-    // فعال‌سازی بخش بکاپ فقط برای ادمین
-    if (window.location.search.includes('admin=true')) {
-      document.getElementById('backupSection').style.display = 'block';
+    try{
+      await Backendless.Data.of('Newbloods').save(data);
+      msg.className='msg ok'; msg.textContent='✅ اطلاعات ذخیره شد.';
+      // reset
+      e.target.reset();
+      $('#birthdate_j').val(''); $('#course_date_j').val('');
+      document.getElementById('instContainer').innerHTML='';
+      document.getElementById('coinsContainer').innerHTML='';
+      document.getElementById('refContainer').innerHTML='';
+      document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
+      document.getElementById('growthVal').value=0;
+    }catch(err){
+      console.error(err);
+      msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err);
     }
+  });
 
-    // بکاپ دیتا (مثال)
-    async function downloadBackup(){
-      // اینجا باید از Backendless همه رکوردها را بگیری
-      const dummyData = [{name:"Ali",mobile:"0912...",city:"Tehran"}];
-      const blob = new Blob([JSON.stringify(dummyData,null,2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href=url; a.download="backup.json"; a.click();
-      URL.revokeObjectURL(url);
-      document.getElementById('backupLog').innerText="بکاپ دانلود شد ("+new Date().toLocaleString()+")";
-    }
-  </script>
+  // ====== بکاپ دستی: JSON & CSV (ادمین) ======
+  async function fetchAllNewbloods(){
+    const store = [];
+    let page = 0, pageSize = 100, chunk = [];
+    const tb = Backendless.Data.of('Newbloods');
+    do{
+      const qb = Backendless.DataQueryBuilder.create()
+                  .setPageSize(pageSize).setOffset(page*pageSize)
+                  .setSortBy(['created DESC']);
+      chunk = await tb.find(qb);
+      store.push(...chunk);
+      page++;
+    }while(chunk.length === pageSize);
+    return store;
+  }
+
+  function download(filename, text, mime='application/json'){
+    const blob = new Blob([text], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    URL.revokeObjectURL(url); a.remove();
+  }
+
+  async function backupJSON(){
+    try{
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
+      download(fname, JSON.stringify(data, null, 2), 'application/json');
+    }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
+  }
+
+  function toCSV(arr){
+    if(!arr.length) return '';
+    const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
+    const esc = v => {
+      if(v==null) return '';
+      const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      return `"${s.replace(/"/g,'""')}"`;
+    };
+    const head = cols.map(esc).join(',');
+    const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
+    return head + '\n' + rows;
+  }
+
+  async function backupCSV(){
+    try{
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
+      download(fname, toCSV(data), 'text/csv;charset=utf-8');
+    }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
+  }
+</script>
+
 </body>
 </html>
