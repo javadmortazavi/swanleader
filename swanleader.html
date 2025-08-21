@@ -2,224 +2,496 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>پنل استادیار - Swan Family</title>
+  <title>داشبورد مدیر - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+
+  <!-- jQuery -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+  <!-- jalaali-js برای تبدیل تاریخ -->
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
+
+  <!-- Chart.js برای نمودارها -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
-    :root { --brand:#009688; }
+    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222 }
     *{box-sizing:border-box}
-    body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
-    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;gap:10px}
-    header h1{font-size:18px;margin:0}
-    a.btn,button{background:var(--brand);color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
-    a.btn:hover,button:hover{opacity:.92}
-    .wrap{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:14px}
-    .hidden{display:none}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    input,select{padding:.7rem;border:1px solid #dedede;border-radius:10px;width:100%}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
+    header{background:#222;color:#fff;padding:12px 16px}
+    header h1{margin:0;font-size:18px}
+    .container{max-width:1200px;margin:16px auto;padding:0 12px}
+
+    .filters{display:grid;grid-template-columns:repeat(4, minmax(180px,1fr));gap:12px;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
+    label{font-weight:700;font-size:.95rem}
+    select,input{width:100%;margin-top:6px;padding:.55rem;border:1px solid #e0e0e0;border-radius:10px}
+
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px}
+    .kpi{display:flex;flex-direction:column;gap:6px}
+    .kpi .title{color:#666}
+    .kpi .val{font-size:22px;font-weight:900}
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    canvas{width:100% !important; height:360px !important}
+
+    .section{margin-top:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right}
     th{background:#fafafa}
-    .topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
-    .muted{color:#666;font-size:.92rem}
-    @media (max-width:900px){ .row{grid-template-columns:1fr} }
-    @media (max-width:700px){
-      header{flex-direction:column;align-items:stretch}
-      header .actions{display:flex;gap:8px;flex-wrap:wrap}
-    }
+    .muted{color:#666;font-size:.9rem}
+
+    .deny{max-width:800px;margin:40px auto;background:#fff;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);text-align:center}
+    .hidden{display:none}
+
+    @media (max-width:1000px){ .grid2{grid-template-columns:1fr} .kpis{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){ .filters{grid-template-columns:1fr 1fr} .kpis{grid-template-columns:1fr} }
+    a.btn{display:inline-block;background:var(--brand);color:#fff;padding:.55rem 1rem;border-radius:10px;text-decoration:none}
   </style>
 </head>
 <body>
-
 <header>
-  <h1>پنل استادیار</h1>
-  <div class="actions">
-    <span id="whoami" class="muted"></span>
-    <a id="addLink" class="btn" href="index.html">+ افزودن نیوبلاد</a>
-    <button type="button" onclick="logout()">خروج</button>
-  </div>
+  <h1>داشبورد مدیر Swan Family</h1>
 </header>
 
-<!-- ورود/ثبت‌نام -->
-<div id="auth" class="wrap">
-  <h2>ورود / ثبت‌نام</h2>
-  <p class="muted">برای ثبت و مدیریت نیوبلادها ابتدا وارد شوید.</p>
-  <div class="row" style="margin-top:10px">
-    <input id="email" type="email" placeholder="ایمیل">
-    <input id="password" type="password" placeholder="رمز عبور">
-  </div>
-  <div class="row" style="margin-top:10px">
-    <input id="displayName" type="text" placeholder="نام نمایشی (مثال: جواد مرتضوی)">
-    <div style="display:flex;gap:8px;align-items:center">
-      <button type="button" onclick="login()">ورود</button>
-      <button type="button" onclick="signup()">ثبت‌نام</button>
-    </div>
-  </div>
-</div>
-
-<!-- اپلیکیشن -->
-<div id="app" class="wrap hidden">
-  <div class="topbar">
-    <div>
-      <h2>نیوبلادهای من</h2>
-      <div class="muted">فقط رکوردهایی که با نام نمایشی شما ثبت شده‌اند.</div>
-    </div>
-    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center;min-width:280px">
-      <input id="q" placeholder="جستجو: نام، موبایل، شهر، استان">
-      <input id="byProvince" placeholder="فیلتر استان (خالی=همه)">
+<div class="container">
+  <!-- دسترسی -->
+  <div id="deny" class="deny hidden">
+    <h3>🚫 دسترسی محدود</h3>
+    <p>این صفحه فقط برای مدیر قابل نمایش است.</p>
+    <p class="muted">با اکانت مدیر وارد شوید یا از لینک آزمایشی با <code>?admin=true</code> استفاده کنید.</p>
+    <div style="margin-top:8px">
+      <a href="assistant.html" class="btn">بازگشت به پنل استادیار</a>
     </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>نام</th>
-        <th>موبایل</th>
-        <th>استان / شهر</th>
-        <th>تعداد اقساط</th>
-        <th>سطح رشد</th>
-        <th>تاریخ ایجاد</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <div id="dash" class="hidden">
+    <!-- فیلترها -->
+    <div class="filters">
+      <div>
+        <label>استان</label>
+        <select id="fProvince"><option value="">همه استان‌ها</option></select>
+      </div>
+      <div>
+        <label>شهر</label>
+        <select id="fCity"><option value="">همه شهرها</option></select>
+      </div>
+      <div>
+        <label>استادیار</label>
+        <select id="fAssistant"><option value="">همه استادیارها</option></select>
+      </div>
+      <div>
+        <label>سال (برای گزارش ماهانه)</label>
+        <select id="fYearJ"><option value="">خودکار</option></select>
+      </div>
+    </div>
+
+    <!-- KPI ها -->
+    <div class="kpis">
+      <div class="card kpi">
+        <div class="title">تعداد کل نیوبلاد</div>
+        <div id="kNewbloods" class="val">0</div>
+        <div class="muted" id="kFilterHint"></div>
+      </div>
+      <div class="card kpi">
+        <div class="title">تعداد استادیار فعال</div>
+        <div id="kAssistants" class="val">0</div>
+      </div>
+      <div class="card kpi">
+        <div class="title">مجموع اقساط این سال</div>
+        <div id="kYearInstallments" class="val">0</div>
+        <div class="muted" id="kYearTitle"></div>
+      </div>
+      <div class="card kpi">
+        <div class="title">میانگین سطح رشد</div>
+        <div id="kAvgGrowth" class="val">0</div>
+      </div>
+    </div>
+
+    <!-- نمودارها 1 -->
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0">تعداد نیوبلاد هر مربی</h3>
+        <canvas id="byAssistantChart"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">مجموع اقساط ماهانه (سال انتخابی)</h3>
+        <canvas id="installmentsMonthlyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- نمودارها 2 -->
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0">درصد سطح رشد بر اساس مربی</h3>
+        <canvas id="growthByAssistantChart"></canvas>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">درصد سطح رشد بر اساس استان</h3>
+        <canvas id="growthByProvinceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- نمودار علاقه‌مندی‌ها -->
+    <div class="card section">
+      <h3 style="margin-top:0">توزیع علاقه‌مندی‌ها</h3>
+      <canvas id="interestsChart"></canvas>
+      <div class="muted">فقط سه تیک: آناتومی، آیورودا، بازاریابی.</div>
+    </div>
+
+    <!-- تولدها -->
+    <div class="card section">
+      <h3 style="margin-top:0">تولدها به تفکیک ماه</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label>ماه:</label>
+        <select id="birthMonthSel"></select>
+        <span class="muted">نمایش اسامی و تاریخ تولد (شمسی)</span>
+      </div>
+      <div id="birthList" style="margin-top:10px"></div>
+    </div>
+
+    <!-- سوان‌کوین و جداول -->
+    <div class="grid2 section">
+      <div class="card">
+        <h3 style="margin-top:0">تعداد سوان‌کوین هر نفر</h3>
+        <table id="coinsTable">
+          <thead>
+            <tr><th>نام</th><th>تعداد کوین</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">مجموع اقساط هر ماه (تفکیکی)</h3>
+        <table id="instTable">
+          <thead>
+            <tr><th>ماه (شمسی)</th><th>جمع اقساط (تومان)</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section" style="text-align:center;margin:16px 0">
+      <a class="btn" href="assistant.html">بازگشت به پنل استادیار</a>
+    </div>
+  </div>
 </div>
 
 <script>
-  // ===== Backendless =====
+  // ====== تنظیمات و کمک‌تابع‌ها ======
+  const ADMIN_NAME  = "جواد مرتضوی";
+  const ADMIN_EMAIL = "j.mortazavi7@gmail.com";
+
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  let CURRENT_USER = null;
-  let RAW = [];
+  const jalaliMonthNames = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 
-  // اگر فرم و پنل در یک سایت/ریپو هستند، فرم‌بیِس را خودکار از مسیر فعلی می‌سازیم
-  let FORM_BASE = location.href.replace(/assistant\.html(\?.*)?$/,'');
-  // اگر فرم روی سایت جداست، این خط را از حالت کامنت خارج و دامنه فرم را ست کن:
-  // let FORM_BASE = "https://YOUR-FORM-DOMAIN.vercel.app/";
-
-  // ===== Auth =====
-  async function signup(){
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const displayName = document.getElementById('displayName').value.trim();
-    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
-    if(!displayName) return alert("نام نمایشی را وارد کنید");
+  function toDate(x){
+    if(!x) return null;
     try{
-      const user = new Backendless.User();
-      user.email = email;
-      user.password = password;
-      user.name = displayName; // ← نام نمایشی
-      await Backendless.UserService.register(user);
-      await Backendless.UserService.login(email, password, true);
-      await afterLogin();
-    }catch(e){
-      console.error(e);
-      alert("ثبت‌نام/ورود ناموفق: " + (e.message||e));
+      if(x instanceof Date) return x;
+      if(typeof x === 'number') return new Date(x);
+      const d = new Date(x);
+      return isNaN(d) ? null : d;
+    }catch{ return null; }
+  }
+
+  function toJalaliStr(d){
+    if(!d) return "";
+    d = toDate(d);
+    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
+    const j = jalaali.toJalaali(g.gy, g.gm, g.gd);
+    const mm = String(j.jm).padStart(2,'0');
+    const dd = String(j.jd).padStart(2,'0');
+    return `${j.jy}/${mm}/${dd}`;
+  }
+
+  function jalaliYear(d){
+    if(!d) return null;
+    d = toDate(d);
+    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
+    return jalaali.toJalaali(g.gy,g.gm,g.gd).jy;
+  }
+  function jalaliMonth(d){
+    if(!d) return null;
+    d = toDate(d);
+    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
+    return jalaali.toJalaali(g.gy,g.gm,g.gd).jm; // 1..12
+  }
+
+  const fmtNum = n => (n||0).toLocaleString('fa-IR');
+
+  // ====== دسترسی ======
+  (async function initAccess(){
+    let allow = false;
+    try{
+      const u = await Backendless.UserService.getCurrentUser();
+      if(u && ((u.name||"")===ADMIN_NAME || (u.email||"")===ADMIN_EMAIL)) allow = true;
+    }catch(e){}
+    const qs = new URLSearchParams(location.search);
+    if(qs.get('admin') === 'true') allow = true;
+    const aFrom = qs.get('assistant');
+    if(aFrom && decodeURIComponent(aFrom).replace(/_/g,' ').trim() === ADMIN_NAME) allow = true;
+
+    if(!allow){
+      document.getElementById('deny').classList.remove('hidden');
+      return;
     }
-  }
-
-  async function login(){
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
-    try{
-      await Backendless.UserService.login(email, password, true);
-      await afterLogin();
-    }catch(e){
-      console.error(e);
-      alert("ورود ناموفق: " + (e.message||e));
-    }
-  }
-
-  async function logout(){
-    try{ await Backendless.UserService.logout(); }catch(_){}
-    location.reload();
-  }
-
-  // ===== After Login =====
-  async function afterLogin(){
-    document.getElementById('auth').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-
-    CURRENT_USER = await Backendless.UserService.getCurrentUser();
-    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name، نه ایمیل
-    document.getElementById('whoami').textContent = "ورود: " + assistantName;
-
-    // لینک افزودن نیوبلاد → index.html?assistant=NAME
-    const addUrl = new URL('index.html', FORM_BASE);
-    addUrl.searchParams.set('assistant', assistantName);
-    const addLink = document.getElementById('addLink');
-    addLink.href = addUrl.toString();
-    // اگر می‌خواهی در همان تب باز شود:
-    // addLink.target = "_self";
-
-    // رویدادهای جستجو/فیلتر
-    document.getElementById('q').addEventListener('input', renderList);
-    document.getElementById('byProvince').addEventListener('input', renderList);
-
-    // لود داده‌ها
-    await loadMine();
-  }
-
-  // ===== Load my records =====
-  async function loadMine(){
-    const name = (CURRENT_USER && CURRENT_USER.name) || '';
-    if(!name){ RAW = []; return renderList(); }
-
-    const safe = name.replace(/'/g, "''");
-    const qb = Backendless.DataQueryBuilder.create()
-               .setWhereClause(`assistant = '${safe}'`)
-               .setSortBy(['created DESC'])
-               .setPageSize(100);
-    try{
-      RAW = await Backendless.Data.of('Newbloods').find(qb);
-      renderList();
-    }catch(e){
-      console.error(e);
-      alert('خواندن داده‌ها ناموفق بود.');
-    }
-  }
-
-  // ===== Render =====
-  function renderList(){
-    const q = (document.getElementById('q').value||'').trim();
-    const p = (document.getElementById('byProvince').value||'').trim();
-
-    const hit = (s)=> (s||'').toString().includes(q);
-    const list = RAW.filter(r=>{
-      const okQ = !q || hit(r.name)||hit(r.mobile)||hit(r.city)||hit(r.province);
-      const okP = !p || (r.province||'')===p;
-      return okQ && okP;
-    });
-
-    const tb = document.getElementById('rows');
-    tb.innerHTML = '';
-    list.forEach(r=>{
-      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← نام ستون شما
-      const grow = Number(r.growth||0);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${esc(r.name||'-')}</td>
-        <td>${esc(r.mobile||'-')}</td>
-        <td>${esc(r.province||'-')} / ${esc(r.city||'-')}</td>
-        <td>${instCount}</td>
-        <td>${'★'.repeat(grow)}${'☆'.repeat(Math.max(0,5-grow))}</td>
-        <td>${r.created ? new Date(r.created).toLocaleDateString('fa-IR') : '-'}</td>
-      `;
-      tb.appendChild(tr);
-    });
-  }
-
-  function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-
-  // اگر سشن قبلی وجود داشت، خودکار وارد شو
-  (async ()=>{
-    try{
-      const cu = await Backendless.UserService.getCurrentUser();
-      if(cu){ await afterLogin(); }
-    }catch(_){}
+    document.getElementById('dash').classList.remove('hidden');
+    await loadAndRender();
   })();
-</script>
 
+  // ====== بارگذاری دیتا ======
+  let rawData = [];
+  async function fetchAllNewbloods(){
+    const out = [];
+    let page = 0, pageSize = 100, chunk = [];
+    const tb = Backendless.Data.of('Newbloods');
+    do{
+      const qb = Backendless.DataQueryBuilder.create()
+                    .setPageSize(pageSize).setOffset(page*pageSize)
+                    .setSortBy(['created DESC']);
+      chunk = await tb.find(qb);
+      out.push(...chunk);
+      page++;
+    }while(chunk.length === pageSize);
+    return out;
+  }
+
+  // ====== فیلترها ======
+  function unique(arr){ return [...new Set(arr.filter(Boolean))]; }
+
+  function applyFilters(){
+    const p = $('#fProvince').val() || '';
+    const c = $('#fCity').val() || '';
+    const a = $('#fAssistant').val() || '';
+    return rawData.filter(r =>
+      (p ? (r.province||'')===p : true) &&
+      (c ? (r.city||'')===c : true) &&
+      (a ? (r.assistant||'')===a : true)
+    );
+  }
+
+  function populateFilters(data){
+    // استان/شهر/استادیار
+    const provinces = unique(data.map(r=>r.province||'')).sort();
+    const assistants= unique(data.map(r=>r.assistant||'')).sort();
+    $('#fProvince').html('<option value="">همه استان‌ها</option>' + provinces.map(x=>`<option value="${x}">${x}</option>`).join(''));
+    $('#fAssistant').html('<option value="">همه استادیارها</option>' + assistants.map(x=>`<option value="${x}">${x}</option>`).join(''));
+
+    // شهرها بر اساس انتخاب استان
+    function refreshCities(){
+      const p = $('#fProvince').val() || '';
+      const cities = unique(data.filter(r=> p? (r.province||'')===p : true).map(r=>r.city||'')).sort();
+      $('#fCity').html('<option value="">همه شهرها</option>' + cities.map(x=>`<option value="${x}">${x}</option>`).join(''));
+    }
+    refreshCities();
+    $('#fProvince').on('change', ()=>{ refreshCities(); renderAll(); });
+    $('#fCity').on('change', renderAll);
+    $('#fAssistant').on('change', renderAll);
+
+    // سال‌های موجود (شمسی) از تاریخ اقساط و تولد و دوره
+    const years = unique(
+      data.flatMap(r=>{
+        const arr = [];
+        if(r.birthdate)   arr.push(jalaliYear(r.birthdate));
+        if(r.course_date) arr.push(jalaliYear(r.course_date));
+        if(Array.isArray(r.instalments)){
+          r.instalments.forEach(i=> i?.date && arr.push(jalaliYear(i.date)));
+        }
+        return arr;
+      })
+    ).filter(Boolean).sort((a,b)=>a-b);
+    $('#fYearJ').html('<option value="">خودکار</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join(''))
+                .on('change', renderAll);
+
+    // ماه‌های تولد
+    $('#birthMonthSel').html(Array.from({length:12},(_,i)=>`<option value="${i+1}">${jalaliMonthNames[i]}</option>`).join(''))
+                       .on('change', renderBirthdays);
+  }
+
+  // ====== رندر کلی ======
+  let chByAssistant, chInstMonthly, chGrowthAsst, chGrowthProv, chInterests;
+
+  function destroyChart(ch){ if(ch){ ch.destroy(); } }
+
+  function renderAll(){
+    const data = applyFilters();
+    // KPI ها
+    $('#kNewbloods').text(fmtNum(data.length));
+    const assistants = unique(data.map(r=>r.assistant||'')).length;
+    $('#kAssistants').text(fmtNum(assistants));
+    const avgGrowth = data.length ? (data.reduce((s,r)=>s + (+r.growth||0),0)/data.length) : 0;
+    $('#kAvgGrowth').text((avgGrowth||0).toFixed(1));
+
+    // سال KPI اقساط
+    let yearSel = +($('#fYearJ').val()||0);
+    if(!yearSel){
+      // انتخاب خودکار: بیشترین سال دیده‌شده در اقساط یا تاریخ دوره
+      const yrs = unique(
+        data.flatMap(r=>{
+          const arr=[];
+          if(r.course_date) arr.push(jalaliYear(r.course_date));
+          if(Array.isArray(r.instalments)) r.instalments.forEach(i=> i?.date && arr.push(jalaliYear(i.date)));
+          return arr;
+        })
+      ).filter(Boolean).sort((a,b)=>b-a);
+      yearSel = yrs[0] || jalaliYear(new Date());
+      $('#fYearJ').val(yearSel);
+    }
+    $('#kYearTitle').text(`سال ${yearSel}`);
+
+    // نمودار تعداد نیوبلاد هر مربی
+    const byAsstMap = new Map();
+    data.forEach(r=>{
+      const a = r.assistant || 'نامشخص';
+      byAsstMap.set(a, (byAsstMap.get(a)||0)+1);
+    });
+    const asstLabels = [...byAsstMap.keys()];
+    const asstVals   = [...byAsstMap.values()];
+    destroyChart(chByAssistant);
+    chByAssistant = new Chart(document.getElementById('byAssistantChart'), {
+      type:'bar',
+      data:{ labels: asstLabels, datasets:[{ label:'تعداد نیوبلاد', data: asstVals }] },
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
+    });
+
+    // مجموع اقساط ماهانه سال انتخابی
+    const instByMonth = Array(12).fill(0);
+    data.forEach(r=>{
+      if(Array.isArray(r.instalments)){
+        r.instalments.forEach(it=>{
+          const d = toDate(it?.date);
+          const amt = +it?.amount || 0;
+          if(!d || !amt) return;
+          const y = jalaliYear(d);
+          const m = jalaliMonth(d);
+          if(y === yearSel && m>=1 && m<=12) instByMonth[m-1] += amt;
+        });
+      }
+    });
+    destroyChart(chInstMonthly);
+    chInstMonthly = new Chart(document.getElementById('installmentsMonthlyChart'), {
+      type:'bar',
+      data:{ labels: jalaliMonthNames, datasets:[{ label:`جمع اقساط سال ${yearSel}`, data: instByMonth }] },
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
+    });
+    // KPI جمع سال
+    $('#kYearInstallments').text(fmtNum(instByMonth.reduce((a,b)=>a+b,0)));
+
+    // درصد سطح رشد بر اساس مربی (Stacked)
+    const assts = unique(data.map(r=>r.assistant||'نامشخص'));
+    const levels = [1,2,3,4,5];
+    const countsAsstLevel = levels.map(lvl =>
+      assts.map(a => data.filter(r => (r.assistant||'نامشخص')===a && (+r.growth||0)===lvl).length)
+    );
+    const totalsByAsst = assts.map(a => data.filter(r => (r.assistant||'نامشخص')===a).length || 1);
+    const percAsstLevel = countsAsstLevel.map(row => row.map((v,i)=> Math.round( (v*100)/totalsByAsst[i] )));
+    destroyChart(chGrowthAsst);
+    chGrowthAsst = new Chart(document.getElementById('growthByAssistantChart'), {
+      type:'bar',
+      data:{
+        labels: assts,
+        datasets: levels.map((lvl, idx)=>({ label:`سطح ${lvl}`, data: percAsstLevel[idx], stack:'s' }))
+      },
+      options:{ responsive:true, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100} } }
+    });
+
+    // درصد سطح رشد بر اساس استان (Stacked)
+    const provs = unique(data.map(r=>r.province||'نامشخص'));
+    const countsProvLevel = levels.map(lvl =>
+      provs.map(p => data.filter(r => (r.province||'نامشخص')===p && (+r.growth||0)===lvl).length)
+    );
+    const totalsByProv = provs.map(p => data.filter(r => (r.province||'نامشخص')===p).length || 1);
+    const percProvLevel = countsProvLevel.map(row => row.map((v,i)=> Math.round( (v*100)/totalsByProv[i] )));
+    destroyChart(chGrowthProv);
+    chGrowthProv = new Chart(document.getElementById('growthByProvinceChart'), {
+      type:'bar',
+      data:{
+        labels: provs,
+        datasets: levels.map((lvl, idx)=>({ label:`سطح ${lvl}`, data: percProvLevel[idx], stack:'s' }))
+      },
+      options:{ responsive:true, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100} } }
+    });
+
+    // علاقه‌مندی‌ها (سه تیک)
+    const interestKeys = ['anatomy','ayurveda','marketing'];
+    const interestLabels= ['آناتومی','آیورودا','بازاریابی'];
+    const interestCounts = [0,0,0];
+    data.forEach(r=>{
+      const arr = Array.isArray(r.interests)? r.interests : [];
+      arr.forEach(k=>{
+        const idx = interestKeys.indexOf(k);
+        if(idx>=0) interestCounts[idx] += 1;
+      });
+    });
+    destroyChart(chInterests);
+    chInterests = new Chart(document.getElementById('interestsChart'), {
+      type:'bar',
+      data:{ labels: interestLabels, datasets:[{ label:'تعداد', data: interestCounts }] },
+      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
+    });
+
+    // جدول کوین‌ها (نام + تعداد)
+    const coinsRows = data.map(r=>{
+      const n = r.name || 'بدون نام';
+      const cnt = Array.isArray(r.coins) ? r.coins.length : 0;
+      return { name:n, count:cnt };
+    }).sort((a,b)=> b.count - a.count);
+    const coinsTbody = $('#coinsTable tbody').empty();
+    coinsRows.forEach(row=>{
+      coinsTbody.append(`<tr><td>${row.name}</td><td>${fmtNum(row.count)}</td></tr>`);
+    });
+
+    // جدول اقساط ماهانه (شمسی)
+    const tableMap = new Map(); // key: m(1..12) -> sum
+    instByMonth.forEach((v,i)=> tableMap.set(i+1, v));
+    const instTbody = $('#instTable tbody').empty();
+    [...tableMap.entries()].forEach(([m,sum])=>{
+      if(sum>0) instTbody.append(`<tr><td>${jalaliMonthNames[m-1]}</td><td>${fmtNum(sum)}</td></tr>`);
+    });
+
+    // لیست تولدها برای ماه انتخابی
+    renderBirthdays();
+    // نکته‌ی فیلتر در KPI
+    const hint = [];
+    if($('#fProvince').val()) hint.push('استان: '+$('#fProvince').val());
+    if($('#fCity').val())     hint.push('شهر: '+$('#fCity').val());
+    if($('#fAssistant').val())hint.push('استادیار: '+$('#fAssistant').val());
+    $('#kFilterHint').text(hint.join(' | '));
+  }
+
+  function renderBirthdays(){
+    const month = +$('#birthMonthSel').val() || 1;
+    const data = applyFilters();
+    const list = data
+      .filter(r => r.birthdate && jalaliMonth(r.birthdate)===month)
+      .map(r => ({ name: r.name||'بدون نام', d: toDate(r.birthdate) }))
+      .sort((a,b)=> (a.d?.getDate()||0) - (b.d?.getDate()||0));
+    const box = $('#birthList').empty();
+    if(!list.length){ box.html('<div class="muted">موردی یافت نشد.</div>'); return; }
+    const rows = list.map(item=>{
+      const jstr = toJalaliStr(item.d);
+      return `<div>- ${item.name} <span class="muted">(${jstr})</span></div>`;
+    }).join('');
+    box.html(rows);
+  }
+
+  // ====== بارگذاری و رندر اولیه ======
+  async function loadAndRender(){
+    try{
+      rawData = await fetchAllNewbloods();
+      populateFilters(rawData);
+      renderAll();
+    }catch(e){
+      console.error(e);
+      alert('خطا در بارگذاری داده‌ها');
+    }
+  }
+</script>
 </body>
 </html>
