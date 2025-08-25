@@ -4,224 +4,308 @@
   <meta charset="UTF-8" />
   <title>پنل استادیار - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="format-detection" content="telephone=no" />
+  <style>html{-webkit-text-size-adjust:100%}</style>
+
+  <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
+
+  <!-- jQuery + jalaali-js -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
+
   <style>
-    :root { --brand:#009688; }
+    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
     *{box-sizing:border-box}
-    body{font-family:Tahoma,system-ui,sans-serif;background:#f7f7f7;margin:0}
-    header{background:#222;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;gap:10px}
-    header h1{font-size:18px;margin:0}
-    a.btn,button{background:var(--brand);color:#fff;padding:8px 12px;border-radius:10px;border:none;text-decoration:none;cursor:pointer}
-    a.btn:hover,button:hover{opacity:.92}
-    .wrap{max-width:1100px;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:14px}
-    .hidden{display:none}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
+    header{background:#222;color:#fff;padding:12px}
+    header h1{margin:0;font-size:18px}
+    .container{max-width:1000px;margin:14px auto;padding:0 10px}
+
+    nav.top{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+    nav.top a{background:#37474f;color:#fff;padding:.6rem 1rem;border-radius:10px;text-decoration:none;font-size:15px}
+    nav.top a.primary{background:var(--brand)}
+
+    .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:10px}
+    label{display:block;margin-top:8px;font-weight:700}
+    input,select,button{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
+    button{background:var(--brand);color:#fff;border:none;cursor:pointer}
+    button.secondary{background:#607d8b}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    input,select{padding:.7rem;border:1px solid #dedede;border-radius:10px;width:100%}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right;vertical-align:middle}
-    th{background:#fafafa}
-    .topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
-    .muted{color:#666;font-size:.92rem}
-    @media (max-width:900px){ .row{grid-template-columns:1fr} }
-    @media (max-width:700px){
-      header{flex-direction:column;align-items:stretch}
-      header .actions{display:flex;gap:8px;flex-wrap:wrap}
-    }
+    @media (max-width:760px){ .row{grid-template-columns:1fr} }
+
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .kpi{display:flex;flex-direction:column;gap:4px}
+    .kpi .title{color:#777}
+    .kpi .val{font-size:20px;font-weight:900}
+
+    .list{display:grid;gap:8px}
+    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
+    .item .meta{font-size:13px;color:#555}
+    .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#444}
+    .actions{display:flex;gap:6px}
+    .actions a, .actions button{padding:.55rem .8rem;border-radius:8px;text-decoration:none}
+    .actions a{background:#37474f}
+    .stars{color:#f4c430}
+    .muted{color:#777;font-size:.9rem}
+
+    .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
+    .pager button{min-width:110px}
+
+    .hint{color:#666;font-size:.9rem;margin-top:6px}
   </style>
 </head>
 <body>
-
 <header>
-  <h1>پنل استادیار</h1>
-  <div class="actions">
-    <span id="whoami" class="muted"></span>
-    <!-- دکمه افزودن قبل از لاگین پنهان است -->
-    <a id="addLink" class="btn hidden" href="#">+ افزودن نیوبلاد</a>
-    <button type="button" onclick="logout()">خروج</button>
-  </div>
+  <h1>پنل استادیار Swan Family</h1>
 </header>
 
-<!-- ورود/ثبت‌نام -->
-<div id="auth" class="wrap">
-  <h2>ورود / ثبت‌نام</h2>
-  <p class="muted">برای ثبت و مدیریت نیوبلادها ابتدا وارد شوید.</p>
-  <div class="row" style="margin-top:10px">
-    <input id="email" type="email" placeholder="ایمیل">
-    <input id="password" type="password" placeholder="رمز عبور">
-  </div>
-  <div class="row" style="margin-top:10px">
-    <input id="displayName" type="text" placeholder="نام نمایشی (مثال: جواد مرتضوی)">
-    <div style="display:flex;gap:8px;align-items:center">
-      <button type="button" onclick="login()">ورود</button>
-      <button type="button" onclick="signup()">ثبت‌نام</button>
-    </div>
-  </div>
-</div>
+<div class="container">
 
-<!-- اپلیکیشن -->
-<div id="app" class="wrap hidden">
-  <div class="topbar">
-    <div>
-      <h2>نیوبلادهای من</h2>
-      <div class="muted">فقط رکوردهایی که با نام نمایشی شما ثبت شده‌اند.</div>
+  <nav class="top">
+    <a href="assistant.html" class="primary">پنل استادیار</a>
+    <a href="index.html">ثبت/ویرایش نیوبلاد</a>
+    <a href="swanleader.html">داشبورد مدیر</a>
+  </nav>
+
+  <!-- انتخاب/ثبت نام استادیار -->
+  <div class="card">
+    <div class="row">
+      <div>
+        <label>نام استادیار</label>
+        <input id="assistantName" placeholder="مثلاً: جواد مرتضوی">
+        <div class="hint">نام اینجا ذخیره می‌شود و برای کل لیست و افزودن نیوبلاد استفاده می‌گردد.</div>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="saveAssistant">ذخیره نام استادیار</button>
+      </div>
     </div>
-    <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;align-items:center;min-width:280px">
-      <input id="q" placeholder="جستجو: نام، موبایل، شهر، استان">
-      <input id="byProvince" placeholder="فیلتر استان (خالی=همه)">
+    <div class="row" style="margin-top:6px">
+      <div>
+        <button class="secondary" id="btnAddNew">+ افزودن نیوبلاد</button>
+      </div>
+      <div class="row" style="gap:8px">
+        <input id="q" placeholder="جستجو: نام یا موبایل…">
+        <button id="btnSearch" class="secondary">جستجو</button>
+      </div>
     </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>نام</th>
-        <th>موبایل</th>
-        <th>استان / شهر</th>
-        <th>تعداد اقساط</th>
-        <th>سطح رشد</th>
-        <th>تاریخ ایجاد</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+  <!-- KPI -->
+  <div class="card">
+    <div class="kpis">
+      <div class="kpi">
+        <div class="title">تعداد نیوبلادهای شما</div>
+        <div id="kCount" class="val">0</div>
+      </div>
+      <div class="kpi">
+        <div class="title">میانگین سطح رشد</div>
+        <div id="kGrowth" class="val">0</div>
+      </div>
+      <div class="kpi">
+        <div class="title">کل سوان‌کوین ثبت‌شده</div>
+        <div id="kCoins" class="val">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- لیست -->
+  <div class="card">
+    <div class="list" id="list"></div>
+    <div class="pager">
+      <button id="prev">قبلی</button>
+      <button id="next">بعدی</button>
+    </div>
+    <div class="muted" id="pageInfo" style="text-align:center"></div>
+  </div>
+
 </div>
 
 <script>
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  let CURRENT_USER = null;
-  let RAW = [];
-
-  // ✅ آدرس قطعی فرم روی Vercel (تا حتماً index اصلی باز شود)
-  const FORM_BASE = "https://swanfamily.vercel.app/";
-
-  // ===== ثبت‌نام/ورود =====
-  async function signup(){
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const displayName = document.getElementById('displayName').value.trim();
-    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
-    if(!displayName) return alert("نام نمایشی را وارد کنید");
+  // ===== Utilities =====
+  function toDate(x){
+    if(!x) return null;
     try{
-      const user = new Backendless.User();
-      user.email = email;
-      user.password = password;
-      user.name = displayName; // نام نمایشی
-      await Backendless.UserService.register(user);
-      await Backendless.UserService.login(email, password, true);
-      await afterLogin();
-    }catch(e){
-      console.error(e);
-      alert("ثبت‌نام/ورود ناموفق: " + (e.message||e));
+      if(x instanceof Date) return x;
+      if(typeof x === 'number') return new Date(x);
+      const d = new Date(x);
+      return isNaN(d) ? null : d;
+    }catch{ return null; }
+  }
+  function toJalaliStr(d){
+    if(!d) return "";
+    d = toDate(d);
+    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
+    const j = jalaali.toJalaali(g.gy, g.gm, g.gd);
+    const mm = String(j.jm).padStart(2,'0');
+    const dd = String(j.jd).padStart(2,'0');
+    return `${j.jy}/${mm}/${dd}`;
+  }
+  const star = n => '★'.repeat(n||0);
+  const fmt = n => (n||0).toLocaleString('fa-IR');
+
+  // ===== Assistant name (URL/localStorage) =====
+  const asstInput = document.getElementById('assistantName');
+  const saved = localStorage.getItem('assistantName');
+  const fromQS = new URLSearchParams(location.search).get('assistant');
+  if(fromQS){
+    const name = decodeURIComponent(fromQS).replace(/_/g,' ').trim();
+    asstInput.value = name;
+    localStorage.setItem('assistantName', name);
+  }else if(saved){
+    asstInput.value = saved;
+  }
+
+  document.getElementById('saveAssistant').onclick = ()=>{
+    const name = (asstInput.value||'').trim();
+    if(!name) return alert('نام استادیار را وارد کنید');
+    localStorage.setItem('assistantName', name);
+    // بعد از ذخیره، لیست را ریفرش کن
+    resetPaging(); loadList();
+  };
+
+  // ===== Add New button =====
+  document.getElementById('btnAddNew').onclick = ()=>{
+    const name = (asstInput.value||'').trim();
+    if(!name) return alert('اول نام استادیار را ذخیره کنید');
+    const q = new URLSearchParams({ assistant: name });
+    location.href = 'index.html?' + q.toString();
+  };
+
+  // ===== Search =====
+  document.getElementById('btnSearch').onclick = ()=>{ resetPaging(); loadList(); };
+  document.getElementById('q').addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); resetPaging(); loadList(); }
+  });
+
+  // ===== Paging =====
+  let page = 0;
+  const pageSize = 20;
+  function resetPaging(){ page = 0; }
+
+  document.getElementById('prev').onclick = ()=>{
+    if(page>0){ page--; loadList(); }
+  };
+  document.getElementById('next').onclick = ()=>{
+    page++; loadList();
+  };
+
+  // ===== Load list =====
+  async function loadList(){
+    const name = (asstInput.value||'').trim();
+    if(!name){
+      document.getElementById('list').innerHTML = '<div class="muted">نام استادیار را وارد و ذخیره کنید.</div>';
+      return;
     }
-  }
 
-  async function login(){
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    if(!email || !password) return alert("ایمیل و رمز را وارد کنید");
-    try{
-      await Backendless.UserService.login(email, password, true);
-      await afterLogin();
-    }catch(e){
-      console.error(e);
-      alert("ورود ناموفق: " + (e.message||e));
-    }
-  }
-
-  async function logout(){
-    try{ await Backendless.UserService.logout(); }catch(_){}
-    location.reload();
-  }
-
-  // ===== بعد از ورود =====
-  async function afterLogin(){
-    document.getElementById('auth').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-
-    CURRENT_USER = await Backendless.UserService.getCurrentUser();
-    const assistantName = (CURRENT_USER && CURRENT_USER.name) || 'بدون‌نام'; // فقط name
-    document.getElementById('whoami').textContent = "ورود: " + assistantName;
-
-    // 👇 باز کردن index اصلی + پارامتر ضدکش
-    const addLink = document.getElementById('addLink');
-    addLink.onclick = (e)=>{
-      e.preventDefault();
-      const url = new URL('index.html', FORM_BASE);
-      url.searchParams.set('assistant', assistantName);
-      url.searchParams.set('v', Date.now().toString()); // جلوگیری از کش
-      window.location.href = url.toString();
-    };
-    addLink.classList.remove('hidden');  // دکمه بعد از لاگین نمایش داده شود
-
-    // رویدادهای جستجو/فیلتر
-    document.getElementById('q').addEventListener('input', renderList);
-    document.getElementById('byProvince').addEventListener('input', renderList);
-
-    // بارگذاری رکوردهای من
-    await loadMine();
-  }
-
-  // ===== دریافت رکوردهای من =====
-  async function loadMine(){
-    const name = (CURRENT_USER && CURRENT_USER.name) || '';
-    if(!name){ RAW = []; return renderList(); }
-
-    const safe = name.replace(/'/g, "''");
-    const qb = Backendless.DataQueryBuilder.create()
-               .setWhereClause(`assistant = '${safe}'`)
-               .setSortBy(['created DESC'])
-               .setPageSize(100);
-    try{
-      RAW = await Backendless.Data.of('Newbloods').find(qb);
-      renderList();
-    }catch(e){
-      console.error(e);
-      alert('خواندن داده‌ها ناموفق بود.');
-    }
-  }
-
-  // ===== نمایش لیست =====
-  function renderList(){
     const q = (document.getElementById('q').value||'').trim();
-    const p = (document.getElementById('byProvince').value||'').trim();
+    let where = `assistant='${name.replace(/'/g,"\\'")}'`;
+    if(q){
+      where += ` AND (name LIKE '%${q}%' OR mobile LIKE '%${q}%')`;
+    }
 
-    const hit = (s)=> (s||'').toString().includes(q);
-    const list = RAW.filter(r=>{
-      const okQ = !q || hit(r.name)||hit(r.mobile)||hit(r.city)||hit(r.province);
-      const okP = !p || (r.province||'')===p;
-      return okQ && okP;
-    });
+    try{
+      const tb = Backendless.Data.of('Newbloods');
+      const qb = Backendless.DataQueryBuilder.create()
+                   .setWhereClause(where)
+                   .setSortBy(['created DESC'])
+                   .setPageSize(pageSize)
+                   .setOffset(page*pageSize);
+      const rows = await tb.find(qb);
 
-    const tb = document.getElementById('rows');
-    tb.innerHTML = '';
-    list.forEach(r=>{
-      const instCount = Array.isArray(r.instalments) ? r.instalments.length : 0; // ← ستون شما
-      const grow = Number(r.growth||0);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${esc(r.name||'-')}</td>
-        <td>${esc(r.mobile||'-')}</td>
-        <td>${esc(r.province||'-')} / ${esc(r.city||'-')}</td>
-        <td>${instCount}</td>
-        <td>${'★'.repeat(grow)}${'☆'.repeat(Math.max(0,5-grow))}</td>
-        <td>${r.created ? new Date(r.created).toLocaleDateString('fa-IR') : '-'}</td>
-      `;
-      tb.appendChild(tr);
-    });
+      // KPI ها
+      await loadKPIs(name);
+
+      // لیست
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      if(!rows.length){
+        list.innerHTML = '<div class="muted">موردی یافت نشد.</div>';
+      }else{
+        rows.forEach(r=>{
+          const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
+          const cityPart = [r.province, r.city].filter(Boolean).join(' / ');
+          const cd = r.course_date ? toJalaliStr(r.course_date) : '—';
+          const growthStars = star(+r.growth||0);
+
+          const wrap = document.createElement('div');
+          wrap.className = 'item';
+
+          const left = document.createElement('div');
+          left.innerHTML = `
+            <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span></div>
+            <div class="meta">${cityPart||'—'} | رشد: <span class="stars">${growthStars}</span> | کوین: ${fmt(coinsCount)} | دوره: ${cd}</div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          const aEdit = document.createElement('a');
+          const qs = new URLSearchParams({ objectId: r.objectId, assistant: name });
+          aEdit.href = 'index.html?' + qs.toString();
+          aEdit.textContent = 'ویرایش';
+          aEdit.target = '_self';
+
+          // دکمه مشاهده فیش‌ها (بازکردن لینک‌ها اگر بودند)
+          const btnFiles = document.createElement('button');
+          btnFiles.className='secondary';
+          btnFiles.textContent = 'فیش/اقساط';
+          btnFiles.onclick = ()=>{
+            const inst = Array.isArray(r.instalments) ? r.instalments : [];
+            const links = inst.filter(i=>i?.receipt_url).map(i=> i.receipt_url);
+            if(!links.length) return alert('فیشی ثبت نشده است.');
+            // نمایش ساده:
+            window.open(links[0], '_blank');
+            // یا اگر چندتا بود:
+            if(links.length>1) alert('چند فیش دارید، اولی باز شد. بقیه را در ویرایش ببینید.');
+          };
+
+          actions.appendChild(aEdit);
+          actions.appendChild(btnFiles);
+
+          wrap.appendChild(left);
+          wrap.appendChild(actions);
+          list.appendChild(wrap);
+        });
+      }
+
+      // صفحه‌بندی
+      document.getElementById('pageInfo').textContent = `صفحه ${page+1}`;
+    }catch(e){
+      console.error(e);
+      alert('خطا در بارگذاری لیست');
+    }
   }
 
-  function esc(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+  async function loadKPIs(name){
+    // برای KPI کلی (count/growth/coins) تعداد کل برای این استادیار را می‌گیریم (بدون صفحه‌بندی)
+    const tb = Backendless.Data.of('Newbloods');
+    let offset = 0, all = [], chunk = [];
+    const where = `assistant='${name.replace(/'/g,"\\'")}'`;
+    do{
+      const qb = Backendless.DataQueryBuilder.create()
+                   .setWhereClause(where)
+                   .setSortBy(['created DESC'])
+                   .setPageSize(100).setOffset(offset);
+      chunk = await tb.find(qb);
+      all.push(...chunk);
+      offset += 100;
+    }while(chunk.length===100);
 
-  // اگر سشن قبلی وجود داشت، خودکار وارد شو (اما دکمه افزودن تا afterLogin پنهان است)
-  (async ()=>{
-    try{
-      const cu = await Backendless.UserService.getCurrentUser();
-      if(cu){ await afterLogin(); }
-    }catch(_){}
-  })();
+    const count = all.length;
+    const avgGrowth = count ? (all.reduce((s,r)=>s + (+r.growth||0),0)/count) : 0;
+    const totalCoins = all.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length:0), 0);
+
+    document.getElementById('kCount').textContent = fmt(count);
+    document.getElementById('kGrowth').textContent = (avgGrowth||0).toFixed(1);
+    document.getElementById('kCoins').textContent = fmt(totalCoins);
+  }
+
+  // اولین بار
+  loadList();
 </script>
-
 </body>
 </html>
