@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>فرم ثبت نیوبلاد - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="format-detection" content="telephone=no" />
+  <style>html{-webkit-text-size-adjust:100%}</style>
 
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
@@ -16,223 +18,274 @@
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
   <style>
-    :root{ --brand:#009688 }
+    :root{ --brand:#009688; --card:#fff; --txt:#222; --muted:#666; --bg:#f5f7fb }
     *{box-sizing:border-box}
-    body{font-family:Tahoma,system-ui,sans-serif;background:#f5f5f5;margin:0;padding:0}
+    body{font-family:Tahoma,system-ui,sans-serif;background:var(--bg);margin:0;color:var(--txt)}
     header{background:#222;color:#fff;text-align:center;padding:12px}
     header h1{margin:0;font-size:18px}
-    form{background:#fff;max-width:980px;margin:18px auto;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+
+    .container{max-width:980px;margin:14px auto;padding:0 10px}
+    .bar{background:var(--card);box-shadow:0 8px 20px rgba(0,0,0,.06);border-radius:12px;padding:10px;margin-bottom:10px}
+
+    /* باکس جستجو برای ویرایش + لیست آخرین ثبت‌ها */
+    .findbox{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+    .findbox input{padding:.9rem;border:1px solid #dde1e6;border-radius:10px;font-size:16px}
+    .findbox button{padding:.95rem 1rem;border:none;border-radius:10px;background:#607d8b;color:#fff;cursor:pointer;font-size:16px}
+    .findresult{margin-top:6px;font-size:.95rem;color:var(--muted)}
+    .recent{margin-top:10px}
+    .recent h4{margin:6px 0 8px 0}
+    .recent-list{display:grid;gap:8px}
+    .recent-item{display:flex;justify-content:space-between;align-items:center;padding:.65rem .8rem;border:1px solid #eee;border-radius:10px;background:#fafafa}
+    .recent-item button{background:#37474f;color:#fff;border:none;border-radius:8px;padding:.5rem .8rem;cursor:pointer}
+
+    form{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
     label{display:block;margin-top:12px;font-weight:700}
-    input,select,textarea{width:100%;padding:.6rem;border:1px solid #dedede;border-radius:10px;margin-top:6px}
+    input,select,textarea{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
     textarea{min-height:90px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .muted{color:#666;font-size:.9rem}
+    .muted{color:var(--muted);font-size:.9rem}
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-    button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:.65rem 1.2rem;cursor:pointer}
-    button.secondary{background:#607d8b}
+    button.primary{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:1rem 1.2rem;cursor:pointer;font-size:16px}
+    a.btn{display:inline-block;background:#607d8b;color:#fff;padding:1rem 1.2rem;border-radius:10px;text-decoration:none;font-size:16px}
 
-    .stars span{font-size:1.6rem;cursor:pointer;color:#c9c9c9}
+    .stars span{font-size:1.8rem;cursor:pointer;color:#c9c9c9}
     .stars .selected{color:#f4c430}
 
     .installments,.coins-log,.referred{margin-top:6px}
     .installment,.coin-entry,.referred-entry{
       background:#f0f0f0;border-radius:10px;padding:.7rem;display:grid;gap:.5rem;align-items:center;margin:.4rem 0
     }
-    .installment{grid-template-columns:repeat(4, minmax(160px,1fr))}
-    .coin-entry{grid-template-columns:minmax(160px,1fr) minmax(220px,2fr) auto}
+    .installment{grid-template-columns:repeat(4, minmax(150px,1fr))}
+    .coin-entry{grid-template-columns:minmax(150px,1fr) minmax(220px,2fr) auto}
     .referred-entry{grid-template-columns:1fr auto}
-    .installment>button,.coin-entry>button,.referred-entry>button{background:#e53935}
+    .installment>button,.coin-entry>button,.referred-entry>button{background:#e53935;color:#fff;border:none;border-radius:8px;padding:.65rem .8rem;cursor:pointer}
 
     .pdate-input{direction:ltr;text-align:center}
     input[type="file"]{width:100%}
 
-    .msg{margin-top:12px;padding:.7rem;border-radius:10px;display:none}
+    .msg{margin-top:12px;padding:.9rem;border-radius:10px;display:none}
     .ok{background:#e0f7f4;color:#00695c}
     .err{background:#ffebee;color:#c62828}
 
-    /* نوار بکاپ فقط برای ادمین؛ پیش‌فرض پنهان */
-    .backup-bar{display:none;max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
-    .backup-bar small{color:#666}
+    /* بکاپ فقط برای ادمین؛ پیش‌فرض پنهان */
+    .backup-bar{display:none;gap:8px;flex-wrap:wrap;align-items:center}
+    .backup-bar button{background:#37474f;color:#fff;border:none;border-radius:10px;padding:.8rem 1rem;cursor:pointer;font-size:16px}
 
+    /* موبایل */
     @media (max-width:900px){ .row{grid-template-columns:1fr} }
-    @media (max-width:700px){
+    @media (max-width:640px){
       .installment,.coin-entry,.referred-entry{grid-template-columns:1fr}
       .installment>button,.coin-entry>button,.referred-entry>button{width:100%;order:99}
+      /* جلوگیری از عناصر روی Select در iOS */
+      label{position:relative;z-index:1}
+    }
+
+    /* فیکس روی‌هم‌افتادگی تاریخ‌پیकर در موبایل */
+    .datepicker-plot-area , .pwt-datepicker-container{z-index:9999 !important}
+
+    /* ناحیه ثابت پایین برای موبایل پس از لود رکورد (دکمه ویرایش همین رکورد) */
+    .sticky-edit{
+      display:none;position:sticky;bottom:8px;background:rgba(255,255,255,.95);
+      border:1px solid #eaeaea;border-radius:12px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.08);
+      margin-top:10px
     }
   </style>
 </head>
 <body>
-
 <header>
   <h1>فرم ثبت نیوبلاد</h1>
 </header>
 
-<!-- نوار بکاپ (فقط وقتی ادمین لاگین است نمایش داده می‌شود) -->
-<div class="backup-bar" id="backupBar">
-  <button type="button" class="secondary" onclick="backupJSON()">دانلود بکاپ JSON</button>
-  <button type="button" class="secondary" onclick="backupCSV()">دانلود بکاپ CSV</button>
-  <small>بکاپ خودکار روزانه با GitHub Actions در ریپو تنظیم می‌شود.</small>
+<div class="container">
+
+  <!-- نوار بکاپ (فقط ادمین) -->
+  <div class="bar backup-bar" id="backupBar">
+    <button type="button" onclick="backupJSON()">دانلود JSON</button>
+    <button type="button" onclick="backupCSV()">دانلود CSV</button>
+    <small class="muted">بکاپ خودکار روزانه با GitHub Actions روی ریپو انجام می‌شود.</small>
+  </div>
+
+  <!-- جستجو برای ویرایش + آخرین ثبت‌ها -->
+  <div class="bar">
+    <div class="findbox">
+      <input id="findQuery" placeholder="جستجو بر اساس موبایل یا نام برای ویرایش…" />
+      <button id="btnFind">یافتن و بارگذاری</button>
+    </div>
+    <div id="findResult" class="findresult"></div>
+
+    <div class="recent" id="recentBox" style="display:none">
+      <h4>آخرین ثبت‌های شما</h4>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+  </div>
+
+  <form id="newbloodForm" class="bar" autocomplete="off">
+    <!-- استادیار ثبت‌کننده -->
+    <label>استادیار ثبت‌کننده</label>
+    <select id="assistantSel" name="assistant" required>
+      <option value="">— انتخاب کنید —</option>
+      <option value="جواد مرتضوی">جواد مرتضوی</option>
+      <option value="استادیار ۱">استادیار ۱</option>
+      <option value="استادیار ۲">استادیار ۲</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>نام و نام خانوادگی</label>
+        <input type="text" name="name" required autocomplete="name">
+      </div>
+      <div>
+        <label>موبایل</label>
+        <input type="tel" name="mobile" required inputmode="tel" autocomplete="tel">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>اینستاگرام</label>
+        <input type="text" name="instagram" placeholder="@username">
+      </div>
+      <div>
+        <label>وضعیت تأهل</label>
+        <select name="marital_status">
+          <option value="">انتخاب کنید</option>
+          <option value="single">مجرد</option>
+          <option value="married">متأهل</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>شغل اول</label>
+        <input type="text" name="job1">
+      </div>
+      <div>
+        <label>شغل دوم</label>
+        <input type="text" name="job2">
+      </div>
+    </div>
+
+    <label>سابقهٔ فعالیت ماساژ</label>
+    <textarea name="massage_experience" placeholder="مختصر توضیح دهید..."></textarea>
+
+    <label>مهارت‌هایی که به کار تیم سوان کمک می‌کند</label>
+    <textarea name="skills" placeholder="مثلاً: عکاسی، تدوین، تدریس، مدیریت شبکه‌های اجتماعی و..."></textarea>
+
+    <label>نحوهٔ آشنایی با خانوادهٔ سوان</label>
+    <textarea name="how_met" placeholder="مثلاً: معرفی دوست، اینستاگرام، شرکت در رویداد و..."></textarea>
+
+    <!-- علاقه‌مندی‌ها (۳ تیک) -->
+    <label>علاقه‌مندی‌ها</label>
+    <div class="row">
+      <label><input type="checkbox" name="interests" value="anatomy"> آناتومی</label>
+      <label><input type="checkbox" name="interests" value="ayurveda"> آیورودا</label>
+      <label><input type="checkbox" name="interests" value="marketing"> بازاریابی</label>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>تاریخ تولد (شمسی)</label>
+        <input type="text" id="birthdate_j" class="pdate-input" placeholder="۱۴۰۴/۰۱/۱۵" inputmode="numeric">
+      </div>
+      <div>
+        <label>تاریخ دوره (شمسی)</label>
+        <input type="text" id="course_date_j" class="pdate-input" placeholder="۱۴۰۴/۰۲/۲۰" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>محل دوره</label>
+        <input type="text" name="course_location">
+      </div>
+      <div>
+        <label>معرف / هماهنگ‌کننده</label>
+        <input type="text" name="referrer">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>استان</label>
+        <input type="text" name="province">
+      </div>
+      <div>
+        <label>شهر</label>
+        <input type="text" name="city">
+      </div>
+    </div>
+
+    <!-- پیش‌پرداخت بالای اقساط -->
+    <label>پیش‌پرداخت (تومان)</label>
+    <input type="number" name="prepayment" min="0" step="1" inputmode="numeric">
+
+    <label>سطح رشد</label>
+    <div class="stars" id="growthStars">
+      <span data-val="1">★</span>
+      <span data-val="2">★</span>
+      <span data-val="3">★</span>
+      <span data-val="4">★</span>
+      <span data-val="5">★</span>
+    </div>
+    <input type="hidden" name="growth" id="growthVal" value="0">
+
+    <!-- اقساط -->
+    <label>اقساط <span class="muted">(برای هر قسط می‌توانید فیش پرداختی آپلود کنید)</span></label>
+    <div class="installments" id="instContainer"></div>
+    <button type="button" class="btn" onclick="addInstallment()">+ افزودن قسط</button>
+
+    <!-- سوان کوین -->
+    <label>سوان کوین</label>
+    <div class="coins-log" id="coinsContainer"></div>
+    <button type="button" class="btn" onclick="addCoin()">+ افزودن کوین</button>
+
+    <!-- معرفی‌شده‌ها -->
+    <label>نیوبلادهایی که معرفی کرده</label>
+    <div class="referred" id="refContainer"></div>
+    <button type="button" class="btn" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
+
+    <label>یادداشت</label>
+    <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
+
+    <div class="actions">
+      <button type="submit" id="submitBtn" class="primary">ثبت</button>
+      <a class="btn" href="/assistant">بازگشت به پنل استادیار</a>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- لینک سریع ویرایش همین رکورد بعد از ذخیره -->
+    <div id="editSticky" class="sticky-edit">
+      <a id="editLink" class="btn" href="#">ویرایش همین رکورد</a>
+    </div>
+  </form>
 </div>
 
-<form id="newbloodForm">
-  <!-- استادیار ثبت‌کننده -->
-  <label>استادیار ثبت‌کننده</label>
-  <select id="assistantSel" name="assistant" required>
-    <option value="">— انتخاب کنید —</option>
-    <option value="جواد مرتضوی">جواد مرتضوی</option>
-    <option value="استادیار ۱">استادیار ۱</option>
-    <option value="استادیار ۲">استادیار ۲</option>
-  </select>
-
-  <div class="row">
-    <div>
-      <label>نام و نام خانوادگی</label>
-      <input type="text" name="name" required>
-    </div>
-    <div>
-      <label>موبایل</label>
-      <input type="tel" name="mobile" required>
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>اینستاگرام</label>
-      <input type="text" name="instagram" placeholder="@username">
-    </div>
-    <div>
-      <label>وضعیت تأهل</label>
-      <select name="marital_status">
-        <option value="">انتخاب کنید</option>
-        <option value="single">مجرد</option>
-        <option value="married">متأهل</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>شغل اول</label>
-      <input type="text" name="job1">
-    </div>
-    <div>
-      <label>شغل دوم</label>
-      <input type="text" name="job2">
-    </div>
-  </div>
-
-  <label>سابقهٔ فعالیت ماساژ</label>
-  <textarea name="massage_experience" placeholder="مختصر توضیح دهید..."></textarea>
-
-  <label>مهارت‌هایی که به کار تیم سوان کمک می‌کند</label>
-  <textarea name="skills" placeholder="مثلاً: عکاسی، تدوین، تدریس، مدیریت شبکه‌های اجتماعی و..."></textarea>
-
-  <label>نحوهٔ آشنایی با خانوادهٔ سوان</label>
-  <textarea name="how_met" placeholder="مثلاً: معرفی دوست، اینستاگرام، شرکت در رویداد و..."></textarea>
-
-  <!-- علاقه‌مندی‌ها: فقط سه تیک خواسته‌شده -->
-  <label>علاقه‌مندی‌ها</label>
-  <div class="row">
-    <label><input type="checkbox" name="interests" value="anatomy"> آناتومی</label>
-    <label><input type="checkbox" name="interests" value="ayurveda"> آیورودا</label>
-    <label><input type="checkbox" name="interests" value="marketing"> بازاریابی</label>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>تاریخ تولد (شمسی)</label>
-      <input type="text" id="birthdate_j" class="pdate-input" placeholder="۱۴۰۴/۰۱/۱۵">
-    </div>
-    <div>
-      <label>تاریخ دوره (شمسی)</label>
-      <input type="text" id="course_date_j" class="pdate-input" placeholder="۱۴۰۴/۰۲/۲۰">
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>محل دوره</label>
-      <input type="text" name="course_location">
-    </div>
-    <div>
-      <label>معرف / هماهنگ‌کننده</label>
-      <input type="text" name="referrer">
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>استان</label>
-      <input type="text" name="province">
-    </div>
-    <div>
-      <label>شهر</label>
-      <input type="text" name="city">
-    </div>
-  </div>
-
-  <!-- پیش‌پرداخت بالای اقساط -->
-  <label>پیش‌پرداخت (تومان)</label>
-  <input type="number" name="prepayment" min="0" step="1">
-
-  <label>سطح رشد</label>
-  <div class="stars" id="growthStars">
-    <span data-val="1">★</span>
-    <span data-val="2">★</span>
-    <span data-val="3">★</span>
-    <span data-val="4">★</span>
-    <span data-val="5">★</span>
-  </div>
-  <input type="hidden" name="growth" id="growthVal" value="0">
-
-  <!-- اقساط -->
-  <label>اقساط <span class="muted">(برای هر قسط می‌توانید فیش پرداختی آپلود کنید)</span></label>
-  <div class="installments" id="instContainer"></div>
-  <button type="button" class="secondary" onclick="addInstallment()">+ افزودن قسط</button>
-
-  <!-- سوان کوین -->
-  <label>سوان کوین</label>
-  <div class="coins-log" id="coinsContainer"></div>
-  <button type="button" class="secondary" onclick="addCoin()">+ افزودن کوین</button>
-
-  <!-- معرفی‌شده‌ها: فقط نام نیوبلادهای معرفی‌شده -->
-  <label>نیوبلادهایی که معرفی کرده</label>
-  <div class="referred" id="refContainer"></div>
-  <button type="button" class="secondary" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
-
-  <label>یادداشت</label>
-  <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
-
-  <div class="actions">
-    <button type="submit">ثبت</button>
-    <a class="secondary" href="/assistant" style="text-decoration:none;padding:.65rem 1.2rem;border-radius:10px;color:#fff">بازگشت به پنل استادیار</a>
-  </div>
-
-  <div id="msg" class="msg"></div>
-</form>
-
 <script>
-  // ===== تنظیمات ادمین =====
+  // ===== تنظیمات ادمین (برای نوار بکاپ) =====
   const ADMIN_NAME  = "جواد مرتضوی";
   const ADMIN_EMAIL = "j.mortazavi7@gmail.com";
 
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // بعد از لود، اگر ادمین لاگین بود، نوار بکاپ را نشان بده
+  // نمایش نوار بکاپ اگر ادمین لاگین است یا ?admin=true
   (async function showBackupIfAdmin(){
     try{
       const u = await Backendless.UserService.getCurrentUser();
       const isAdmin = !!u && ((u.name||"")===ADMIN_NAME || (u.email||"")===ADMIN_EMAIL);
-      if(isAdmin){ document.getElementById('backupBar').style.display = 'flex'; }
+      if(isAdmin || new URLSearchParams(location.search).get('admin')==='true'){
+        document.getElementById('backupBar').style.display = 'flex';
+      }
     }catch(_){}
   })();
 
-  // ===== Persian datepickers =====
+  // تاریخ‌پیگر شمسی
   $('#birthdate_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
   $('#course_date_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
 
-  // ===== Growth stars =====
+  // ستاره‌های رشد
   (function initStars(){
     const stars = document.querySelectorAll('#growthStars span');
     const out = document.getElementById('growthVal');
@@ -245,7 +298,7 @@
     });
   })();
 
-  // ===== Assistant from URL; lock & hidden =====
+  // مقداردهی استادیار از URL و بارگذاری «آخرین ثبت‌ها»
   (function initAssistant(){
     const sel = document.getElementById('assistantSel');
     const p = new URLSearchParams(location.search).get('assistant');
@@ -258,63 +311,234 @@
       const hid = document.createElement('input');
       hid.type='hidden'; hid.name='assistant'; hid.value=name;
       sel.parentNode.appendChild(hid);
+      // لیست آخرین ثبت‌های این استادیار
+      loadRecentForAssistant(name);
+    }else{
+      sel.addEventListener('change', ()=> {
+        if(sel.value) loadRecentForAssistant(sel.value);
+        else hideRecent();
+      });
     }
   })();
 
-  // ===== Helpers =====
+  // Helpers
   function jalaliStrToDate(str){
     if(!str) return null;
     const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
     if(!m) return null;
     const jy=+m[1], jm=+m[2], jd=+m[3];
-    const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
+    const g = window.jalaali.toGregorian(jy, jm, jd);
     return new Date(g.gy, g.gm-1, g.gd);
   }
   const toNumber = v => (v===''||v==null ? null : Number(v));
 
   async function uploadReceipt(file){
-    const safe = (file.name||'receipt').replace(/\s+/g,'_');
+    const safe = (file?.name||'receipt').replace(/\s+/g,'_');
     const fname = `${Date.now()}_${safe}`;
     const res = await Backendless.Files.upload(file, `receipts/${fname}`, true);
     return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
   }
 
-  // ===== Dynamic rows =====
-  function addInstallment(){
+  // Dynamic rows
+  function addInstallment(it=null){
     const div=document.createElement('div');
     div.className='installment';
     div.innerHTML=`
-      <input type="text" class="pdate-input inst-date" placeholder="تاریخ قسط (شمسی)">
-      <input type="number" class="inst-amount" placeholder="مبلغ (تومان)">
+      <input type="text" class="pdate-input inst-date" placeholder="تاریخ قسط (شمسی)" inputmode="numeric">
+      <input type="number" class="inst-amount" placeholder="مبلغ (تومان)" inputmode="numeric">
       <input type="file" class="inst-file" accept="image/*,application/pdf">
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('instContainer').appendChild(div);
-    $(div.querySelector('.inst-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    const dp = $(div.querySelector('.inst-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    if(it?.date){
+      const d = new Date(it.date);
+      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
+      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
+      dp.setDate(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
+    }
+    if(it?.amount!=null) div.querySelector('.inst-amount').value = it.amount;
+    if(it?.receipt_url){
+      const a = document.createElement('a');
+      a.href = it.receipt_url; a.target = "_blank"; a.textContent = 'مشاهده فیش قبلی';
+      a.style.marginTop = '6px';
+      div.appendChild(a);
+    }
   }
 
-  function addCoin(){
+  function addCoin(c=null){
     const div=document.createElement('div');
     div.className='coin-entry';
     div.innerHTML=`
-      <input type="text" class="pdate-input coin-date" placeholder="تاریخ کوین (شمسی)">
+      <input type="text" class="pdate-input coin-date" placeholder="تاریخ کوین (شمسی)" inputmode="numeric">
       <input type="text" class="coin-note" placeholder="توضیح (اختیاری)">
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('coinsContainer').appendChild(div);
-    $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    const dp = $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    if(c?.date){
+      const d = new Date(c.date);
+      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
+      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
+      dp.setDate(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
+    }
+    if(c?.note) div.querySelector('.coin-note').value = c.note;
   }
 
-  function addReferred(){
+  function addReferred(name=''){
     const div=document.createElement('div');
     div.className='referred-entry';
     div.innerHTML=`
-      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده">
+      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده" value="${name}">
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('refContainer').appendChild(div);
   }
 
-  // ===== Submit =====
+  // حالت ایجاد/ویرایش
+  let editingId = null;
+
+  async function loadByObjectId(id){
+    const msg = document.getElementById('msg');
+    try{
+      const rec = await Backendless.Data.of('Newbloods').findById(id);
+      fillForm(rec);
+      editingId = rec.objectId;
+      document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
+      msg.style.display='block'; msg.className='msg ok'; msg.textContent='حالت ویرایش فعال شد.';
+      showEditLink(rec.objectId);
+    }catch(e){
+      msg.style.display='block'; msg.className='msg err'; msg.textContent='❌ رکورد پیدا نشد.';
+    }
+  }
+
+  function fillForm(d){
+    const f = document.getElementById('newbloodForm');
+    const set = (name,val)=>{ const el = f.querySelector(`[name="${name}"]`); if(el!=null) el.value = val ?? ''; };
+
+    const sel = document.getElementById('assistantSel');
+    if(d.assistant){
+      let opt = Array.from(sel.options).find(o=>o.value===d.assistant);
+      if(!opt){ opt = new Option(d.assistant, d.assistant); sel.add(opt); }
+      sel.value = d.assistant;
+    }
+
+    set('name', d.name);
+    set('mobile', d.mobile);
+    set('instagram', d.instagram);
+    set('marital_status', d.marital_status);
+    set('job1', d.job1);
+    set('job2', d.job2);
+    set('massage_experience', d.massage_experience);
+    set('skills', d.skills);
+    set('how_met', d.how_met);
+    set('course_location', d.course_location);
+    set('referrer', d.referrer);
+    set('province', d.province);
+    set('city', d.city);
+    set('prepayment', d.prepayment);
+
+    // interests
+    const ints = Array.isArray(d.interests)? d.interests : [];
+    f.querySelectorAll('input[name="interests"]').forEach(ch=>{
+      ch.checked = ints.includes(ch.value);
+    });
+
+    // dates -> jalali UI
+    function setJalaliInput(sel, dateVal){
+      if(!dateVal) return;
+      const d = new Date(dateVal);
+      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
+      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
+      $(sel).val(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
+    }
+    setJalaliInput('#birthdate_j', d.birthdate);
+    setJalaliInput('#course_date_j', d.course_date);
+
+    // growth
+    const gv = +(d.growth||0);
+    document.getElementById('growthVal').value = gv;
+    document.querySelectorAll('#growthStars span').forEach((s,i)=> s.classList.toggle('selected', i < gv));
+
+    // installments
+    document.getElementById('instContainer').innerHTML='';
+    if(Array.isArray(d.instalments)){
+      d.instalments.forEach(it=> addInstallment(it));
+    }
+
+    // coins
+    document.getElementById('coinsContainer').innerHTML='';
+    if(Array.isArray(d.coins)){
+      d.coins.forEach(c=> addCoin(c));
+    }
+
+    // referred
+    document.getElementById('refContainer').innerHTML='';
+    if(Array.isArray(d.referred_people)){
+      d.referred_people.forEach(n=> addReferred(n));
+    }
+  }
+
+  function showEditLink(objectId){
+    const box = document.getElementById('editSticky');
+    const a = document.getElementById('editLink');
+    const asst = new URLSearchParams(location.search).get('assistant');
+    const q = new URLSearchParams();
+    if(asst) q.set('assistant', asst);
+    q.set('objectId', objectId);
+    a.href = `index.html?${q.toString()}`;
+    box.style.display = 'block';
+  }
+
+  // جستجو برای ویرایش (بر اساس موبایل یا نام)
+  document.getElementById('btnFind').addEventListener('click', async ()=>{
+    const q = (document.getElementById('findQuery').value||'').trim();
+    const out = document.getElementById('findResult');
+    if(!q){ out.textContent='لطفاً موبایل یا نام را وارد کنید.'; return; }
+    out.textContent='در حال جستجو…';
+    try{
+      const tb = Backendless.Data.of('Newbloods');
+      const qb = Backendless.DataQueryBuilder.create()
+                  .setWhereClause(`mobile LIKE '%${q}%' OR name LIKE '%${q}%'`)
+                  .setPageSize(1);
+      const res = await tb.find(qb);
+      if(!res.length){ out.textContent='چیزی پیدا نشد.'; return; }
+      const r = res[0];
+      out.innerHTML = `پیدا شد: <b>${r.name||'—'}</b> (${r.mobile||'—'}) — <a href="#" id="loadRec">بارگذاری برای ویرایش</a>`;
+      document.getElementById('loadRec').onclick = (e)=>{ e.preventDefault(); fillForm(r); editingId = r.objectId; document.getElementById('submitBtn').textContent='به‌روزرسانی'; showEditLink(r.objectId); };
+    }catch(e){
+      out.textContent='خطا در جستجو.'; console.error(e);
+    }
+  });
+
+  // لیست آخرین ثبت‌های استادیار
+  async function loadRecentForAssistant(assistantName){
+    try{
+      const tb = Backendless.Data.of('Newbloods');
+      const qb = Backendless.DataQueryBuilder.create()
+                  .setWhereClause(`assistant='${assistantName.replace(/'/g,"\\'")}'`)
+                  .setSortBy(['created DESC'])
+                  .setPageSize(10);
+      const res = await tb.find(qb);
+      const box = document.getElementById('recentBox');
+      const lst = document.getElementById('recentList');
+      lst.innerHTML = '';
+      res.forEach(r=>{
+        const div = document.createElement('div');
+        div.className='recent-item';
+        div.innerHTML = `
+          <div><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span></div>
+          <button type="button">ویرایش</button>`;
+        div.querySelector('button').onclick = ()=> { fillForm(r); editingId = r.objectId; document.getElementById('submitBtn').textContent='به‌روزرسانی'; showEditLink(r.objectId); window.scrollTo({top:0,behavior:'smooth'}); };
+        lst.appendChild(div);
+      });
+      box.style.display = res.length ? 'block' : 'none';
+    }catch(e){ console.warn(e); }
+  }
+  function hideRecent(){ document.getElementById('recentBox').style.display='none'; }
+
+  // Submit (create or update) + دیسبل دکمه برای جلوگیری از چند کلیک در موبایل
   document.getElementById('newbloodForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'در حال ذخیره...';
     const msg = document.getElementById('msg');
     msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ذخیره...';
 
@@ -322,18 +546,13 @@
     const data = {};
     fd.forEach((v,k)=> data[k]=v);
 
-    // تاریخ‌ها: شمسی → میلادی
     data.birthdate   = jalaliStrToDate($('#birthdate_j').val());
     data.course_date = jalaliStrToDate($('#course_date_j').val());
-
-    // سطح رشد / پیش‌پرداخت
     data.growth = toNumber(document.getElementById('growthVal').value) || 0;
     data.prepayment = toNumber(data.prepayment);
-
-    // علاقه‌مندی‌ها → آرایه (فقط سه مورد)
     data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
 
-    // اقساط (با آپلود فیش)
+    // اقساط
     const instRows = Array.from(document.querySelectorAll('.installment'));
     const instPromises = instRows.map(async row=>{
       const date = jalaliStrToDate($(row).find('.inst-date').val());
@@ -357,23 +576,43 @@
       .map(i=>i.value.trim()).filter(Boolean);
 
     try{
-      await Backendless.Data.of('Newbloods').save(data);
-      msg.className='msg ok'; msg.textContent='✅ اطلاعات ذخیره شد.';
-      // reset
-      e.target.reset();
-      $('#birthdate_j').val(''); $('#course_date_j').val('');
-      document.getElementById('instContainer').innerHTML='';
-      document.getElementById('coinsContainer').innerHTML='';
-      document.getElementById('refContainer').innerHTML='';
-      document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
-      document.getElementById('growthVal').value=0;
+      if(editingId){
+        data.objectId = editingId;
+        await Backendless.Data.of('Newbloods').save(data);
+        msg.className='msg ok'; msg.textContent='✅ رکورد به‌روزرسانی شد.';
+        showEditLink(editingId);
+      }else{
+        const saved = await Backendless.Data.of('Newbloods').save(data);
+        msg.className='msg ok'; msg.textContent='✅ اطلاعات ذخیره شد.';
+        showEditLink(saved.objectId);
+        // ریست فرم (ایجاد)
+        e.target.reset();
+        $('#birthdate_j').val(''); $('#course_date_j').val('');
+        document.getElementById('instContainer').innerHTML='';
+        document.getElementById('coinsContainer').innerHTML='';
+        document.getElementById('refContainer').innerHTML='';
+        document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
+        document.getElementById('growthVal').value=0;
+
+        // اگر استادیار مشخص است، لیست آخرین ثبت‌ها را تازه کن
+        const asst = new URLSearchParams(location.search).get('assistant') || document.getElementById('assistantSel').value;
+        if(asst) loadRecentForAssistant(asst);
+      }
     }catch(err){
       console.error(err);
       msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err);
+    }finally{
+      btn.disabled = false; btn.textContent = editingId ? 'به‌روزرسانی' : 'ثبت';
     }
   });
 
-  // ====== بکاپ دستی: JSON & CSV (ادمین) ======
+  // اگر با پارامتر objectId آمدیم، رکورد را بارگذاری کن
+  (function maybeLoadFromURL(){
+    const id = new URLSearchParams(location.search).get('objectId');
+    if(id){ loadByObjectId(id); }
+  })();
+
+  // ====== بکاپ دستی: JSON & CSV (فقط وقتی نوار بکاپ دیده می‌شود) ======
   async function fetchAllNewbloods(){
     const store = [];
     let page = 0, pageSize = 100, chunk = [];
@@ -388,7 +627,6 @@
     }while(chunk.length === pageSize);
     return store;
   }
-
   function download(filename, text, mime='application/json'){
     const blob = new Blob([text], {type:mime});
     const url = URL.createObjectURL(blob);
@@ -396,7 +634,6 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click();
     URL.revokeObjectURL(url); a.remove();
   }
-
   async function backupJSON(){
     try{
       const data = await fetchAllNewbloods();
@@ -404,7 +641,6 @@
       download(fname, JSON.stringify(data, null, 2), 'application/json');
     }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
   }
-
   function toCSV(arr){
     if(!arr.length) return '';
     const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
@@ -417,7 +653,6 @@
     const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
     return head + '\n' + rows;
   }
-
   async function backupCSV(){
     try{
       const data = await fetchAllNewbloods();
@@ -426,6 +661,5 @@
     }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
   }
 </script>
-
 </body>
 </html>
