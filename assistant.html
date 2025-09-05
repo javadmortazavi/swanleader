@@ -10,7 +10,7 @@
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 
-  <!-- jQuery + jalaali-js -->
+  <!-- jQuery + jalaali-js برای نمایش تاریخ شمسی در لیست -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
@@ -18,41 +18,51 @@
     :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
-    header{background:#222;color:#fff;padding:12px}
+    header{background:#222;color:#fff;padding:12px;text-align:center}
     header h1{margin:0;font-size:18px}
     .container{max-width:1000px;margin:14px auto;padding:0 10px}
-
-    nav.top{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
-    nav.top a{background:#37474f;color:#fff;padding:.6rem 1rem;border-radius:10px;text-decoration:none;font-size:15px}
-    nav.top a.primary{background:var(--brand)}
-
     .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:10px}
+
+    /* تب‌های ورود/ثبت‌نام */
+    .tabs{display:flex;gap:6px;margin-bottom:10px}
+    .tabs button{flex:1;padding:.8rem;border:none;border-radius:10px;background:#e0e0e0;color:#333;cursor:pointer;font-size:16px}
+    .tabs button.active{background:var(--brand);color:#fff}
     label{display:block;margin-top:8px;font-weight:700}
-    input,select,button{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
+    input,button,select{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
     button{background:var(--brand);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#607d8b}
+    .hint{color:#777;font-size:.9rem;margin-top:6px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     @media (max-width:760px){ .row{grid-template-columns:1fr} }
 
-    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .kpi{display:flex;flex-direction:column;gap:4px}
+    /* نوار بالای داشبورد */
+    .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+    .asst{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .asst input{width:auto;min-width:220px}
+
+    /* KPI های ساده */
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+    .kpi{background:#fafafa;border:1px solid #eee;border-radius:12px;padding:10px}
     .kpi .title{color:#777}
     .kpi .val{font-size:20px;font-weight:900}
 
-    .list{display:grid;gap:8px}
+    /* لیست کارت‌ها */
+    .list{display:grid;gap:8px;margin-top:10px}
     .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
-    .item .meta{font-size:13px;color:#555}
     .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#444}
+    .item .meta{font-size:13px;color:#555}
     .actions{display:flex;gap:6px}
-    .actions a, .actions button{padding:.55rem .8rem;border-radius:8px;text-decoration:none}
-    .actions a{background:#37474f}
+    .actions a,.actions button{padding:.55rem .8rem;border-radius:8px;text-decoration:none}
+    .actions a{background:#37474f;color:#fff}
+    .actions button.secondary{background:#607d8b;color:#fff}
     .stars{color:#f4c430}
-    .muted{color:#777;font-size:.9rem}
 
     .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
     .pager button{min-width:110px}
 
-    .hint{color:#666;font-size:.9rem;margin-top:6px}
+    .msg{margin-top:8px;padding:.8rem;border-radius:10px;display:none}
+    .ok{background:#e0f7f4;color:#00695c}
+    .err{background:#ffebee;color:#c62828}
   </style>
 </head>
 <body>
@@ -62,38 +72,56 @@
 
 <div class="container">
 
-  <nav class="top">
-    <a href="assistant.html" class="primary">پنل استادیار</a>
-    <a href="index.html">ثبت/ویرایش نیوبلاد</a>
-    <a href="swanleader.html">داشبورد مدیر</a>
-  </nav>
-
-  <!-- انتخاب/ثبت نام استادیار -->
-  <div class="card">
-    <div class="row">
-      <div>
-        <label>نام استادیار</label>
-        <input id="assistantName" placeholder="مثلاً: جواد مرتضوی">
-        <div class="hint">نام اینجا ذخیره می‌شود و برای کل لیست و افزودن نیوبلاد استفاده می‌گردد.</div>
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button id="saveAssistant">ذخیره نام استادیار</button>
-      </div>
+  <!-- احراز هویت -->
+  <div class="card" id="authCard">
+    <div class="tabs">
+      <button id="tabLogin" class="active">ورود</button>
+      <button id="tabSignup">ثبت‌نام</button>
     </div>
-    <div class="row" style="margin-top:6px">
-      <div>
-        <button class="secondary" id="btnAddNew">+ افزودن نیوبلاد</button>
+
+    <div id="loginBox">
+      <label>ایمیل</label>
+      <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email">
+      <label>رمز عبور</label>
+      <input id="loginPass" type="password" placeholder="******" autocomplete="current-password">
+      <button id="btnLogin">ورود</button>
+      <div id="loginMsg" class="msg"></div>
+    </div>
+
+    <div id="signupBox" style="display:none">
+      <label>نام و نام خانوادگی (نام استادیار)</label>
+      <input id="signupName" placeholder="مثلاً: جواد مرتضوی" autocomplete="name">
+      <div class="row">
+        <div>
+          <label>ایمیل</label>
+          <input id="signupEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div>
+          <label>رمز عبور</label>
+          <input id="signupPass" type="password" placeholder="حداقل ۶ کاراکتر" autocomplete="new-password">
+        </div>
       </div>
-      <div class="row" style="gap:8px">
-        <input id="q" placeholder="جستجو: نام یا موبایل…">
-        <button id="btnSearch" class="secondary">جستجو</button>
-      </div>
+      <button id="btnSignup">ثبت‌نام</button>
+      <div id="signupMsg" class="msg"></div>
     </div>
   </div>
 
-  <!-- KPI -->
-  <div class="card">
+  <!-- داشبورد پس از ورود -->
+  <div class="card" id="dashCard" style="display:none">
+    <div class="topbar">
+      <div class="asst">
+        <span>استادیار:</span>
+        <input id="assistantName" placeholder="نام شما…" />
+        <button id="saveAsst" class="secondary">ذخیره نام</button>
+        <button id="btnAddNew" class="secondary">+ افزودن نیوبلاد</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input id="q" placeholder="جستجو: نام یا موبایل…" />
+        <button id="btnSearch" class="secondary">جستجو</button>
+        <button id="btnLogout" style="background:#e53935">خروج</button>
+      </div>
+    </div>
+
     <div class="kpis">
       <div class="kpi">
         <div class="title">تعداد نیوبلادهای شما</div>
@@ -108,10 +136,7 @@
         <div id="kCoins" class="val">0</div>
       </div>
     </div>
-  </div>
 
-  <!-- لیست -->
-  <div class="card">
     <div class="list" id="list"></div>
     <div class="pager">
       <button id="prev">قبلی</button>
@@ -119,94 +144,164 @@
     </div>
     <div class="muted" id="pageInfo" style="text-align:center"></div>
   </div>
-
 </div>
 
 <script>
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // ===== Utilities =====
-  function toDate(x){
-    if(!x) return null;
-    try{
-      if(x instanceof Date) return x;
-      if(typeof x === 'number') return new Date(x);
-      const d = new Date(x);
-      return isNaN(d) ? null : d;
-    }catch{ return null; }
-  }
+  // ===== تب‌ها: ورود / ثبت‌نام =====
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const loginBox = document.getElementById('loginBox');
+  const signupBox = document.getElementById('signupBox');
+
+  tabLogin.onclick = ()=>{ tabLogin.classList.add('active'); tabSignup.classList.remove('active'); loginBox.style.display='block'; signupBox.style.display='none'; };
+  tabSignup.onclick = ()=>{ tabSignup.classList.add('active'); tabLogin.classList.remove('active'); loginBox.style.display='none'; signupBox.style.display='block'; };
+
+  // ===== نمایش/مخفی کردن کارت‌ها =====
+  function showAuth(){ document.getElementById('authCard').style.display='block'; document.getElementById('dashCard').style.display='none'; }
+  function showDash(){ document.getElementById('authCard').style.display='none'; document.getElementById('dashCard').style.display='block'; }
+
+  // ===== کمک‌ها =====
+  function toDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
   function toJalaliStr(d){
-    if(!d) return "";
-    d = toDate(d);
-    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
-    const j = jalaali.toJalaali(g.gy, g.gm, g.gd);
-    const mm = String(j.jm).padStart(2,'0');
-    const dd = String(j.jd).padStart(2,'0');
-    return `${j.jy}/${mm}/${dd}`;
+    d = toDate(d); if(!d) return "—";
+    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
+    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
+    return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
   }
   const star = n => '★'.repeat(n||0);
   const fmt = n => (n||0).toLocaleString('fa-IR');
 
-  // ===== Assistant name (URL/localStorage) =====
-  const asstInput = document.getElementById('assistantName');
-  const saved = localStorage.getItem('assistantName');
-  const fromQS = new URLSearchParams(location.search).get('assistant');
-  if(fromQS){
-    const name = decodeURIComponent(fromQS).replace(/_/g,' ').trim();
-    asstInput.value = name;
-    localStorage.setItem('assistantName', name);
-  }else if(saved){
-    asstInput.value = saved;
-  }
+  // ===== وضعیت احراز هویت اولیه =====
+  let currentUser = null;
+  let assistantName = '';
 
-  document.getElementById('saveAssistant').onclick = ()=>{
-    const name = (asstInput.value||'').trim();
-    if(!name) return alert('نام استادیار را وارد کنید');
-    localStorage.setItem('assistantName', name);
-    // بعد از ذخیره، لیست را ریفرش کن
-    resetPaging(); loadList();
+  (async function initAuth(){
+    try{
+      currentUser = await Backendless.UserService.getCurrentUser();
+    }catch(e){ currentUser = null; }
+    if(currentUser){
+      showDash();
+      assistantName = currentUser.name || localStorage.getItem('assistantName') || '';
+      document.getElementById('assistantName').value = assistantName;
+      // اگر نام خالی است، از ایمیل قبل از @ حدس بزن
+      if(!assistantName && currentUser.email){
+        assistantName = currentUser.email.split('@')[0];
+        document.getElementById('assistantName').value = assistantName;
+      }
+      loadList(true);
+    }else{
+      showAuth();
+    }
+  })();
+
+  // ===== ورود =====
+  document.getElementById('btnLogin').onclick = async ()=>{
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass  = document.getElementById('loginPass').value.trim();
+    const msg = document.getElementById('loginMsg');
+    msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ورود…';
+    try{
+      currentUser = await Backendless.UserService.login(email, pass, true);
+      msg.className='msg ok'; msg.textContent='ورود موفق.';
+      showDash();
+      assistantName = currentUser.name || '';
+      document.getElementById('assistantName').value = assistantName;
+      loadList(true);
+    }catch(e){
+      msg.className='msg err'; msg.textContent = 'خطا در ورود: ' + (e.message||e);
+    }
   };
 
-  // ===== Add New button =====
+  // ===== ثبت‌نام =====
+  document.getElementById('btnSignup').onclick = async ()=>{
+    const name  = document.getElementById('signupName').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const pass  = document.getElementById('signupPass').value.trim();
+    const msg = document.getElementById('signupMsg');
+    msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ثبت‌نام…';
+    if(!name || !email || !pass){ msg.className='msg err'; msg.textContent='نام، ایمیل و رمز عبور الزامی است.'; return; }
+
+    try{
+      const user = new Backendless.User();
+      user.email = email;
+      user.password = pass;
+      user.name = name; // ذخیره نام استادیار
+      await Backendless.UserService.register(user);
+
+      // بعد از ثبت‌نام، مستقیم وارد شو
+      currentUser = await Backendless.UserService.login(email, pass, true);
+      msg.className='msg ok'; msg.textContent='ثبت‌نام و ورود موفق.';
+      showDash();
+      assistantName = name;
+      document.getElementById('assistantName').value = assistantName;
+      loadList(true);
+    }catch(e){
+      msg.className='msg err'; msg.textContent = 'خطا در ثبت‌نام: ' + (e.message||e);
+    }
+  };
+
+  // ===== خروج =====
+  document.getElementById('btnLogout').onclick = async ()=>{
+    try{ await Backendless.UserService.logout(); }catch(_){}
+    currentUser = null; assistantName = '';
+    showAuth();
+  };
+
+  // ===== ذخیره/به‌روزرسانی نام استادیار روی یوزر =====
+  document.getElementById('saveAsst').onclick = async ()=>{
+    const name = (document.getElementById('assistantName').value||'').trim();
+    if(!name) return alert('نام را وارد کنید.');
+    assistantName = name;
+    localStorage.setItem('assistantName', name);
+    try{
+      if(currentUser){
+        currentUser.name = name;
+        await Backendless.UserService.update(currentUser);
+      }
+      alert('نام ذخیره شد.');
+      loadList(true);
+    }catch(e){
+      alert('خطا در ذخیره نام کاربر'); console.error(e);
+    }
+  };
+
+  // ===== افزودن نیوبلاد =====
   document.getElementById('btnAddNew').onclick = ()=>{
-    const name = (asstInput.value||'').trim();
-    if(!name) return alert('اول نام استادیار را ذخیره کنید');
+    const name = (document.getElementById('assistantName').value||'').trim() || assistantName;
+    if(!name) return alert('نام استادیار را ذخیره کنید.');
     const q = new URLSearchParams({ assistant: name });
     location.href = 'index.html?' + q.toString();
   };
 
-  // ===== Search =====
+  // ===== جستجو =====
   document.getElementById('btnSearch').onclick = ()=>{ resetPaging(); loadList(); };
   document.getElementById('q').addEventListener('keydown', e=>{
     if(e.key==='Enter'){ e.preventDefault(); resetPaging(); loadList(); }
   });
 
-  // ===== Paging =====
+  // ===== صفحه‌بندی =====
   let page = 0;
   const pageSize = 20;
   function resetPaging(){ page = 0; }
+  document.getElementById('prev').onclick = ()=>{ if(page>0){ page--; loadList(); } };
+  document.getElementById('next').onclick = ()=>{ page++; loadList(); };
 
-  document.getElementById('prev').onclick = ()=>{
-    if(page>0){ page--; loadList(); }
-  };
-  document.getElementById('next').onclick = ()=>{
-    page++; loadList();
-  };
+  // ===== بارگذاری لیست نیوبلادهای استادیار =====
+  async function loadList(refreshKPIs=false){
+    const name = (document.getElementById('assistantName').value||'').trim() || assistantName;
+    const list = document.getElementById('list');
+    const q = (document.getElementById('q').value||'').trim();
 
-  // ===== Load list =====
-  async function loadList(){
-    const name = (asstInput.value||'').trim();
     if(!name){
-      document.getElementById('list').innerHTML = '<div class="muted">نام استادیار را وارد و ذخیره کنید.</div>';
+      list.innerHTML = '<div class="hint">نام استادیار را وارد و ذخیره کنید.</div>';
       return;
     }
 
-    const q = (document.getElementById('q').value||'').trim();
     let where = `assistant='${name.replace(/'/g,"\\'")}'`;
-    if(q){
-      where += ` AND (name LIKE '%${q}%' OR mobile LIKE '%${q}%')`;
-    }
+    if(q){ where += ` AND (name LIKE '%${q}%' OR mobile LIKE '%${q}%')`; }
 
     try{
       const tb = Backendless.Data.of('Newbloods');
@@ -217,14 +312,12 @@
                    .setOffset(page*pageSize);
       const rows = await tb.find(qb);
 
-      // KPI ها
-      await loadKPIs(name);
+      // KPI ها فقط وقتی نیاز
+      if(refreshKPIs){ await loadKPIs(name); }
 
-      // لیست
-      const list = document.getElementById('list');
       list.innerHTML = '';
       if(!rows.length){
-        list.innerHTML = '<div class="muted">موردی یافت نشد.</div>';
+        list.innerHTML = '<div class="hint">موردی یافت نشد.</div>';
       }else{
         rows.forEach(r=>{
           const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
@@ -243,36 +336,20 @@
 
           const actions = document.createElement('div');
           actions.className = 'actions';
+
           const aEdit = document.createElement('a');
           const qs = new URLSearchParams({ objectId: r.objectId, assistant: name });
           aEdit.href = 'index.html?' + qs.toString();
           aEdit.textContent = 'ویرایش';
           aEdit.target = '_self';
 
-          // دکمه مشاهده فیش‌ها (بازکردن لینک‌ها اگر بودند)
-          const btnFiles = document.createElement('button');
-          btnFiles.className='secondary';
-          btnFiles.textContent = 'فیش/اقساط';
-          btnFiles.onclick = ()=>{
-            const inst = Array.isArray(r.instalments) ? r.instalments : [];
-            const links = inst.filter(i=>i?.receipt_url).map(i=> i.receipt_url);
-            if(!links.length) return alert('فیشی ثبت نشده است.');
-            // نمایش ساده:
-            window.open(links[0], '_blank');
-            // یا اگر چندتا بود:
-            if(links.length>1) alert('چند فیش دارید، اولی باز شد. بقیه را در ویرایش ببینید.');
-          };
-
           actions.appendChild(aEdit);
-          actions.appendChild(btnFiles);
-
           wrap.appendChild(left);
           wrap.appendChild(actions);
           list.appendChild(wrap);
         });
       }
 
-      // صفحه‌بندی
       document.getElementById('pageInfo').textContent = `صفحه ${page+1}`;
     }catch(e){
       console.error(e);
@@ -281,7 +358,6 @@
   }
 
   async function loadKPIs(name){
-    // برای KPI کلی (count/growth/coins) تعداد کل برای این استادیار را می‌گیریم (بدون صفحه‌بندی)
     const tb = Backendless.Data.of('Newbloods');
     let offset = 0, all = [], chunk = [];
     const where = `assistant='${name.replace(/'/g,"\\'")}'`;
@@ -303,9 +379,6 @@
     document.getElementById('kGrowth').textContent = (avgGrowth||0).toFixed(1);
     document.getElementById('kCoins').textContent = fmt(totalCoins);
   }
-
-  // اولین بار
-  loadList();
 </script>
 </body>
 </html>
