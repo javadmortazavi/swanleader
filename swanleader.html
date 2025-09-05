@@ -2,495 +2,386 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>داشبورد مدیر - Swan Family</title>
+  <title>داشبورد مدیریت - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="format-detection" content="telephone=no" />
+  <style>html{-webkit-text-size-adjust:100%}</style>
 
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 
-  <!-- jQuery -->
+  <!-- jQuery + jalaali-js برای نمایش تاریخ شمسی -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-
-  <!-- jalaali-js برای تبدیل تاریخ -->
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
-  <!-- Chart.js برای نمودارها -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
   <style>
-    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222 }
+    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
-    header{background:#222;color:#fff;padding:12px 16px}
+    header{background:#222;color:#fff;padding:12px;text-align:center}
     header h1{margin:0;font-size:18px}
-    .container{max-width:1200px;margin:16px auto;padding:0 12px}
+    .container{max-width:1100px;margin:14px auto;padding:0 10px}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:12px}
 
-    .filters{display:grid;grid-template-columns:repeat(4, minmax(180px,1fr));gap:12px;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06)}
-    label{font-weight:700;font-size:.95rem}
-    select,input{width:100%;margin-top:6px;padding:.55rem;border:1px solid #e0e0e0;border-radius:10px}
+    label{display:block;margin-top:8px;font-weight:700}
+    input,button,select{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
+    button{background:var(--brand);color:#fff;border:none;cursor:pointer}
+    button.secondary{background:#607d8b}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:760px){ .row{grid-template-columns:1fr} }
 
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-    .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px}
-    .kpi{display:flex;flex-direction:column;gap:6px}
-    .kpi .title{color:#666}
-    .kpi .val{font-size:22px;font-weight:900}
+    /* لاگین */
+    .loginwrap{max-width:420px;margin:30px auto}
 
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    canvas{width:100% !important; height:360px !important}
+    /* نوار بالا + فیلترها */
+    .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+    .filters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    @media (max-width:980px){ .filters{grid-template-columns:1fr 1fr} }
+    @media (max-width:520px){ .filters{grid-template-columns:1fr} }
+    .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
-    .section{margin-top:12px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:.6rem;border-bottom:1px solid #eee;text-align:right}
-    th{background:#fafafa}
-    .muted{color:#666;font-size:.9rem}
+    /* KPI ها */
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+    .kpi{background:#fafafa;border:1px solid #eee;border-radius:12px;padding:10px}
+    .kpi .title{color:#777}
+    .kpi .val{font-size:20px;font-weight:900}
+    @media (max-width:900px){ .kpis{grid-template-columns:1fr 1fr} }
+    @media (max-width:520px){ .kpis{grid-template-columns:1fr} }
 
-    .deny{max-width:800px;margin:40px auto;background:#fff;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);text-align:center}
-    .hidden{display:none}
+    /* لیست */
+    .list{display:grid;gap:8px;margin-top:10px}
+    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
+    .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#444}
+    .item .meta{font-size:13px;color:#555}
+    .badge{
+      padding:2px 6px;border-radius:8px;font-size:12px
+    }
+    .badge-ok{background:#e8f5e9;color:#1b5e20}
+    .badge-no{background:#fff3e0;color:#ef6c00}
+    .actions{display:flex;gap:6px}
+    .actions a,.actions button{padding:.55rem .8rem;border-radius:8px;text-decoration:none}
+    .actions a{background:#37474f;color:#fff}
 
-    @media (max-width:1000px){ .grid2{grid-template-columns:1fr} .kpis{grid-template-columns:1fr 1fr}}
-    @media (max-width:640px){ .filters{grid-template-columns:1fr 1fr} .kpis{grid-template-columns:1fr} }
-    a.btn{display:inline-block;background:var(--brand);color:#fff;padding:.55rem 1rem;border-radius:10px;text-decoration:none}
+    .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
+    .pager button{min-width:110px}
+
+    .msg{margin-top:8px;padding:.8rem;border-radius:10px;display:none}
+    .ok{background:#e0f7f4;color:#00695c}
+    .err{background:#ffebee;color:#c62828}
   </style>
 </head>
 <body>
 <header>
-  <h1>داشبورد مدیر Swan Family</h1>
+  <h1>داشبورد مدیریت Swan Family</h1>
 </header>
 
 <div class="container">
-  <!-- دسترسی -->
-  <div id="deny" class="deny hidden">
-    <h3>🚫 دسترسی محدود</h3>
-    <p>این صفحه فقط برای مدیر قابل نمایش است.</p>
-    <p class="muted">با اکانت مدیر وارد شوید یا از لینک آزمایشی با <code>?admin=true</code> استفاده کنید.</p>
-    <div style="margin-top:8px">
-      <a href="assistant.html" class="btn">بازگشت به پنل استادیار</a>
-    </div>
+
+  <!-- لاگین ساده مدیر -->
+  <div class="card loginwrap" id="loginCard">
+    <h3 style="margin:0 0 8px 0">ورود مدیر</h3>
+    <label>نام کاربری</label>
+    <input id="admUser" placeholder="admin">
+    <label>رمز عبور</label>
+    <input id="admPass" type="password" placeholder="swan">
+    <button id="btnAdminLogin" style="margin-top:10px">ورود</button>
+    <div id="loginMsg" class="msg"></div>
   </div>
 
-  <div id="dash" class="hidden">
-    <!-- فیلترها -->
-    <div class="filters">
-      <div>
-        <label>استان</label>
-        <select id="fProvince"><option value="">همه استان‌ها</option></select>
-      </div>
-      <div>
-        <label>شهر</label>
-        <select id="fCity"><option value="">همه شهرها</option></select>
-      </div>
-      <div>
-        <label>استادیار</label>
-        <select id="fAssistant"><option value="">همه استادیارها</option></select>
-      </div>
-      <div>
-        <label>سال (برای گزارش ماهانه)</label>
-        <select id="fYearJ"><option value="">خودکار</option></select>
+  <!-- داشبورد -->
+  <div id="dashCard" style="display:none">
+
+    <div class="card">
+      <div class="topbar">
+        <div class="inline">
+          <button id="btnBackupJSON" class="secondary">بکاپ JSON</button>
+          <button id="btnBackupCSV"  class="secondary">بکاپ CSV</button>
+        </div>
+        <div class="inline">
+          <button id="btnLogout" style="background:#e53935">خروج</button>
+        </div>
       </div>
     </div>
 
-    <!-- KPI ها -->
-    <div class="kpis">
-      <div class="card kpi">
-        <div class="title">تعداد کل نیوبلاد</div>
-        <div id="kNewbloods" class="val">0</div>
-        <div class="muted" id="kFilterHint"></div>
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">فیلترها</h3>
+      <div class="filters">
+        <input id="q" placeholder="جستجو: نام یا موبایل…">
+        <input id="prov" placeholder="استان…">
+        <input id="city" placeholder="شهر…">
+        <input id="assistant" placeholder="استادیار…">
       </div>
-      <div class="card kpi">
-        <div class="title">تعداد استادیار فعال</div>
-        <div id="kAssistants" class="val">0</div>
-      </div>
-      <div class="card kpi">
-        <div class="title">مجموع اقساط این سال</div>
-        <div id="kYearInstallments" class="val">0</div>
-        <div class="muted" id="kYearTitle"></div>
-      </div>
-      <div class="card kpi">
-        <div class="title">میانگین سطح رشد</div>
-        <div id="kAvgGrowth" class="val">0</div>
+      <div class="inline" style="margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="onlyContracted"> فقط دارای قرارداد
+        </label>
+        <button id="btnApply" class="secondary">اعمال فیلتر</button>
+        <button id="btnReset" class="secondary">ریست</button>
       </div>
     </div>
 
-    <!-- نمودارها 1 -->
-    <div class="grid2">
-      <div class="card">
-        <h3 style="margin-top:0">تعداد نیوبلاد هر مربی</h3>
-        <canvas id="byAssistantChart"></canvas>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">مجموع اقساط ماهانه (سال انتخابی)</h3>
-        <canvas id="installmentsMonthlyChart"></canvas>
-      </div>
-    </div>
-
-    <!-- نمودارها 2 -->
-    <div class="grid2">
-      <div class="card">
-        <h3 style="margin-top:0">درصد سطح رشد بر اساس مربی</h3>
-        <canvas id="growthByAssistantChart"></canvas>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">درصد سطح رشد بر اساس استان</h3>
-        <canvas id="growthByProvinceChart"></canvas>
+    <div class="card">
+      <div class="kpis">
+        <div class="kpi">
+          <div class="title">تعداد کل نیوبلادها</div>
+          <div id="kCount" class="val">0</div>
+        </div>
+        <div class="kpi">
+          <div class="title">میانگین سطح رشد</div>
+          <div id="kGrowth" class="val">0</div>
+        </div>
+        <div class="kpi">
+          <div class="title">کل سوان‌کوین ثبت‌شده</div>
+          <div id="kCoins" class="val">0</div>
+        </div>
+        <div class="kpi">
+          <div class="title">قراردادهای امضا شده</div>
+          <div id="kContracts" class="val">0</div>
+          <div class="muted" id="kContractsPct">0%</div>
+        </div>
       </div>
     </div>
 
-    <!-- نمودار علاقه‌مندی‌ها -->
-    <div class="card section">
-      <h3 style="margin-top:0">توزیع علاقه‌مندی‌ها</h3>
-      <canvas id="interestsChart"></canvas>
-      <div class="muted">فقط سه تیک: آناتومی، آیورودا، بازاریابی.</div>
+    <div class="card">
+      <div class="list" id="list"></div>
+      <div class="pager">
+        <button id="prev">قبلی</button>
+        <button id="next">بعدی</button>
+      </div>
+      <div class="muted" id="pageInfo" style="text-align:center"></div>
     </div>
 
-    <!-- تولدها -->
-    <div class="card section">
-      <h3 style="margin-top:0">تولدها به تفکیک ماه</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <label>ماه:</label>
-        <select id="birthMonthSel"></select>
-        <span class="muted">نمایش اسامی و تاریخ تولد (شمسی)</span>
-      </div>
-      <div id="birthList" style="margin-top:10px"></div>
-    </div>
-
-    <!-- سوان‌کوین و جداول -->
-    <div class="grid2 section">
-      <div class="card">
-        <h3 style="margin-top:0">تعداد سوان‌کوین هر نفر</h3>
-        <table id="coinsTable">
-          <thead>
-            <tr><th>نام</th><th>تعداد کوین</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">مجموع اقساط هر ماه (تفکیکی)</h3>
-        <table id="instTable">
-          <thead>
-            <tr><th>ماه (شمسی)</th><th>جمع اقساط (تومان)</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="section" style="text-align:center;margin:16px 0">
-      <a class="btn" href="assistant.html">بازگشت به پنل استادیار</a>
-    </div>
   </div>
 </div>
 
 <script>
-  // ====== تنظیمات و کمک‌تابع‌ها ======
-  const ADMIN_NAME  = "جواد مرتضوی";
-  const ADMIN_EMAIL = "j.mortazavi7@gmail.com";
-
+  // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  const jalaliMonthNames = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+  // ===== ورود ساده مدیر (سمت کاربر) =====
+  const ADMIN_FIXED_USER = 'admin';
+  const ADMIN_FIXED_PASS = 'swan';
+  const loginCard = document.getElementById('loginCard');
+  const dashCard  = document.getElementById('dashCard');
 
-  function toDate(x){
-    if(!x) return null;
-    try{
-      if(x instanceof Date) return x;
-      if(typeof x === 'number') return new Date(x);
-      const d = new Date(x);
-      return isNaN(d) ? null : d;
-    }catch{ return null; }
-  }
+  function showLogin(){ loginCard.style.display='block'; dashCard.style.display='none'; }
+  function showDash(){ loginCard.style.display='none'; dashCard.style.display='block'; }
 
-  function toJalaliStr(d){
-    if(!d) return "";
-    d = toDate(d);
-    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
-    const j = jalaali.toJalaali(g.gy, g.gm, g.gd);
-    const mm = String(j.jm).padStart(2,'0');
-    const dd = String(j.jd).padStart(2,'0');
-    return `${j.jy}/${mm}/${dd}`;
-  }
-
-  function jalaliYear(d){
-    if(!d) return null;
-    d = toDate(d);
-    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
-    return jalaali.toJalaali(g.gy,g.gm,g.gd).jy;
-  }
-  function jalaliMonth(d){
-    if(!d) return null;
-    d = toDate(d);
-    const g = { gy: d.getFullYear(), gm: d.getMonth()+1, gd: d.getDate() };
-    return jalaali.toJalaali(g.gy,g.gm,g.gd).jm; // 1..12
-  }
-
-  const fmtNum = n => (n||0).toLocaleString('fa-IR');
-
-  // ====== دسترسی ======
-  (async function initAccess(){
-    let allow = false;
-    try{
-      const u = await Backendless.UserService.getCurrentUser();
-      if(u && ((u.name||"")===ADMIN_NAME || (u.email||"")===ADMIN_EMAIL)) allow = true;
-    }catch(e){}
-    const qs = new URLSearchParams(location.search);
-    if(qs.get('admin') === 'true') allow = true;
-    const aFrom = qs.get('assistant');
-    if(aFrom && decodeURIComponent(aFrom).replace(/_/g,' ').trim() === ADMIN_NAME) allow = true;
-
-    if(!allow){
-      document.getElementById('deny').classList.remove('hidden');
-      return;
-    }
-    document.getElementById('dash').classList.remove('hidden');
-    await loadAndRender();
+  (function initAdminSession(){
+    if(sessionStorage.getItem('isAdmin')==='1') showDash();
   })();
 
-  // ====== بارگذاری دیتا ======
-  let rawData = [];
+  document.getElementById('btnAdminLogin').onclick = ()=>{
+    const u = (document.getElementById('admUser').value||'').trim();
+    const p = (document.getElementById('admPass').value||'').trim();
+    const m = document.getElementById('loginMsg');
+    m.style.display='block'; m.className='msg'; m.textContent='در حال بررسی…';
+    if(u===ADMIN_FIXED_USER && p===ADMIN_FIXED_PASS){
+      sessionStorage.setItem('isAdmin','1');
+      m.className='msg ok'; m.textContent='ورود موفق.';
+      showDash();
+      resetPaging();
+      loadList(true);
+    }else{
+      m.className='msg err'; m.textContent='نام کاربری یا رمز نادرست است.';
+    }
+  };
+
+  document.getElementById('btnLogout').onclick = ()=>{
+    sessionStorage.removeItem('isAdmin');
+    showLogin();
+  };
+
+  // ===== کمک‌ها =====
+  function toDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
+  function toJalaliStr(d){
+    d = toDate(d); if(!d) return "—";
+    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
+    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
+    return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
+  }
+  const star = n => '★'.repeat(n||0);
+  const fmt  = n => (n||0).toLocaleString('fa-IR');
+
+  // ===== فیلترها =====
+  document.getElementById('btnApply').onclick = ()=>{ resetPaging(); loadList(true); };
+  document.getElementById('btnReset').onclick = ()=>{
+    document.getElementById('q').value='';
+    document.getElementById('prov').value='';
+    document.getElementById('city').value='';
+    document.getElementById('assistant').value='';
+    document.getElementById('onlyContracted').checked=false;
+    resetPaging(); loadList(true);
+  };
+
+  // ===== صفحه‌بندی =====
+  let page = 0; const pageSize = 30;
+  function resetPaging(){ page = 0; }
+  document.getElementById('prev').onclick = ()=>{ if(page>0){ page--; loadList(); } };
+  document.getElementById('next').onclick = ()=>{ page++; loadList(); };
+
+  // ===== ساخت where بر اساس فیلترها =====
+  function buildWhere(){
+    const q  = (document.getElementById('q').value||'').trim();
+    const pv = (document.getElementById('prov').value||'').trim();
+    const ct = (document.getElementById('city').value||'').trim();
+    const as = (document.getElementById('assistant').value||'').trim();
+    const onlyC = document.getElementById('onlyContracted').checked;
+
+    let where = '1=1';
+    if(q){ where += ` AND (name LIKE '%${q}%' OR mobile LIKE '%${q}%')`; }
+    if(pv){ where += ` AND province LIKE '%${pv}%'`; }
+    if(ct){ where += ` AND city LIKE '%${ct}%'`; }
+    if(as){ where += ` AND assistant LIKE '%${as}%'`; }
+    if(onlyC){ where += ` AND contract_signed = true`; }
+    return where;
+  }
+
+  // ===== بارگذاری لیست + KPI =====
+  async function loadList(refreshKPIs=false){
+    const list = document.getElementById('list');
+    const where = buildWhere();
+    try{
+      const tb = Backendless.Data.of('Newbloods');
+      const qb = Backendless.DataQueryBuilder.create()
+                   .setWhereClause(where)
+                   .setSortBy(['created DESC'])
+                   .setPageSize(pageSize)
+                   .setOffset(page*pageSize);
+      const rows = await tb.find(qb);
+
+      if(refreshKPIs){ await loadKPIs(); }
+
+      list.innerHTML = '';
+      if(!rows.length){
+        list.innerHTML = '<div class="muted">موردی یافت نشد.</div>';
+      }else{
+        rows.forEach(r=>{
+          const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
+          const cd = r.course_date ? toJalaliStr(r.course_date) : '—';
+          const growthStars = star(+r.growth||0);
+          const cityPart = [r.province, r.city].filter(Boolean).join(' / ');
+          const badge = r.contract_signed
+            ? '<span class="badge badge-ok">قرارداد</span>'
+            : '<span class="badge badge-no">بدون قرارداد</span>';
+
+          const wrap = document.createElement('div');
+          wrap.className = 'item';
+
+          const left = document.createElement('div');
+          left.innerHTML = `
+            <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
+            <div class="meta">
+              ${cityPart||'—'} | استادیار: ${r.assistant||'—'} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
+            </div>
+          `;
+
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          const aEdit = document.createElement('a');
+          const qs = new URLSearchParams({ objectId: r.objectId, assistant: (r.assistant||'') });
+          aEdit.href = 'index.html?' + qs.toString();
+          aEdit.textContent = 'ویرایش';
+          aEdit.target = '_self';
+          actions.appendChild(aEdit);
+
+          wrap.appendChild(left);
+          wrap.appendChild(actions);
+          list.appendChild(wrap);
+        });
+      }
+
+      document.getElementById('pageInfo').textContent = `صفحه ${page+1}`;
+    }catch(e){
+      console.error(e);
+      alert('خطا در بارگذاری لیست');
+    }
+  }
+
+  async function loadKPIs(){
+    // برای KPI ها کل داده‌های مطابق فیلتر فعلی را می‌خوانیم
+    const where = buildWhere();
+    const tb = Backendless.Data.of('Newbloods');
+    let offset = 0, all = [], chunk = [];
+    do{
+      const qb = Backendless.DataQueryBuilder.create()
+                   .setWhereClause(where)
+                   .setSortBy(['created DESC'])
+                   .setPageSize(100).setOffset(offset);
+      chunk = await tb.find(qb);
+      all.push(...chunk);
+      offset += 100;
+    }while(chunk.length===100);
+
+    const count = all.length;
+    const avgGrowth = count ? (all.reduce((s,r)=>s + (+r.growth||0),0)/count) : 0;
+    const totalCoins = all.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length:0), 0);
+    const contracts  = all.filter(r => !!r.contract_signed).length;
+
+    document.getElementById('kCount').textContent     = fmt(count);
+    document.getElementById('kGrowth').textContent    = (avgGrowth||0).toFixed(1);
+    document.getElementById('kCoins').textContent     = fmt(totalCoins);
+    document.getElementById('kContracts').textContent = fmt(contracts);
+    const pct = count ? Math.round((contracts / count) * 100) : 0;
+    document.getElementById('kContractsPct').textContent = pct + '%';
+  }
+
+  // ===== بکاپ‌ها =====
   async function fetchAllNewbloods(){
-    const out = [];
-    let page = 0, pageSize = 100, chunk = [];
+    const store = [];
+    let page = 0, pageSize = 200, chunk = [];
     const tb = Backendless.Data.of('Newbloods');
     do{
       const qb = Backendless.DataQueryBuilder.create()
-                    .setPageSize(pageSize).setOffset(page*pageSize)
-                    .setSortBy(['created DESC']);
+                  .setPageSize(pageSize).setOffset(page*pageSize)
+                  .setSortBy(['created DESC']);
       chunk = await tb.find(qb);
-      out.push(...chunk);
+      store.push(...chunk);
       page++;
     }while(chunk.length === pageSize);
-    return out;
+    return store;
   }
 
-  // ====== فیلترها ======
-  function unique(arr){ return [...new Set(arr.filter(Boolean))]; }
-
-  function applyFilters(){
-    const p = $('#fProvince').val() || '';
-    const c = $('#fCity').val() || '';
-    const a = $('#fAssistant').val() || '';
-    return rawData.filter(r =>
-      (p ? (r.province||'')===p : true) &&
-      (c ? (r.city||'')===c : true) &&
-      (a ? (r.assistant||'')===a : true)
-    );
+  function download(filename, text, mime='application/json'){
+    const blob = new Blob([text], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    URL.revokeObjectURL(url); a.remove();
   }
 
-  function populateFilters(data){
-    // استان/شهر/استادیار
-    const provinces = unique(data.map(r=>r.province||'')).sort();
-    const assistants= unique(data.map(r=>r.assistant||'')).sort();
-    $('#fProvince').html('<option value="">همه استان‌ها</option>' + provinces.map(x=>`<option value="${x}">${x}</option>`).join(''));
-    $('#fAssistant').html('<option value="">همه استادیارها</option>' + assistants.map(x=>`<option value="${x}">${x}</option>`).join(''));
-
-    // شهرها بر اساس انتخاب استان
-    function refreshCities(){
-      const p = $('#fProvince').val() || '';
-      const cities = unique(data.filter(r=> p? (r.province||'')===p : true).map(r=>r.city||'')).sort();
-      $('#fCity').html('<option value="">همه شهرها</option>' + cities.map(x=>`<option value="${x}">${x}</option>`).join(''));
-    }
-    refreshCities();
-    $('#fProvince').on('change', ()=>{ refreshCities(); renderAll(); });
-    $('#fCity').on('change', renderAll);
-    $('#fAssistant').on('change', renderAll);
-
-    // سال‌های موجود (شمسی) از تاریخ اقساط و تولد و دوره
-    const years = unique(
-      data.flatMap(r=>{
-        const arr = [];
-        if(r.birthdate)   arr.push(jalaliYear(r.birthdate));
-        if(r.course_date) arr.push(jalaliYear(r.course_date));
-        if(Array.isArray(r.instalments)){
-          r.instalments.forEach(i=> i?.date && arr.push(jalaliYear(i.date)));
-        }
-        return arr;
-      })
-    ).filter(Boolean).sort((a,b)=>a-b);
-    $('#fYearJ').html('<option value="">خودکار</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join(''))
-                .on('change', renderAll);
-
-    // ماه‌های تولد
-    $('#birthMonthSel').html(Array.from({length:12},(_,i)=>`<option value="${i+1}">${jalaliMonthNames[i]}</option>`).join(''))
-                       .on('change', renderBirthdays);
+  function toCSV(arr){
+    if(!arr.length) return '';
+    const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
+    const esc = v => {
+      if(v==null) return '';
+      const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      return `"${s.replace(/"/g,'""')}"`;
+    };
+    const head = cols.map(esc).join(',');
+    const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
+    return head + '\n' + rows;
   }
 
-  // ====== رندر کلی ======
-  let chByAssistant, chInstMonthly, chGrowthAsst, chGrowthProv, chInterests;
-
-  function destroyChart(ch){ if(ch){ ch.destroy(); } }
-
-  function renderAll(){
-    const data = applyFilters();
-    // KPI ها
-    $('#kNewbloods').text(fmtNum(data.length));
-    const assistants = unique(data.map(r=>r.assistant||'')).length;
-    $('#kAssistants').text(fmtNum(assistants));
-    const avgGrowth = data.length ? (data.reduce((s,r)=>s + (+r.growth||0),0)/data.length) : 0;
-    $('#kAvgGrowth').text((avgGrowth||0).toFixed(1));
-
-    // سال KPI اقساط
-    let yearSel = +($('#fYearJ').val()||0);
-    if(!yearSel){
-      // انتخاب خودکار: بیشترین سال دیده‌شده در اقساط یا تاریخ دوره
-      const yrs = unique(
-        data.flatMap(r=>{
-          const arr=[];
-          if(r.course_date) arr.push(jalaliYear(r.course_date));
-          if(Array.isArray(r.instalments)) r.instalments.forEach(i=> i?.date && arr.push(jalaliYear(i.date)));
-          return arr;
-        })
-      ).filter(Boolean).sort((a,b)=>b-a);
-      yearSel = yrs[0] || jalaliYear(new Date());
-      $('#fYearJ').val(yearSel);
-    }
-    $('#kYearTitle').text(`سال ${yearSel}`);
-
-    // نمودار تعداد نیوبلاد هر مربی
-    const byAsstMap = new Map();
-    data.forEach(r=>{
-      const a = r.assistant || 'نامشخص';
-      byAsstMap.set(a, (byAsstMap.get(a)||0)+1);
-    });
-    const asstLabels = [...byAsstMap.keys()];
-    const asstVals   = [...byAsstMap.values()];
-    destroyChart(chByAssistant);
-    chByAssistant = new Chart(document.getElementById('byAssistantChart'), {
-      type:'bar',
-      data:{ labels: asstLabels, datasets:[{ label:'تعداد نیوبلاد', data: asstVals }] },
-      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
-    });
-
-    // مجموع اقساط ماهانه سال انتخابی
-    const instByMonth = Array(12).fill(0);
-    data.forEach(r=>{
-      if(Array.isArray(r.instalments)){
-        r.instalments.forEach(it=>{
-          const d = toDate(it?.date);
-          const amt = +it?.amount || 0;
-          if(!d || !amt) return;
-          const y = jalaliYear(d);
-          const m = jalaliMonth(d);
-          if(y === yearSel && m>=1 && m<=12) instByMonth[m-1] += amt;
-        });
-      }
-    });
-    destroyChart(chInstMonthly);
-    chInstMonthly = new Chart(document.getElementById('installmentsMonthlyChart'), {
-      type:'bar',
-      data:{ labels: jalaliMonthNames, datasets:[{ label:`جمع اقساط سال ${yearSel}`, data: instByMonth }] },
-      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
-    });
-    // KPI جمع سال
-    $('#kYearInstallments').text(fmtNum(instByMonth.reduce((a,b)=>a+b,0)));
-
-    // درصد سطح رشد بر اساس مربی (Stacked)
-    const assts = unique(data.map(r=>r.assistant||'نامشخص'));
-    const levels = [1,2,3,4,5];
-    const countsAsstLevel = levels.map(lvl =>
-      assts.map(a => data.filter(r => (r.assistant||'نامشخص')===a && (+r.growth||0)===lvl).length)
-    );
-    const totalsByAsst = assts.map(a => data.filter(r => (r.assistant||'نامشخص')===a).length || 1);
-    const percAsstLevel = countsAsstLevel.map(row => row.map((v,i)=> Math.round( (v*100)/totalsByAsst[i] )));
-    destroyChart(chGrowthAsst);
-    chGrowthAsst = new Chart(document.getElementById('growthByAssistantChart'), {
-      type:'bar',
-      data:{
-        labels: assts,
-        datasets: levels.map((lvl, idx)=>({ label:`سطح ${lvl}`, data: percAsstLevel[idx], stack:'s' }))
-      },
-      options:{ responsive:true, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100} } }
-    });
-
-    // درصد سطح رشد بر اساس استان (Stacked)
-    const provs = unique(data.map(r=>r.province||'نامشخص'));
-    const countsProvLevel = levels.map(lvl =>
-      provs.map(p => data.filter(r => (r.province||'نامشخص')===p && (+r.growth||0)===lvl).length)
-    );
-    const totalsByProv = provs.map(p => data.filter(r => (r.province||'نامشخص')===p).length || 1);
-    const percProvLevel = countsProvLevel.map(row => row.map((v,i)=> Math.round( (v*100)/totalsByProv[i] )));
-    destroyChart(chGrowthProv);
-    chGrowthProv = new Chart(document.getElementById('growthByProvinceChart'), {
-      type:'bar',
-      data:{
-        labels: provs,
-        datasets: levels.map((lvl, idx)=>({ label:`سطح ${lvl}`, data: percProvLevel[idx], stack:'s' }))
-      },
-      options:{ responsive:true, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100} } }
-    });
-
-    // علاقه‌مندی‌ها (سه تیک)
-    const interestKeys = ['anatomy','ayurveda','marketing'];
-    const interestLabels= ['آناتومی','آیورودا','بازاریابی'];
-    const interestCounts = [0,0,0];
-    data.forEach(r=>{
-      const arr = Array.isArray(r.interests)? r.interests : [];
-      arr.forEach(k=>{
-        const idx = interestKeys.indexOf(k);
-        if(idx>=0) interestCounts[idx] += 1;
-      });
-    });
-    destroyChart(chInterests);
-    chInterests = new Chart(document.getElementById('interestsChart'), {
-      type:'bar',
-      data:{ labels: interestLabels, datasets:[{ label:'تعداد', data: interestCounts }] },
-      options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{ beginAtZero:true } } }
-    });
-
-    // جدول کوین‌ها (نام + تعداد)
-    const coinsRows = data.map(r=>{
-      const n = r.name || 'بدون نام';
-      const cnt = Array.isArray(r.coins) ? r.coins.length : 0;
-      return { name:n, count:cnt };
-    }).sort((a,b)=> b.count - a.count);
-    const coinsTbody = $('#coinsTable tbody').empty();
-    coinsRows.forEach(row=>{
-      coinsTbody.append(`<tr><td>${row.name}</td><td>${fmtNum(row.count)}</td></tr>`);
-    });
-
-    // جدول اقساط ماهانه (شمسی)
-    const tableMap = new Map(); // key: m(1..12) -> sum
-    instByMonth.forEach((v,i)=> tableMap.set(i+1, v));
-    const instTbody = $('#instTable tbody').empty();
-    [...tableMap.entries()].forEach(([m,sum])=>{
-      if(sum>0) instTbody.append(`<tr><td>${jalaliMonthNames[m-1]}</td><td>${fmtNum(sum)}</td></tr>`);
-    });
-
-    // لیست تولدها برای ماه انتخابی
-    renderBirthdays();
-    // نکته‌ی فیلتر در KPI
-    const hint = [];
-    if($('#fProvince').val()) hint.push('استان: '+$('#fProvince').val());
-    if($('#fCity').val())     hint.push('شهر: '+$('#fCity').val());
-    if($('#fAssistant').val())hint.push('استادیار: '+$('#fAssistant').val());
-    $('#kFilterHint').text(hint.join(' | '));
-  }
-
-  function renderBirthdays(){
-    const month = +$('#birthMonthSel').val() || 1;
-    const data = applyFilters();
-    const list = data
-      .filter(r => r.birthdate && jalaliMonth(r.birthdate)===month)
-      .map(r => ({ name: r.name||'بدون نام', d: toDate(r.birthdate) }))
-      .sort((a,b)=> (a.d?.getDate()||0) - (b.d?.getDate()||0));
-    const box = $('#birthList').empty();
-    if(!list.length){ box.html('<div class="muted">موردی یافت نشد.</div>'); return; }
-    const rows = list.map(item=>{
-      const jstr = toJalaliStr(item.d);
-      return `<div>- ${item.name} <span class="muted">(${jstr})</span></div>`;
-    }).join('');
-    box.html(rows);
-  }
-
-  // ====== بارگذاری و رندر اولیه ======
-  async function loadAndRender(){
+  document.getElementById('btnBackupJSON').onclick = async ()=>{
     try{
-      rawData = await fetchAllNewbloods();
-      populateFilters(rawData);
-      renderAll();
-    }catch(e){
-      console.error(e);
-      alert('خطا در بارگذاری داده‌ها');
-    }
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
+      download(fname, JSON.stringify(data, null, 2), 'application/json');
+    }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
+  };
+
+  document.getElementById('btnBackupCSV').onclick = async ()=>{
+    try{
+      const data = await fetchAllNewbloods();
+      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
+      download(fname, toCSV(data), 'text/csv;charset=utf-8');
+    }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
+  };
+
+  // ===== آماده‌سازی اولیه بعد از ورود =====
+  if(sessionStorage.getItem('isAdmin')==='1'){
+    resetPaging(); loadList(true);
   }
 </script>
 </body>
