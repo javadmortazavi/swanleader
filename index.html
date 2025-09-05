@@ -228,6 +228,12 @@
   <div class="referred" id="refContainer"></div>
   <button type="button" class="secondary" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
 
+  <!-- ✅ فقط اضافه‌شده: تیک قرارداد -->
+  <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
+    <input type="checkbox" name="contract_signed" value="true">
+    قرارداد امضا شده
+  </label>
+
   <label>یادداشت</label>
   <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
 
@@ -414,11 +420,15 @@
       ch.checked = ints.includes(ch.value);
     });
 
+    // ✅ قرارداد
+    const cbox = f.querySelector('input[name="contract_signed"]');
+    if(cbox) cbox.checked = !!d.contract_signed;
+
     // تاریخ‌ها -> جلالی UI
     function setJalaliInput(sel, dateVal){
       if(!dateVal) return;
-      const d = new Date(dateVal);
-      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
+      const d2 = new Date(dateVal);
+      const g = { gy:d2.getFullYear(), gm:d2.getMonth()+1, gd:d2.getDate() };
       const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
       $(sel).val(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
     }
@@ -432,21 +442,15 @@
 
     // اقساط
     document.getElementById('instContainer').innerHTML='';
-    if(Array.isArray(d.instalments)){
-      d.instalments.forEach(it=> addInstallment(it));
-    }
+    if(Array.isArray(d.instalments)){ d.instalments.forEach(it=> addInstallment(it)); }
 
     // کوین‌ها
     document.getElementById('coinsContainer').innerHTML='';
-    if(Array.isArray(d.coins)){
-      d.coins.forEach(c=> addCoin(c));
-    }
+    if(Array.isArray(d.coins)){ d.coins.forEach(c=> addCoin(c)); }
 
     // معرفی‌شده‌ها
     document.getElementById('refContainer').innerHTML='';
-    if(Array.isArray(d.referred_people)){
-      d.referred_people.forEach(n=> addReferred(n));
-    }
+    if(Array.isArray(d.referred_people)){ d.referred_people.forEach(n=> addReferred(n)); }
   }
 
   function showEditLink(objectId){
@@ -468,7 +472,6 @@
     out.textContent='در حال جستجو…';
     try{
       const tb = Backendless.Data.of('Newbloods');
-      // اگر دوست داری فقط در بین نیوبلادهای همان استادیار بگردد، نام را از URL بخوان
       const asst = new URLSearchParams(location.search).get('assistant');
       let where = `mobile LIKE '%${q}%' OR name LIKE '%${q}%'`;
       if(asst) where = `assistant='${asst.replace(/'/g,"\\'")}' AND (${where})`;
@@ -506,6 +509,9 @@
 
     // علاقه‌مندی‌ها → آرایه (فقط سه مورد)
     data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
+
+    // ✅ قرارداد (تیک)
+    data.contract_signed = document.querySelector('input[name="contract_signed"]').checked;
 
     // اقساط (با آپلود فیش)
     const instRows = Array.from(document.querySelectorAll('.installment'));
@@ -548,6 +554,8 @@
         document.getElementById('refContainer').innerHTML='';
         document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
         document.getElementById('growthVal').value=0;
+        // قرارداد هم به حالت پیش‌فرض برگرده
+        const cbox = document.querySelector('input[name="contract_signed"]'); if(cbox) cbox.checked = false;
       }
     }catch(err){
       console.error(err);
@@ -557,7 +565,7 @@
     }
   });
 
-  // اگر با پارامتر objectId آمدیم، رکورد را بارگذاری کن (برای ویرایش از لیست استادیار)
+  // اگر با پارامتر objectId آمدیم، رکورد را بارگذاری کن
   (function maybeLoadFromURL(){
     const id = new URLSearchParams(location.search).get('objectId');
     if(id){ loadByObjectId(id); }
