@@ -14,13 +14,16 @@
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
+  <!-- Chart.js برای نمودارها -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
   <style>
     :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
     header{background:#222;color:#fff;padding:12px;text-align:center}
     header h1{margin:0;font-size:18px}
-    .container{max-width:1100px;margin:14px auto;padding:0 10px}
+    .container{max-width:1180px;margin:14px auto;padding:0 10px}
     .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:12px}
 
     label{display:block;margin-top:8px;font-weight:700}
@@ -48,14 +51,17 @@
     @media (max-width:900px){ .kpis{grid-template-columns:1fr 1fr} }
     @media (max-width:520px){ .kpis{grid-template-columns:1fr} }
 
+    /* چارت ها */
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:980px){ .charts{grid-template-columns:1fr} }
+    .chart-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px}
+
     /* لیست */
     .list{display:grid;gap:8px;margin-top:10px}
     .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
     .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#444}
     .item .meta{font-size:13px;color:#555}
-    .badge{
-      padding:2px 6px;border-radius:8px;font-size:12px
-    }
+    .badge{padding:2px 6px;border-radius:8px;font-size:12px}
     .badge-ok{background:#e8f5e9;color:#1b5e20}
     .badge-no{background:#fff3e0;color:#ef6c00}
     .actions{display:flex;gap:6px}
@@ -77,13 +83,13 @@
 
 <div class="container">
 
-  <!-- لاگین ساده مدیر -->
+  <!-- لاگین مدیر (بدون نمایش یوزر/پس روی UI) -->
   <div class="card loginwrap" id="loginCard">
     <h3 style="margin:0 0 8px 0">ورود مدیر</h3>
     <label>نام کاربری</label>
-    <input id="admUser" placeholder="admin">
+    <input id="admUser" placeholder="نام کاربری">
     <label>رمز عبور</label>
-    <input id="admPass" type="password" placeholder="swan">
+    <input id="admPass" type="password" placeholder="رمز عبور">
     <button id="btnAdminLogin" style="margin-top:10px">ورود</button>
     <div id="loginMsg" class="msg"></div>
   </div>
@@ -143,6 +149,19 @@
     </div>
 
     <div class="card">
+      <div class="charts">
+        <div class="chart-card">
+          <h3 style="margin:0 0 10px 0">آمار بر اساس استان</h3>
+          <canvas id="chartProvince" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3 style="margin:0 0 10px 0">آمار بر اساس استادیار</h3>
+          <canvas id="chartAssistant" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="list" id="list"></div>
       <div class="pager">
         <button id="prev">قبلی</button>
@@ -159,16 +178,17 @@
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
   // ===== ورود ساده مدیر (سمت کاربر) =====
+  // اعتبارسنجی سمت کاربر برای MVP؛ برای انتشار نهایی باید سمت سرور ایمن شود.
   const ADMIN_FIXED_USER = 'admin';
   const ADMIN_FIXED_PASS = 'swan';
+
   const loginCard = document.getElementById('loginCard');
   const dashCard  = document.getElementById('dashCard');
-
   function showLogin(){ loginCard.style.display='block'; dashCard.style.display='none'; }
   function showDash(){ loginCard.style.display='none'; dashCard.style.display='block'; }
 
   (function initAdminSession(){
-    if(sessionStorage.getItem('isAdmin')==='1') showDash();
+    if(sessionStorage.getItem('isAdmin')==='1'){ showDash(); resetPaging(); loadAll(true); }
   })();
 
   document.getElementById('btnAdminLogin').onclick = ()=>{
@@ -180,8 +200,7 @@
       sessionStorage.setItem('isAdmin','1');
       m.className='msg ok'; m.textContent='ورود موفق.';
       showDash();
-      resetPaging();
-      loadList(true);
+      resetPaging(); loadAll(true);
     }else{
       m.className='msg err'; m.textContent='نام کاربری یا رمز نادرست است.';
     }
@@ -204,23 +223,22 @@
   const fmt  = n => (n||0).toLocaleString('fa-IR');
 
   // ===== فیلترها =====
-  document.getElementById('btnApply').onclick = ()=>{ resetPaging(); loadList(true); };
+  document.getElementById('btnApply').onclick = ()=>{ resetPaging(); loadAll(true); };
   document.getElementById('btnReset').onclick = ()=>{
     document.getElementById('q').value='';
     document.getElementById('prov').value='';
     document.getElementById('city').value='';
     document.getElementById('assistant').value='';
     document.getElementById('onlyContracted').checked=false;
-    resetPaging(); loadList(true);
+    resetPaging(); loadAll(true);
   };
 
   // ===== صفحه‌بندی =====
   let page = 0; const pageSize = 30;
   function resetPaging(){ page = 0; }
-  document.getElementById('prev').onclick = ()=>{ if(page>0){ page--; loadList(); } };
-  document.getElementById('next').onclick = ()=>{ page++; loadList(); };
+  document.getElementById('prev').onclick = ()=>{ if(page>0){ page--; loadListOnly(); } };
+  document.getElementById('next').onclick = ()=>{ page++; loadListOnly(); };
 
-  // ===== ساخت where بر اساس فیلترها =====
   function buildWhere(){
     const q  = (document.getElementById('q').value||'').trim();
     const pv = (document.getElementById('prov').value||'').trim();
@@ -237,82 +255,33 @@
     return where;
   }
 
-  // ===== بارگذاری لیست + KPI =====
-  async function loadList(refreshKPIs=false){
-    const list = document.getElementById('list');
-    const where = buildWhere();
-    try{
-      const tb = Backendless.Data.of('Newbloods');
-      const qb = Backendless.DataQueryBuilder.create()
-                   .setWhereClause(where)
-                   .setSortBy(['created DESC'])
-                   .setPageSize(pageSize)
-                   .setOffset(page*pageSize);
-      const rows = await tb.find(qb);
-
-      if(refreshKPIs){ await loadKPIs(); }
-
-      list.innerHTML = '';
-      if(!rows.length){
-        list.innerHTML = '<div class="muted">موردی یافت نشد.</div>';
-      }else{
-        rows.forEach(r=>{
-          const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
-          const cd = r.course_date ? toJalaliStr(r.course_date) : '—';
-          const growthStars = star(+r.growth||0);
-          const cityPart = [r.province, r.city].filter(Boolean).join(' / ');
-          const badge = r.contract_signed
-            ? '<span class="badge badge-ok">قرارداد</span>'
-            : '<span class="badge badge-no">بدون قرارداد</span>';
-
-          const wrap = document.createElement('div');
-          wrap.className = 'item';
-
-          const left = document.createElement('div');
-          left.innerHTML = `
-            <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
-            <div class="meta">
-              ${cityPart||'—'} | استادیار: ${r.assistant||'—'} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
-            </div>
-          `;
-
-          const actions = document.createElement('div');
-          actions.className = 'actions';
-          const aEdit = document.createElement('a');
-          const qs = new URLSearchParams({ objectId: r.objectId, assistant: (r.assistant||'') });
-          aEdit.href = 'index.html?' + qs.toString();
-          aEdit.textContent = 'ویرایش';
-          aEdit.target = '_self';
-          actions.appendChild(aEdit);
-
-          wrap.appendChild(left);
-          wrap.appendChild(actions);
-          list.appendChild(wrap);
-        });
-      }
-
-      document.getElementById('pageInfo').textContent = `صفحه ${page+1}`;
-    }catch(e){
-      console.error(e);
-      alert('خطا در بارگذاری لیست');
-    }
-  }
-
-  async function loadKPIs(){
-    // برای KPI ها کل داده‌های مطابق فیلتر فعلی را می‌خوانیم
+  // ===== داده‌ی کامل بر اساس فیلتر (برای KPI و نمودارها) =====
+  let cacheAll = []; // کل داده‌های مطابق فیلتر برای ساخت KPI/نمودار
+  async function loadAll(refreshKPIsAndCharts=false){
     const where = buildWhere();
     const tb = Backendless.Data.of('Newbloods');
     let offset = 0, all = [], chunk = [];
-    do{
-      const qb = Backendless.DataQueryBuilder.create()
-                   .setWhereClause(where)
-                   .setSortBy(['created DESC'])
-                   .setPageSize(100).setOffset(offset);
-      chunk = await tb.find(qb);
-      all.push(...chunk);
-      offset += 100;
-    }while(chunk.length===100);
+    try{
+      do{
+        const qb = Backendless.DataQueryBuilder.create()
+                     .setWhereClause(where)
+                     .setSortBy(['created DESC'])
+                     .setPageSize(200).setOffset(offset);
+        chunk = await tb.find(qb);
+        all.push(...chunk);
+        offset += 200;
+      }while(chunk.length===200);
+      cacheAll = all;
+      if(refreshKPIsAndCharts){ updateKPIs(all); drawCharts(all); }
+      await loadListOnly(); // صفحه فعلی از نتایج
+    }catch(e){
+      console.error(e);
+      alert('خطا در بارگذاری داده‌ها');
+    }
+  }
 
+  // ===== KPI ها =====
+  function updateKPIs(all){
     const count = all.length;
     const avgGrowth = count ? (all.reduce((s,r)=>s + (+r.growth||0),0)/count) : 0;
     const totalCoins = all.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length:0), 0);
@@ -326,8 +295,151 @@
     document.getElementById('kContractsPct').textContent = pct + '%';
   }
 
+  // ===== نمودارها =====
+  let chartProvince, chartAssistant;
+
+  function aggBy(items, keyFn){
+    const map = new Map();
+    for(const r of items){
+      const k = keyFn(r) || '—';
+      if(!map.has(k)) map.set(k, []);
+      map.get(k).push(r);
+    }
+    return map;
+  }
+
+  function buildProvinceDataset(all){
+    const g = aggBy(all, r=> (r.province||'—').trim());
+    const labels = [...g.keys()];
+    const counts = labels.map(l=> g.get(l).length);
+    const avgGrowth = labels.map(l=>{
+      const arr=g.get(l), c=arr.length;
+      return c? (arr.reduce((s,r)=>s+(+r.growth||0),0)/c) : 0;
+    });
+    const contractsPct = labels.map(l=>{
+      const arr=g.get(l), c=arr.length;
+      const k=arr.filter(r=>!!r.contract_signed).length;
+      return c? Math.round((k/c)*100):0;
+    });
+    return { labels, counts, avgGrowth, contractsPct };
+  }
+
+  function buildAssistantDataset(all){
+    const g = aggBy(all, r=> (r.assistant||'—').trim());
+    const labels = [...g.keys()];
+    const counts = labels.map(l=> g.get(l).length);
+    const avgGrowth = labels.map(l=>{
+      const arr=g.get(l), c=arr.length;
+      return c? (arr.reduce((s,r)=>s+(+r.growth||0),0)/c) : 0;
+    });
+    const contractsPct = labels.map(l=>{
+      const arr=g.get(l), c=arr.length;
+      const k=arr.filter(r=>!!r.contract_signed).length;
+      return c? Math.round((k/c)*100):0;
+    });
+    return { labels, counts, avgGrowth, contractsPct };
+  }
+
+  function drawCharts(all){
+    const p = buildProvinceDataset(all);
+    const a = buildAssistantDataset(all);
+
+    const ctxP = document.getElementById('chartProvince').getContext('2d');
+    const ctxA = document.getElementById('chartAssistant').getContext('2d');
+
+    if(chartProvince) chartProvince.destroy();
+    if(chartAssistant) chartAssistant.destroy();
+
+    chartProvince = new Chart(ctxP, {
+      type: 'bar',
+      data: {
+        labels: p.labels,
+        datasets: [
+          { label:'تعداد', data: p.counts },
+          { label:'میانگین رشد', data: p.avgGrowth },
+          { label:'٪ قرارداد', data: p.contractsPct }
+        ]
+      },
+      options: {
+        responsive: true,
+        aspectRatio: 2,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    chartAssistant = new Chart(ctxA, {
+      type: 'bar',
+      data: {
+        labels: a.labels,
+        datasets: [
+          { label:'تعداد', data: a.counts },
+          { label:'میانگین رشد', data: a.avgGrowth },
+          { label:'٪ قرارداد', data: a.contractsPct }
+        ]
+      },
+      options: {
+        responsive: true,
+        aspectRatio: 2,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // ===== لیست صفحه‌ای (از cacheAll) =====
+  async function loadListOnly(){
+    const list = document.getElementById('list');
+    const start = page*pageSize;
+    const rows = cacheAll.slice(start, start+pageSize);
+
+    list.innerHTML = '';
+    if(!rows.length){
+      list.innerHTML = '<div class="muted">موردی یافت نشد.</div>';
+    }else{
+      rows.forEach(r=>{
+        const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
+        const cd = r.course_date ? toJalaliStr(r.course_date) : '—';
+        const growthStars = star(+r.growth||0);
+        const cityPart = [r.province, r.city].filter(Boolean).join(' / ');
+        const badge = r.contract_signed
+          ? '<span class="badge badge-ok">قرارداد</span>'
+          : '<span class="badge badge-no">بدون قرارداد</span>';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'item';
+
+        const left = document.createElement('div');
+        left.innerHTML = `
+          <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
+          <div class="meta">
+            ${cityPart||'—'} | استادیار: ${r.assistant||'—'} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
+          </div>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+        const aEdit = document.createElement('a');
+        const qs = new URLSearchParams({ objectId: r.objectId, assistant: (r.assistant||'') });
+        aEdit.href = 'index.html?' + qs.toString();
+        aEdit.textContent = 'ویرایش';
+        aEdit.target = '_self';
+        actions.appendChild(aEdit);
+
+        wrap.appendChild(left);
+        wrap.appendChild(actions);
+        list.appendChild(wrap);
+      });
+    }
+
+    document.getElementById('pageInfo').textContent =
+      `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
+  }
+
   // ===== بکاپ‌ها =====
-  async function fetchAllNewbloods(){
+  async function fetchAllNewbloodsRaw(){
     const store = [];
     let page = 0, pageSize = 200, chunk = [];
     const tb = Backendless.Data.of('Newbloods');
@@ -365,7 +477,7 @@
 
   document.getElementById('btnBackupJSON').onclick = async ()=>{
     try{
-      const data = await fetchAllNewbloods();
+      const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
       download(fname, JSON.stringify(data, null, 2), 'application/json');
     }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
@@ -373,15 +485,15 @@
 
   document.getElementById('btnBackupCSV').onclick = async ()=>{
     try{
-      const data = await fetchAllNewbloods();
+      const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
       download(fname, toCSV(data), 'text/csv;charset=utf-8');
     }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
   };
 
-  // ===== آماده‌سازی اولیه بعد از ورود =====
+  // ===== شروع (بعد از ورود) =====
   if(sessionStorage.getItem('isAdmin')==='1'){
-    resetPaging(); loadList(true);
+    resetPaging(); loadAll(true);
   }
 </script>
 </body>
