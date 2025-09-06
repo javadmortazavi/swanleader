@@ -280,11 +280,12 @@
         const qb = Backendless.DataQueryBuilder.create()
                      .setWhereClause(where)
                      .setSortBy(['created DESC'])
-                     .setPageSize(200).setOffset(offset);
+                     .setPageSize(100)          // <= محدودیت Backendless
+                     .setOffset(offset);
         chunk = await tb.find(qb);
         all.push(...chunk);
-        offset += 200;
-      }while(chunk.length===200);
+        offset += 100;                          // <= قدمِ بعدی
+      }while(chunk.length===100);
       cacheAll = all;
       if(refreshKPIsAndCharts){ updateKPIs(all); drawCharts(all); }
       await loadListOnly(); // صفحه فعلی از نتایج
@@ -451,7 +452,7 @@
   // ===== بکاپ‌ها =====
   async function fetchAllNewbloodsRaw(){
     const store = [];
-    let page = 0, pageSize = 200, chunk = [];
+    let page = 0, pageSize = 100, chunk = [];
     const tb = Backendless.Data.of('Newbloods');
     do{
       const qb = Backendless.DataQueryBuilder.create()
