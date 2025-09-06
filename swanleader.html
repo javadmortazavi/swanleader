@@ -177,36 +177,50 @@
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // ===== ورود ساده مدیر (سمت کاربر) =====
-  // اعتبارسنجی سمت کاربر برای MVP؛ برای انتشار نهایی باید سمت سرور ایمن شود.
+  // ===== ورود ساده مدیر (سمت کاربر) + لاگین واقعی به Backendless =====
   const ADMIN_FIXED_USER = 'admin';
   const ADMIN_FIXED_PASS = 'swan';
+  // ایمیلی که در Users ساخته‌ای:
+  const ADMIN_BL_EMAIL  = 'admin@swanfamily.app';
 
   const loginCard = document.getElementById('loginCard');
   const dashCard  = document.getElementById('dashCard');
   function showLogin(){ loginCard.style.display='block'; dashCard.style.display='none'; }
   function showDash(){ loginCard.style.display='none'; dashCard.style.display='block'; }
 
-  (function initAdminSession(){
-    if(sessionStorage.getItem('isAdmin')==='1'){ showDash(); resetPaging(); loadAll(true); }
+  (async function initAdminSession(){
+    if(sessionStorage.getItem('isAdmin')==='1'){
+      // اگر سشن Backendless معتبر باشد، ادامه می‌دهیم
+      try{ await Backendless.UserService.getCurrentUser(); }catch(_){}
+      showDash(); resetPaging(); loadAll(true);
+    }
   })();
 
-  document.getElementById('btnAdminLogin').onclick = ()=>{
+  document.getElementById('btnAdminLogin').onclick = async ()=>{
     const u = (document.getElementById('admUser').value||'').trim();
     const p = (document.getElementById('admPass').value||'').trim();
     const m = document.getElementById('loginMsg');
     m.style.display='block'; m.className='msg'; m.textContent='در حال بررسی…';
-    if(u===ADMIN_FIXED_USER && p===ADMIN_FIXED_PASS){
+    try{
+      if(u!==ADMIN_FIXED_USER || p!==ADMIN_FIXED_PASS){
+        m.className='msg err'; m.textContent='نام کاربری یا رمز نادرست است.'; return;
+      }
+      // ✅ لاگین واقعی به Backendless با کاربر مدیر
+      await Backendless.UserService.login(ADMIN_BL_EMAIL, p, true);
+
       sessionStorage.setItem('isAdmin','1');
       m.className='msg ok'; m.textContent='ورود موفق.';
       showDash();
       resetPaging(); loadAll(true);
-    }else{
-      m.className='msg err'; m.textContent='نام کاربری یا رمز نادرست است.';
+    }catch(e){
+      console.error(e);
+      m.className='msg err';
+      m.textContent = 'خطا در ورود به سرور: ' + (e.message || e);
     }
   };
 
-  document.getElementById('btnLogout').onclick = ()=>{
+  document.getElementById('btnLogout').onclick = async ()=>{
+    try{ await Backendless.UserService.logout(); }catch(_){}
     sessionStorage.removeItem('isAdmin');
     showLogin();
   };
@@ -276,7 +290,7 @@
       await loadListOnly(); // صفحه فعلی از نتایج
     }catch(e){
       console.error(e);
-      alert('خطا در بارگذاری داده‌ها');
+      alert('خطا در بارگذاری داده‌ها: ' + (e.message || e));
     }
   }
 
@@ -363,9 +377,7 @@
       options: {
         responsive: true,
         aspectRatio: 2,
-        scales: {
-          y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
       }
     });
 
@@ -382,9 +394,7 @@
       options: {
         responsive: true,
         aspectRatio: 2,
-        scales: {
-          y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
       }
     });
   }
@@ -480,7 +490,7 @@
       const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
       download(fname, JSON.stringify(data, null, 2), 'application/json');
-    }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
+    }catch(e){ alert('خطا در بکاپ JSON: ' + (e.message||e)); console.error(e); }
   };
 
   document.getElementById('btnBackupCSV').onclick = async ()=>{
@@ -488,7 +498,7 @@
       const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
       download(fname, toCSV(data), 'text/csv;charset=utf-8');
-    }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
+    }catch(e){ alert('خطا در بکاپ CSV: ' + (e.message||e)); console.error(e); }
   };
 
   // ===== شروع (بعد از ورود) =====
