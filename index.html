@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>فرم ثبت نیوبلاد - Swan Family</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="format-detection" content="telephone=no" />
-  <style>html{-webkit-text-size-adjust:100%}</style>
 
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
@@ -23,25 +21,17 @@
     body{font-family:Tahoma,system-ui,sans-serif;background:#f5f5f5;margin:0;padding:0}
     header{background:#222;color:#fff;text-align:center;padding:12px}
     header h1{margin:0;font-size:18px}
-
-    /* کارت/باکس بالای فرم برای «ویرایش سریع» */
-    .bar{background:#fff;max-width:980px;margin:12px auto 0;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06)}
-    .findbox{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
-    .findbox input{padding:.9rem;border:1px solid #dedede;border-radius:10px;font-size:16px}
-    .findbox button{padding:.9rem 1.1rem;border:none;border-radius:10px;background:#607d8b;color:#fff;cursor:pointer;font-size:16px}
-    .findresult{margin-top:6px;color:#666;font-size:.9rem}
-
-    form{background:#fff;max-width:980px;margin:12px auto 18px;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+    form{background:#fff;max-width:980px;margin:18px auto;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
     label{display:block;margin-top:12px;font-weight:700}
-    input,select,textarea{width:100%;padding:.9rem;border:1px solid #dedede;border-radius:10px;margin-top:6px;font-size:16px}
+    input,select,textarea{width:100%;padding:.6rem;border:1px solid #dedede;border-radius:10px;margin-top:6px}
     textarea{min-height:90px}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .muted{color:#666;font-size:.9rem}
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-    button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:.9rem 1.2rem;cursor:pointer;font-size:16px}
+    button{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:.65rem 1.2rem;cursor:pointer}
     button.secondary{background:#607d8b}
 
-    .stars span{font-size:1.8rem;cursor:pointer;color:#c9c9c9}
+    .stars span{font-size:1.6rem;cursor:pointer;color:#c9c9c9}
     .stars .selected{color:#f4c430}
 
     .installments,.coins-log,.referred{margin-top:6px}
@@ -56,7 +46,7 @@
     .pdate-input{direction:ltr;text-align:center}
     input[type="file"]{width:100%}
 
-    .msg{margin-top:12px;padding:.9rem;border-radius:10px;display:none}
+    .msg{margin-top:12px;padding:.7rem;border-radius:10px;display:none}
     .ok{background:#e0f7f4;color:#00695c}
     .err{background:#ffebee;color:#c62828}
 
@@ -64,20 +54,14 @@
     .backup-bar{display:none;max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
     .backup-bar small{color:#666}
 
-    /* واکنش‌گرا برای موبایل */
+    /* تگ‌های استادیاران */
+    #assistantsTags span{background:#e8f5e9;color:#1b5e20;padding:4px 8px;border-radius:10px;display:inline-flex;gap:6px;align-items:center}
+
     @media (max-width:900px){ .row{grid-template-columns:1fr} }
     @media (max-width:700px){
       .installment,.coin-entry,.referred-entry{grid-template-columns:1fr}
       .installment>button,.coin-entry>button,.referred-entry>button{width:100%;order:99}
     }
-
-    /* استیکی لینک ویرایش همین رکورد بعد از ذخیره/لود */
-    .sticky-edit{
-      display:none;position:sticky;bottom:8px;background:rgba(255,255,255,.95);
-      border:1px solid #eaeaea;border-radius:12px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.08);
-      max-width:980px;margin:0 auto
-    }
-    .sticky-edit a{background:#37474f;color:#fff;padding:.7rem 1rem;border-radius:10px;text-decoration:none;font-size:15px}
   </style>
 </head>
 <body>
@@ -85,15 +69,6 @@
 <header>
   <h1>فرم ثبت نیوبلاد</h1>
 </header>
-
-<!-- ویرایش سریع (جستجو بر اساس نام/موبایل) -->
-<div class="bar">
-  <div class="findbox">
-    <input id="findQuery" placeholder="جستجو برای ویرایش: نام یا موبایل…" />
-    <button id="btnFindEdit">یافتن و بارگذاری</button>
-  </div>
-  <div id="findResult" class="findresult"></div>
-</div>
 
 <!-- نوار بکاپ (فقط وقتی ادمین لاگین است نمایش داده می‌شود) -->
 <div class="backup-bar" id="backupBar">
@@ -103,14 +78,19 @@
 </div>
 
 <form id="newbloodForm">
-  <!-- استادیار ثبت‌کننده -->
-  <label>استادیار ثبت‌کننده</label>
-  <select id="assistantSel" name="assistant" required>
-    <option value="">— انتخاب کنید —</option>
-    <option value="جواد مرتضوی">جواد مرتضوی</option>
-    <option value="استادیار ۱">استادیار ۱</option>
-    <option value="استادیار ۲">استادیار ۲</option>
-  </select>
+  <!-- ✅ چک‌باکس قرارداد -->
+  <label style="display:flex;align-items:center;gap:8px">
+    <input type="checkbox" id="contract_signed"> قرارداد امضا شده
+  </label>
+
+  <!-- ✅ استادیاران (چندتایی) -->
+  <label>استادیاران</label>
+  <div id="assistantsTags" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
+    <input type="text" id="assistantInput" placeholder="نام استادیار را بنویسید و + بزنید" style="flex:1">
+    <button type="button" class="secondary" onclick="addAssistant()">+ افزودن</button>
+  </div>
+  <small class="muted">نکته: اولین استادیار به‌عنوان فیلد سازگاری «assistant» ذخیره می‌شود.</small>
 
   <div class="row">
     <div>
@@ -158,7 +138,7 @@
   <label>نحوهٔ آشنایی با خانوادهٔ سوان</label>
   <textarea name="how_met" placeholder="مثلاً: معرفی دوست، اینستاگرام، شرکت در رویداد و..."></textarea>
 
-  <!-- علاقه‌مندی‌ها: فقط سه تیک خواسته‌شده -->
+  <!-- علاقه‌مندی‌ها: سه تیک خواسته‌شده -->
   <label>علاقه‌مندی‌ها</label>
   <div class="row">
     <label><input type="checkbox" name="interests" value="anatomy"> آناتومی</label>
@@ -199,7 +179,7 @@
     </div>
   </div>
 
-  <!-- پیش‌پرداخت بالای اقساط -->
+  <!-- ✅ پیش‌پرداخت بالای اقساط -->
   <label>پیش‌پرداخت (تومان)</label>
   <input type="number" name="prepayment" min="0" step="1">
 
@@ -228,37 +208,26 @@
   <div class="referred" id="refContainer"></div>
   <button type="button" class="secondary" onclick="addReferred()">+ افزودن نام معرفی‌شده</button>
 
-  <!-- ✅ فقط اضافه‌شده: تیک قرارداد -->
-  <label style="display:flex;align-items:center;gap:8px;margin-top:12px">
-    <input type="checkbox" name="contract_signed" value="true">
-    قرارداد امضا شده
-  </label>
-
   <label>یادداشت</label>
   <textarea name="notes" placeholder="توضیحات تکمیلی..."></textarea>
 
   <div class="actions">
     <button type="submit" id="submitBtn">ثبت</button>
-    <a class="secondary" href="/assistant" style="text-decoration:none;padding:.9rem 1.2rem;border-radius:10px;color:#fff">بازگشت به پنل استادیار</a>
+    <a class="secondary" href="/assistant" style="text-decoration:none;padding:.65rem 1.2rem;border-radius:10px;color:#fff">بازگشت به پنل استادیار</a>
   </div>
 
   <div id="msg" class="msg"></div>
 </form>
 
-<!-- لینک ثابت ویرایشِ همین رکورد -->
-<div id="editSticky" class="sticky-edit">
-  <a id="editLink" href="#">ویرایش همین رکورد</a>
-</div>
-
 <script>
-  // ===== تنظیمات ادمین =====
+  // ===== تنظیمات ادمین برای نمایش بکاپ =====
   const ADMIN_NAME  = "جواد مرتضوی";
-  const ADMIN_EMAIL = "j.mortazavi7@gmail.com";
+  const ADMIN_EMAIL = "admin@swanfamily.app"; // یا ایمیلی که در Users برای ادمین ساختی
 
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // بعد از لود، اگر ادمین لاگین بود، نوار بکاپ را نشان بده
+  // نمایش نوار بکاپ فقط اگر ادمین لاگین باشد
   (async function showBackupIfAdmin(){
     try{
       const u = await Backendless.UserService.getCurrentUser();
@@ -284,19 +253,34 @@
     });
   })();
 
-  // ===== Assistant from URL; lock & hidden =====
-  (function initAssistant(){
-    const sel = document.getElementById('assistantSel');
-    const p = new URLSearchParams(location.search).get('assistant');
-    if(p){
-      const name = decodeURIComponent(p).replace(/_/g,' ').trim();
-      let opt = Array.from(sel.options).find(o=>o.value===name);
-      if(!opt){ opt = new Option(name,name); sel.add(opt); }
-      sel.value = name;
-      sel.disabled = true;
-      const hid = document.createElement('input');
-      hid.type='hidden'; hid.name='assistant'; hid.value=name;
-      sel.parentNode.appendChild(hid);
+  // ===== Assistants (multi) =====
+  let assistantsSet = new Set();
+  function renderAssistantTags(){
+    const box = document.getElementById('assistantsTags');
+    box.innerHTML = '';
+    assistantsSet.forEach(name=>{
+      const tag = document.createElement('span');
+      tag.innerHTML = `${name} <button type="button" onclick="removeAssistant('${name}')" style="background:#c8e6c9;border:none;border-radius:8px;padding:0 6px;cursor:pointer">×</button>`;
+      box.appendChild(tag);
+    });
+  }
+  function addAssistant(nameOpt){
+    const inp = document.getElementById('assistantInput');
+    const name = (nameOpt || inp.value || '').trim();
+    if(!name) return;
+    assistantsSet.add(name);
+    inp.value = '';
+    renderAssistantTags();
+  }
+  function removeAssistant(name){
+    assistantsSet.delete(name);
+    renderAssistantTags();
+  }
+  // اگر از پنل استادیار آمده باشد، او را خودکار اضافه کن
+  (function seedAssistantFromURL(){
+    const a = new URLSearchParams(location.search).get('assistant');
+    if(a){
+      addAssistant(decodeURIComponent(a).replace(/_/g,' ').trim());
     }
   })();
 
@@ -309,42 +293,48 @@
     const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
     return new Date(g.gy, g.gm-1, g.gd);
   }
+  function toJalaliStr(d){
+    if(!d) return '';
+    const date = new Date(d);
+    if(isNaN(date)) return '';
+    const g={gy:date.getFullYear(), gm:date.getMonth()+1, gd:date.getDate()};
+    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
+    return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
+  }
   const toNumber = v => (v===''||v==null ? null : Number(v));
 
   async function uploadReceipt(file){
-    const safe = (file?.name||'receipt').replace(/\s+/g,'_');
+    const safe = (file.name||'receipt').replace(/\s+/g,'_');
     const fname = `${Date.now()}_${safe}`;
     const res = await Backendless.Files.upload(file, `receipts/${fname}`, true);
     return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
   }
 
   // ===== Dynamic rows =====
-  function addInstallment(it=null){
+  function addInstallment(rowData){
     const div=document.createElement('div');
     div.className='installment';
     div.innerHTML=`
       <input type="text" class="pdate-input inst-date" placeholder="تاریخ قسط (شمسی)">
       <input type="number" class="inst-amount" placeholder="مبلغ (تومان)">
-      <input type="file" class="inst-file" accept="image/*,application/pdf">
+      <div>
+        <input type="file" class="inst-file" accept="image/*,application/pdf">
+        <div class="muted curr-link" style="margin-top:4px"></div>
+      </div>
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('instContainer').appendChild(div);
     const dp = $(div.querySelector('.inst-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
-    if(it?.date){
-      const d = new Date(it.date);
-      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
-      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
-      dp.setDate(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
-    }
-    if(it?.amount!=null) div.querySelector('.inst-amount').value = it.amount;
-    if(it?.receipt_url){
-      const a = document.createElement('a');
-      a.href = it.receipt_url; a.target = "_blank"; a.textContent = 'مشاهده فیش قبلی';
-      a.style.marginTop = '6px';
-      div.appendChild(a);
+    if(rowData){
+      if(rowData.date) $(div).find('.inst-date').val(toJalaliStr(rowData.date));
+      if(rowData.amount!=null) $(div).find('.inst-amount').val(rowData.amount);
+      if(rowData.receipt_url){
+        div.dataset.currentUrl = rowData.receipt_url;
+        div.querySelector('.curr-link').innerHTML = `<a href="${rowData.receipt_url}" target="_blank">مشاهده فیش فعلی</a>`;
+      }
     }
   }
 
-  function addCoin(c=null){
+  function addCoin(rowData){
     const div=document.createElement('div');
     div.className='coin-entry';
     div.innerHTML=`
@@ -352,152 +342,100 @@
       <input type="text" class="coin-note" placeholder="توضیح (اختیاری)">
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('coinsContainer').appendChild(div);
-    const dp = $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
-    if(c?.date){
-      const d = new Date(c.date);
-      const g = { gy:d.getFullYear(), gm:d.getMonth()+1, gd:d.getDate() };
-      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
-      dp.setDate(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
+    $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    if(rowData){
+      if(rowData.date) $(div).find('.coin-date').val(toJalaliStr(rowData.date));
+      if(rowData.note) $(div).find('.coin-note').val(rowData.note);
     }
-    if(c?.note) div.querySelector('.coin-note').value = c.note;
   }
 
-  function addReferred(name=''){
+  function addReferred(nameVal){
     const div=document.createElement('div');
     div.className='referred-entry';
     div.innerHTML=`
-      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده" value="${name}">
+      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده">
       <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
     document.getElementById('refContainer').appendChild(div);
+    if(nameVal) $(div).find('.ref-name').val(nameVal);
   }
 
-  // ===== حالت ایجاد/ویرایش =====
-  let editingId = null;
+  // ===== حالت ویرایش: بارگذاری داده موجود =====
+  let currentObjectId = new URLSearchParams(location.search).get('objectId') || null;
+  if(currentObjectId){
+    (async function loadExisting(){
+      try{
+        const rec = await Backendless.Data.of('Newbloods').findById(currentObjectId);
 
-  async function loadByObjectId(id){
-    const msg = document.getElementById('msg');
-    try{
-      const rec = await Backendless.Data.of('Newbloods').findById(id);
-      fillForm(rec);
-      editingId = rec.objectId;
-      document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
-      msg.style.display='block'; msg.className='msg ok'; msg.textContent='حالت ویرایش فعال شد.';
-      showEditLink(rec.objectId);
-    }catch(e){
-      msg.style.display='block'; msg.className='msg err'; msg.textContent='❌ رکورد پیدا نشد.';
-    }
+        // قرارداد
+        document.getElementById('contract_signed').checked = !!rec.contract_signed;
+
+        // استادیاران
+        const list = (Array.isArray(rec.assistants) && rec.assistants.length)
+          ? rec.assistants
+          : (rec.assistant ? [rec.assistant] : []);
+        assistantsSet = new Set(list);
+        renderAssistantTags();
+
+        // فیلدها
+        document.querySelector('[name="name"]').value = rec.name||'';
+        document.querySelector('[name="mobile"]').value = rec.mobile||'';
+        document.querySelector('[name="instagram"]').value = rec.instagram||'';
+        document.querySelector('[name="marital_status"]').value = rec.marital_status||'';
+        document.querySelector('[name="job1"]').value = rec.job1||'';
+        document.querySelector('[name="job2"]').value = rec.job2||'';
+        document.querySelector('[name="massage_experience"]').value = rec.massage_experience||'';
+        document.querySelector('[name="skills"]').value = rec.skills||'';
+        document.querySelector('[name="how_met"]').value = rec.how_met||'';
+        $('#birthdate_j').val(toJalaliStr(rec.birthdate));
+        $('#course_date_j').val(toJalaliStr(rec.course_date));
+        document.querySelector('[name="course_location"]').value = rec.course_location||'';
+        document.querySelector('[name="referrer"]').value = rec.referrer||'';
+        document.querySelector('[name="province"]').value = rec.province||'';
+        document.querySelector('[name="city"]').value = rec.city||'';
+        document.querySelector('[name="prepayment"]').value = rec.prepayment||'';
+
+        // رشد
+        const gv = +rec.growth||0;
+        document.getElementById('growthVal').value = gv;
+        document.querySelectorAll('#growthStars span').forEach((s,i)=> s.classList.toggle('selected', i < gv));
+
+        // اقساط
+        (Array.isArray(rec.instalments) ? rec.instalments : []).forEach(addInstallment);
+
+        // کوین‌ها
+        (Array.isArray(rec.coins) ? rec.coins : []).forEach(addCoin);
+
+        // معرفی‌شده‌ها
+        (Array.isArray(rec.referred_people) ? rec.referred_people : []).forEach(addReferred);
+
+        // علاقه‌مندی‌ها
+        const ints = Array.isArray(rec.interests) ? rec.interests : [];
+        ints.forEach(v=>{
+          const el = document.querySelector(`input[name="interests"][value="${v}"]`);
+          if(el) el.checked = true;
+        });
+      }catch(e){
+        console.error(e);
+        alert('خطا در بارگذاری رکورد: ' + (e.message||e));
+      }
+    })();
+
+    // در حالت ویرایش، متن دکمه را تغییر بده
+    document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
   }
 
-  function fillForm(d){
-    const f = document.getElementById('newbloodForm');
-    const set = (name,val)=>{ const el = f.querySelector(`[name="${name}"]`); if(el!=null) el.value = val ?? ''; };
-
-    const sel = document.getElementById('assistantSel');
-    if(d.assistant){
-      let opt = Array.from(sel.options).find(o=>o.value===d.assistant);
-      if(!opt){ opt = new Option(d.assistant, d.assistant); sel.add(opt); }
-      sel.value = d.assistant;
-    }
-
-    set('name', d.name);
-    set('mobile', d.mobile);
-    set('instagram', d.instagram);
-    set('marital_status', d.marital_status);
-    set('job1', d.job1);
-    set('job2', d.job2);
-    set('massage_experience', d.massage_experience);
-    set('skills', d.skills);
-    set('how_met', d.how_met);
-    set('course_location', d.course_location);
-    set('referrer', d.referrer);
-    set('province', d.province);
-    set('city', d.city);
-    set('prepayment', d.prepayment);
-
-    // علاقه‌مندی‌ها
-    const ints = Array.isArray(d.interests)? d.interests : [];
-    f.querySelectorAll('input[name="interests"]').forEach(ch=>{
-      ch.checked = ints.includes(ch.value);
-    });
-
-    // ✅ قرارداد
-    const cbox = f.querySelector('input[name="contract_signed"]');
-    if(cbox) cbox.checked = !!d.contract_signed;
-
-    // تاریخ‌ها -> جلالی UI
-    function setJalaliInput(sel, dateVal){
-      if(!dateVal) return;
-      const d2 = new Date(dateVal);
-      const g = { gy:d2.getFullYear(), gm:d2.getMonth()+1, gd:d2.getDate() };
-      const j = jalaali.toJalaali(g.gy,g.gm,g.gd);
-      $(sel).val(`${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`);
-    }
-    setJalaliInput('#birthdate_j', d.birthdate);
-    setJalaliInput('#course_date_j', d.course_date);
-
-    // رشد
-    const gv = +(d.growth||0);
-    document.getElementById('growthVal').value = gv;
-    document.querySelectorAll('#growthStars span').forEach((s,i)=> s.classList.toggle('selected', i < gv));
-
-    // اقساط
-    document.getElementById('instContainer').innerHTML='';
-    if(Array.isArray(d.instalments)){ d.instalments.forEach(it=> addInstallment(it)); }
-
-    // کوین‌ها
-    document.getElementById('coinsContainer').innerHTML='';
-    if(Array.isArray(d.coins)){ d.coins.forEach(c=> addCoin(c)); }
-
-    // معرفی‌شده‌ها
-    document.getElementById('refContainer').innerHTML='';
-    if(Array.isArray(d.referred_people)){ d.referred_people.forEach(n=> addReferred(n)); }
-  }
-
-  function showEditLink(objectId){
-    const box = document.getElementById('editSticky');
-    const a = document.getElementById('editLink');
-    const asst = new URLSearchParams(location.search).get('assistant');
-    const q = new URLSearchParams();
-    if(asst) q.set('assistant', asst);
-    q.set('objectId', objectId);
-    a.href = `index.html?${q.toString()}`;
-    box.style.display = 'block';
-  }
-
-  // ===== ویرایش سریع (جستجو) =====
-  document.getElementById('btnFindEdit').addEventListener('click', async ()=>{
-    const q = (document.getElementById('findQuery').value||'').trim();
-    const out = document.getElementById('findResult');
-    if(!q){ out.textContent='لطفاً نام یا موبایل را وارد کنید.'; return; }
-    out.textContent='در حال جستجو…';
-    try{
-      const tb = Backendless.Data.of('Newbloods');
-      const asst = new URLSearchParams(location.search).get('assistant');
-      let where = `mobile LIKE '%${q}%' OR name LIKE '%${q}%'`;
-      if(asst) where = `assistant='${asst.replace(/'/g,"\\'")}' AND (${where})`;
-      const qb = Backendless.DataQueryBuilder.create().setWhereClause(where).setPageSize(1);
-      const res = await tb.find(qb);
-      if(!res.length){ out.textContent='چیزی پیدا نشد.'; return; }
-      const r = res[0];
-      out.innerHTML = `پیدا شد: <b>${r.name||'—'}</b> (${r.mobile||'—'}) — در حال بارگذاری…`;
-      fillForm(r); editingId = r.objectId; document.getElementById('submitBtn').textContent='به‌روزرسانی'; showEditLink(r.objectId);
-      window.scrollTo({top:0,behavior:'smooth'});
-    }catch(e){
-      console.error(e); out.textContent='خطا در جستجو.';
-    }
-  });
-
-  // ===== Submit (ایجاد/به‌روزرسانی) =====
+  // ===== Submit =====
   document.getElementById('newbloodForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = editingId ? 'در حال به‌روزرسانی…' : 'در حال ذخیره…';
     const msg = document.getElementById('msg');
     msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ذخیره...';
 
     const fd = new FormData(e.target);
     const data = {};
     fd.forEach((v,k)=> data[k]=v);
+
+    // قرارداد
+    data.contract_signed = document.getElementById('contract_signed').checked;
 
     // تاریخ‌ها: شمسی → میلادی
     data.birthdate   = jalaliStrToDate($('#birthdate_j').val());
@@ -507,19 +445,20 @@
     data.growth = toNumber(document.getElementById('growthVal').value) || 0;
     data.prepayment = toNumber(data.prepayment);
 
-    // علاقه‌مندی‌ها → آرایه (فقط سه مورد)
+    // علاقه‌مندی‌ها → آرایه
     data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
 
-    // ✅ قرارداد (تیک)
-    data.contract_signed = document.querySelector('input[name="contract_signed"]').checked;
+    // استادیاران
+    data.assistants = Array.from(assistantsSet);
+    data.assistant  = data.assistants[0] || ''; // سازگاری نسخه‌های قبلی
 
-    // اقساط (با آپلود فیش)
+    // اقساط (با آپلود فیش؛ اگر فایل جدید نبود، لینک فعلی باقی می‌ماند)
     const instRows = Array.from(document.querySelectorAll('.installment'));
     const instPromises = instRows.map(async row=>{
       const date = jalaliStrToDate($(row).find('.inst-date').val());
       const amount = toNumber($(row).find('.inst-amount').val());
       const file = row.querySelector('.inst-file')?.files?.[0];
-      let receipt_url = null;
+      let receipt_url = row.dataset.currentUrl || null;
       if(file){ try{ receipt_url = await uploadReceipt(file); }catch(e){ console.warn('upload failed',e); } }
       return (date || amount || receipt_url) ? { date, amount, receipt_url } : null;
     });
@@ -537,16 +476,15 @@
       .map(i=>i.value.trim()).filter(Boolean);
 
     try{
-      if(editingId){
-        data.objectId = editingId; // به‌روزرسانی
-        await Backendless.Data.of('Newbloods').save(data);
-        msg.className='msg ok'; msg.textContent='✅ رکورد به‌روزرسانی شد.';
-        showEditLink(editingId);
-      }else{
-        const saved = await Backendless.Data.of('Newbloods').save(data);
-        msg.className='msg ok'; msg.textContent='✅ اطلاعات ذخیره شد.';
-        showEditLink(saved.objectId);
-        // reset
+      // اگر در حالت ویرایش هستیم
+      if(currentObjectId){
+        data.objectId = currentObjectId;
+      }
+      await Backendless.Data.of('Newbloods').save(data);
+      msg.className='msg ok'; msg.textContent = currentObjectId ? '✅ اطلاعات به‌روزرسانی شد.' : '✅ اطلاعات ذخیره شد.';
+
+      if(!currentObjectId){
+        // reset فقط در حالت ثبت جدید
         e.target.reset();
         $('#birthdate_j').val(''); $('#course_date_j').val('');
         document.getElementById('instContainer').innerHTML='';
@@ -554,24 +492,16 @@
         document.getElementById('refContainer').innerHTML='';
         document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
         document.getElementById('growthVal').value=0;
-        // قرارداد هم به حالت پیش‌فرض برگرده
-        const cbox = document.querySelector('input[name="contract_signed"]'); if(cbox) cbox.checked = false;
+        assistantsSet = new Set();
+        renderAssistantTags();
       }
     }catch(err){
       console.error(err);
       msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err);
-    }finally{
-      btn.disabled = false; btn.textContent = editingId ? 'به‌روزرسانی' : 'ثبت';
     }
   });
 
-  // اگر با پارامتر objectId آمدیم، رکورد را بارگذاری کن
-  (function maybeLoadFromURL(){
-    const id = new URLSearchParams(location.search).get('objectId');
-    if(id){ loadByObjectId(id); }
-  })();
-
-  // ====== بکاپ دستی: JSON & CSV (ادمین) ======
+  // ====== بکاپ دستی: JSON & CSV (فقط ادمین) ======
   async function fetchAllNewbloods(){
     const store = [];
     let page = 0, pageSize = 100, chunk = [];
