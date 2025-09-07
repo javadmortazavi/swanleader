@@ -83,7 +83,7 @@
 
 <div class="container">
 
-  <!-- لاگین مدیر (بدون نمایش یوزر/پس روی UI) -->
+  <!-- لاگین مدیر -->
   <div class="card loginwrap" id="loginCard">
     <h3 style="margin:0 0 8px 0">ورود مدیر</h3>
     <label>نام کاربری</label>
@@ -103,9 +103,7 @@
           <button id="btnBackupJSON" class="secondary">بکاپ JSON</button>
           <button id="btnBackupCSV"  class="secondary">بکاپ CSV</button>
         </div>
-        <div class="inline">
-          <button id="btnLogout" style="background:#e53935">خروج</button>
-        </div>
+        <button id="btnLogout" style="background:#e53935">خروج</button>
       </div>
     </div>
 
@@ -161,6 +159,40 @@
       </div>
     </div>
 
+    <!-- ✅ گزارش مالی: اقساط (جدید) -->
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">گزارش مالی اقساط</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <h4 style="margin:6px 0">مجموع اقساط ماهانه (شمسی)</h4>
+          <div class="muted" style="font-size:13px;margin-bottom:6px">فقط رکوردهای در حال نمایش (بعد از فیلترها)</div>
+          <table id="tblByMonth" style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="text-align:right;border-bottom:1px solid #eee;padding:6px">ماه</th>
+                <th style="text-align:left;border-bottom:1px solid #eee;padding:6px">جمع (تومان)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div>
+          <h4 style="margin:6px 0">مجموع اقساط به‌تفکیک استادیار</h4>
+          <div class="muted" style="font-size:13px;margin-bottom:6px">بدون تقسیم؛ هر استادیار تمام مبلغ نیوبلادهای خودش را می‌بیند</div>
+          <table id="tblByAssistant" style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr>
+                <th style="text-align:right;border-bottom:1px solid #eee;padding:6px">استادیار</th>
+                <th style="text-align:left;border-bottom:1px solid #eee;padding:6px">جمع (تومان)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- /گزارش مالی -->
+
     <div class="card">
       <div class="list" id="list"></div>
       <div class="pager">
@@ -177,11 +209,10 @@
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // ===== ورود ساده مدیر (سمت کاربر) + لاگین واقعی به Backendless =====
+  // ===== ورود ساده مدیر + لاگین واقعی Backendless =====
   const ADMIN_FIXED_USER = 'admin';
   const ADMIN_FIXED_PASS = 'swan';
-  // ایمیلی که در Users ساخته‌ای:
-  const ADMIN_BL_EMAIL  = 'admin@swanfamily.app';
+  const ADMIN_BL_EMAIL   = 'admin@swanfamily.app';
 
   const loginCard = document.getElementById('loginCard');
   const dashCard  = document.getElementById('dashCard');
@@ -190,42 +221,30 @@
 
   (async function initAdminSession(){
     if(sessionStorage.getItem('isAdmin')==='1'){
-      // اگر سشن Backendless معتبر باشد، ادامه می‌دهیم
       try{ await Backendless.UserService.getCurrentUser(); }catch(_){}
       showDash(); resetPaging(); loadAll(true);
     }
   })();
 
   document.getElementById('btnAdminLogin').onclick = async ()=>{
-    const u = (document.getElementById('admUser').value||'').trim();
-    const p = (document.getElementById('admPass').value||'').trim();
-    const m = document.getElementById('loginMsg');
+    const u = admUser.value.trim(), p = admPass.value.trim(), m = loginMsg;
     m.style.display='block'; m.className='msg'; m.textContent='در حال بررسی…';
+    if(u!==ADMIN_FIXED_USER || p!==ADMIN_FIXED_PASS){
+      m.className='msg err'; m.textContent='یوزر/پس اشتباه'; return;
+    }
     try{
-      if(u!==ADMIN_FIXED_USER || p!==ADMIN_FIXED_PASS){
-        m.className='msg err'; m.textContent='نام کاربری یا رمز نادرست است.'; return;
-      }
-      // ✅ لاگین واقعی به Backendless با کاربر مدیر
       await Backendless.UserService.login(ADMIN_BL_EMAIL, p, true);
-
       sessionStorage.setItem('isAdmin','1');
       m.className='msg ok'; m.textContent='ورود موفق.';
-      showDash();
-      resetPaging(); loadAll(true);
-    }catch(e){
-      console.error(e);
-      m.className='msg err';
-      m.textContent = 'خطا در ورود به سرور: ' + (e.message || e);
-    }
+      showDash(); resetPaging(); loadAll(true);
+    }catch(e){ m.className='msg err'; m.textContent='خطا: ' + (e.message||e); }
   };
-
   document.getElementById('btnLogout').onclick = async ()=>{
     try{ await Backendless.UserService.logout(); }catch(_){}
-    sessionStorage.removeItem('isAdmin');
-    showLogin();
+    sessionStorage.removeItem('isAdmin'); showLogin();
   };
 
-  // ===== کمک‌ها =====
+  // ===== ابزار تاریخ برای نمایش شمسی =====
   function toDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
   function toJalaliStr(d){
     d = toDate(d); if(!d) return "—";
@@ -239,59 +258,69 @@
   // ===== فیلترها =====
   document.getElementById('btnApply').onclick = ()=>{ resetPaging(); loadAll(true); };
   document.getElementById('btnReset').onclick = ()=>{
-    document.getElementById('q').value='';
-    document.getElementById('prov').value='';
-    document.getElementById('city').value='';
-    document.getElementById('assistant').value='';
-    document.getElementById('onlyContracted').checked=false;
+    q.value=''; prov.value=''; city.value=''; assistant.value=''; onlyContracted.checked=false;
     resetPaging(); loadAll(true);
   };
 
   // ===== صفحه‌بندی =====
   let page = 0; const pageSize = 30;
   function resetPaging(){ page = 0; }
-  document.getElementById('prev').onclick = ()=>{ if(page>0){ page--; loadListOnly(); } };
-  document.getElementById('next').onclick = ()=>{ page++; loadListOnly(); };
+  prev.onclick = ()=>{ if(page>0){ page--; loadListOnly(); } };
+  next.onclick = ()=>{ if((page+1)*pageSize<cacheAll.length){ page++; loadListOnly(); } };
 
   function buildWhere(){
-    const q  = (document.getElementById('q').value||'').trim();
-    const pv = (document.getElementById('prov').value||'').trim();
-    const ct = (document.getElementById('city').value||'').trim();
-    const as = (document.getElementById('assistant').value||'').trim();
-    const onlyC = document.getElementById('onlyContracted').checked;
+    const qv  = (q.value||'').trim();
+    const pv  = (prov.value||'').trim();
+    const ct  = (city.value||'').trim();
+    const onlyC = onlyContracted.checked;
 
     let where = '1=1';
-    if(q){ where += ` AND (name LIKE '%${q}%' OR mobile LIKE '%${q}%')`; }
+    if(qv){ where += ` AND (name LIKE '%${qv}%' OR mobile LIKE '%${qv}%')`; }
     if(pv){ where += ` AND province LIKE '%${pv}%'`; }
     if(ct){ where += ` AND city LIKE '%${ct}%'`; }
-    if(as){ where += ` AND assistant LIKE '%${as}%'`; }
     if(onlyC){ where += ` AND contract_signed = true`; }
     return where;
   }
 
-  // ===== داده‌ی کامل بر اساس فیلتر (برای KPI و نمودارها) =====
-  let cacheAll = []; // کل داده‌های مطابق فیلتر برای ساخت KPI/نمودار
+  // ===== دادهٔ کامل بر اساس فیلتر (KPI/نمودار/لیست/گزارش مالی) =====
+  let cacheAll = [];
   async function loadAll(refreshKPIsAndCharts=false){
     const where = buildWhere();
     const tb = Backendless.Data.of('Newbloods');
-    let offset = 0, all = [], chunk = [];
+    let offset=0, all=[], chunk=[];
     try{
       do{
         const qb = Backendless.DataQueryBuilder.create()
                      .setWhereClause(where)
                      .setSortBy(['created DESC'])
-                     .setPageSize(100)          // <= محدودیت Backendless
+                     .setPageSize(100)   // محدودیت Backendless
                      .setOffset(offset);
         chunk = await tb.find(qb);
         all.push(...chunk);
-        offset += 100;                          // <= قدمِ بعدی
+        offset += 100;
       }while(chunk.length===100);
+
+      // فیلتر «استادیار» روی assistant/assistants (کلاینتی دقیق)
+      const asStr = (assistant.value||'').trim();
+      if(asStr){
+        all = all.filter(r=>{
+          const arr = Array.isArray(r.assistants)&&r.assistants.length
+            ? r.assistants
+            : (r.assistant ? [r.assistant] : []);
+          return arr.some(x => (x||'').includes(asStr));
+        });
+      }
+
       cacheAll = all;
-      if(refreshKPIsAndCharts){ updateKPIs(all); drawCharts(all); }
-      await loadListOnly(); // صفحه فعلی از نتایج
+      if(refreshKPIsAndCharts){
+        updateKPIs(all);
+        drawCharts(all);
+        renderFinanceTables(all);  // ✅ گزارش مالی
+      }
+      await loadListOnly();
     }catch(e){
       console.error(e);
-      alert('خطا در بارگذاری داده‌ها: ' + (e.message || e));
+      alert('خطا در بارگذاری داده‌ها: ' + (e.message||e));
     }
   }
 
@@ -302,12 +331,12 @@
     const totalCoins = all.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length:0), 0);
     const contracts  = all.filter(r => !!r.contract_signed).length;
 
-    document.getElementById('kCount').textContent     = fmt(count);
-    document.getElementById('kGrowth').textContent    = (avgGrowth||0).toFixed(1);
-    document.getElementById('kCoins').textContent     = fmt(totalCoins);
-    document.getElementById('kContracts').textContent = fmt(contracts);
+    kCount.textContent     = fmt(count);
+    kGrowth.textContent    = (avgGrowth||0).toFixed(1);
+    kCoins.textContent     = fmt(totalCoins);
+    kContracts.textContent = fmt(contracts);
     const pct = count ? Math.round((contracts / count) * 100) : 0;
-    document.getElementById('kContractsPct').textContent = pct + '%';
+    kContractsPct.textContent = pct + '%';
   }
 
   // ===== نمودارها =====
@@ -339,19 +368,46 @@
     return { labels, counts, avgGrowth, contractsPct };
   }
 
+  // === چند استادیاری: شمارش کسری 1/k برای هر استادیار در نمودار ===
   function buildAssistantDataset(all){
-    const g = aggBy(all, r=> (r.assistant||'—').trim());
-    const labels = [...g.keys()];
-    const counts = labels.map(l=> g.get(l).length);
-    const avgGrowth = labels.map(l=>{
-      const arr=g.get(l), c=arr.length;
-      return c? (arr.reduce((s,r)=>s+(+r.growth||0),0)/c) : 0;
+    const countMap = {};         // Σ(1/k)
+    const growthSumMap = {};     // Σ(growth * 1/k)
+    const contractCountMap = {}; // Σ( contract(true=1) * 1/k )
+
+    for(const r of all){
+      const list = (Array.isArray(r.assistants) && r.assistants.length)
+        ? r.assistants
+        : (r.assistant ? [r.assistant] : []);
+      const k = list.length || 1;
+      const w = 1 / k;
+
+      const growth = +r.growth || 0;
+      const hasC = !!r.contract_signed;
+
+      if(list.length===0){
+        const a='—';
+        countMap[a]=(countMap[a]||0)+1;
+        growthSumMap[a]=(growthSumMap[a]||0)+growth;
+        contractCountMap[a]=(contractCountMap[a]||0)+(hasC?1:0);
+      }else{
+        list.forEach(a=>{
+          countMap[a]=(countMap[a]||0)+w;
+          growthSumMap[a]=(growthSumMap[a]||0)+(growth*w);
+          contractCountMap[a]=(contractCountMap[a]||0)+(hasC?w:0);
+        });
+      }
+    }
+
+    const labels = Object.keys(countMap);
+    const counts = labels.map(a=> Number((countMap[a]).toFixed(3)));
+    const avgGrowth = labels.map(a=>{
+      const c=countMap[a]; return c? Number((growthSumMap[a]/c).toFixed(2)) : 0;
     });
-    const contractsPct = labels.map(l=>{
-      const arr=g.get(l), c=arr.length;
-      const k=arr.filter(r=>!!r.contract_signed).length;
-      return c? Math.round((k/c)*100):0;
+    const contractsPct = labels.map(a=>{
+      const c=countMap[a], k=contractCountMap[a]||0;
+      return c? Math.round((k/c)*100) : 0;
     });
+
     return { labels, counts, avgGrowth, contractsPct };
   }
 
@@ -375,11 +431,7 @@
           { label:'٪ قرارداد', data: p.contractsPct }
         ]
       },
-      options: {
-        responsive: true,
-        aspectRatio: 2,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive:true, aspectRatio:2, scales:{ y:{ beginAtZero:true } } }
     });
 
     chartAssistant = new Chart(ctxA, {
@@ -387,20 +439,98 @@
       data: {
         labels: a.labels,
         datasets: [
-          { label:'تعداد', data: a.counts },
-          { label:'میانگین رشد', data: a.avgGrowth },
-          { label:'٪ قرارداد', data: a.contractsPct }
+          { label:'تعداد (کسری)', data: a.counts },
+          { label:'میانگین رشد',   data: a.avgGrowth },
+          { label:'٪ قرارداد',     data: a.contractsPct }
         ]
       },
-      options: {
-        responsive: true,
-        aspectRatio: 2,
-        scales: { y: { beginAtZero: true } }
-      }
+      options: { responsive:true, aspectRatio:2, scales:{ y:{ beginAtZero:true } } }
     });
   }
 
-  // ===== لیست صفحه‌ای (از cacheAll) =====
+  // ===== گزارش مالی: اقساط (تابع‌ها) =====
+  function toMonthKeyJalali(x){
+    const d = new Date(x);
+    if (isNaN(d)) return null;
+    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
+    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
+    const mm = String(j.jm).padStart(2,'0');
+    return `${j.jy}/${mm}`;
+  }
+
+  // مجموع اقساط بر اساس ماه شمسی
+  function sumInstallmentsByMonth(rows){
+    const map = {}; // key = 'YYYY/MM' (jalali), val = sum amount
+    for(const r of rows){
+      const inst = Array.isArray(r.instalments) ? r.instalments : [];
+      for(const it of inst){
+        const amt = Number(it?.amount||0);
+        const dt = it?.date;
+        if(!amt || !dt) continue;
+        const key = toMonthKeyJalali(dt);
+        if(!key) continue;
+        map[key] = (map[key]||0) + amt;
+      }
+    }
+    const keys = Object.keys(map).sort((a,b)=> a<b ? 1 : -1); // نزولی
+    return keys.map(k=>({ month:k, total: map[k] }));
+  }
+
+  // مجموع اقساط به‌تفکیک استادیار (بدون تقسیم)
+  function sumInstallmentsByAssistant(rows){
+    const map = {}; // key = assistantName, val = sum amount
+    for(const r of rows){
+      const inst = Array.isArray(r.instalments) ? r.instalments : [];
+      if(!inst.length) continue;
+      const sumForRecord = inst.reduce((s,it)=> s + (Number(it?.amount||0) || 0), 0);
+      if(!sumForRecord) continue;
+
+      const list = (Array.isArray(r.assistants) && r.assistants.length)
+        ? r.assistants
+        : (r.assistant ? [r.assistant] : []);
+
+      if(list.length===0){
+        map['—'] = (map['—']||0) + sumForRecord;
+      }else{
+        list.forEach(a=>{
+          const key = (a||'—').trim();
+          map[key] = (map[key]||0) + sumForRecord;
+        });
+      }
+    }
+    const entries = Object.entries(map).sort((a,b)=> b[1]-a[1]); // مبلغ نزولی
+    return entries.map(([assistant,total])=>({assistant,total}));
+  }
+
+  function renderFinanceTables(all){
+    // 1) ماهانه
+    const byMonth = sumInstallmentsByMonth(all).slice(0, 24); // حداکثر ۲۴ ماه اخیر
+    const t1 = document.querySelector('#tblByMonth tbody');
+    t1.innerHTML = byMonth.length ? '' : '<tr><td colspan="2" style="padding:8px;color:#777">داده‌ای یافت نشد.</td></tr>';
+    byMonth.forEach(row=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:6px;border-bottom:1px solid #f0f0f0">${row.month}</td>
+        <td style="padding:6px;border-bottom:1px solid #f0f0f0;text-align:left">${row.total.toLocaleString('fa-IR')}</td>
+      `;
+      t1.appendChild(tr);
+    });
+
+    // 2) به‌تفکیک استادیار
+    const byAsst = sumInstallmentsByAssistant(all);
+    const t2 = document.querySelector('#tblByAssistant tbody');
+    t2.innerHTML = byAsst.length ? '' : '<tr><td colspan="2" style="padding:8px;color:#777">داده‌ای یافت نشد.</td></tr>';
+    byAsst.forEach(row=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:6px;border-bottom:1px solid #f0f0f0">${row.assistant}</td>
+        <td style="padding:6px;border-bottom:1px solid #f0f0f0;text-align:left">${row.total.toLocaleString('fa-IR')}</td>
+      `;
+      t2.appendChild(tr);
+    });
+  }
+
+  // ===== لیست صفحه‌ای =====
   async function loadListOnly(){
     const list = document.getElementById('list');
     const start = page*pageSize;
@@ -419,6 +549,10 @@
           ? '<span class="badge badge-ok">قرارداد</span>'
           : '<span class="badge badge-no">بدون قرارداد</span>';
 
+        const assistants = (Array.isArray(r.assistants) && r.assistants.length)
+          ? r.assistants.join('، ')
+          : (r.assistant || '—');
+
         const wrap = document.createElement('div');
         wrap.className = 'item';
 
@@ -426,7 +560,7 @@
         left.innerHTML = `
           <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
           <div class="meta">
-            ${cityPart||'—'} | استادیار: ${r.assistant||'—'} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
+            ${cityPart||'—'} | استادیار(ها): ${assistants} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
           </div>
         `;
 
@@ -445,11 +579,10 @@
       });
     }
 
-    document.getElementById('pageInfo').textContent =
-      `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
+    pageInfo.textContent = `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
   }
 
-  // ===== بکاپ‌ها =====
+  // ===== بکاپ =====
   async function fetchAllNewbloodsRaw(){
     const store = [];
     let page = 0, pageSize = 100, chunk = [];
@@ -464,7 +597,6 @@
     }while(chunk.length === pageSize);
     return store;
   }
-
   function download(filename, text, mime='application/json'){
     const blob = new Blob([text], {type:mime});
     const url = URL.createObjectURL(blob);
@@ -472,7 +604,6 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click();
     URL.revokeObjectURL(url); a.remove();
   }
-
   function toCSV(arr){
     if(!arr.length) return '';
     const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
@@ -485,24 +616,22 @@
     const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
     return head + '\n' + rows;
   }
-
-  document.getElementById('btnBackupJSON').onclick = async ()=>{
+  btnBackupJSON.onclick = async ()=>{
     try{
       const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
       download(fname, JSON.stringify(data, null, 2), 'application/json');
-    }catch(e){ alert('خطا در بکاپ JSON: ' + (e.message||e)); console.error(e); }
+    }catch(e){ alert('خطا در بکاپ JSON: ' + (e.message||e)); }
   };
-
-  document.getElementById('btnBackupCSV').onclick = async ()=>{
+  btnBackupCSV.onclick = async ()=>{
     try{
       const data = await fetchAllNewbloodsRaw();
       const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
       download(fname, toCSV(data), 'text/csv;charset=utf-8');
-    }catch(e){ alert('خطا در بکاپ CSV: ' + (e.message||e)); console.error(e); }
+    }catch(e){ alert('خطا در بکاپ CSV: ' + (e.message||e)); }
   };
 
-  // ===== شروع (بعد از ورود) =====
+  // ===== شروع =====
   if(sessionStorage.getItem('isAdmin')==='1'){
     resetPaging(); loadAll(true);
   }
