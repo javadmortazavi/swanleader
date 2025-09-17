@@ -78,6 +78,12 @@
 
     .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
     .pager button{min-width:110px}
+
+    /* tables */
+    table.simple{width:100%;border-collapse:collapse}
+    table.simple th, table.simple td{padding:8px;border-bottom:1px solid #f0f2f5}
+    table.simple th{text-align:right;color:#607d8b}
+    table.simple td{text-align:left}
   </style>
 </head>
 <body>
@@ -159,7 +165,7 @@
           <div class="statlist" id="boxOther"></div>
         </div>
       </div>
-      <div class="muted" style="margin-top:8px">* آمار هر باکس شامل: تعداد نیوبلاد، ٪ رشد، تعداد کوین، تعداد قرارداد، تعداد متاهل، تعداد علاقه‌مندان (در صورت مرتبط)، مجموع اقساط پرداخت‌نشده.</div>
+      <div class="muted" style="margin-top:8px">* آمار هر باکس شامل: تعداد نیوبلاد، ٪ رشد، تعداد کوین، تعداد قرارداد، تعداد متاهل، علاقه‌مندان مرتبط، و مجموع اقساط پرداخت‌نشده.</div>
     </div>
 
     <!-- نمودارها -->
@@ -199,6 +205,32 @@
             </select>
           </div>
           <canvas id="chartAssistant" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ گزارش اقساط پرداخت‌نشدهٔ سوان (ماهانه شمسی) -->
+    <div class="card">
+      <h3 style="margin:0 0 10px 0;color:#374151">گزارش ماهانه اقساط پرداخت‌نشدهٔ سوان</h3>
+      <div class="muted" style="margin-bottom:8px">فقط اقساطی که <b>target = 'swan'</b> و <b>status ≠ 'done'</b> باشند.</div>
+
+      <div class="inline" style="gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1 1 320px;min-width:280px">
+          <table id="tblSwanUnpaidByMonth" class="simple">
+            <thead>
+              <tr>
+                <th>ماه (شمسی)</th>
+                <th style="text-align:left">جمع (تومان)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="inline" style="margin-top:8px">
+            <button id="btnExportSwanUnpaid" class="secondary" type="button">خروجی CSV</button>
+          </div>
+        </div>
+        <div style="flex:1 1 420px;min-width:320px">
+          <canvas id="chartSwanUnpaid" height="220"></canvas>
         </div>
       </div>
     </div>
@@ -314,6 +346,7 @@
         seedBuilderOptions(all);
         renderBuilder(all);
         drawCharts(all);
+        renderSwanUnpaid(all);   // ✅ گزارش سوان
       }
       renderList();
     }catch(e){
@@ -377,7 +410,7 @@
     const rowsC = cv ? all.filter(r=> (r.city||'—').trim()===cv) : all;
     renderStatsInto(boxCity, rowsC);
 
-    // Assistant box (بدون کسری؛ حضور در رکورد کافی‌ست)
+    // Assistant box
     const av = selAssistant.value;
     const rowsA = av ? all.filter(r=> getAllAssistantsFor(r).includes(av)) : all;
     renderStatsInto(boxAssistant, rowsA);
@@ -441,11 +474,7 @@
       const k = list.length || 1;
       const w = 1 / k;
 
-      // آماده‌سازی
-      if(list.length===0){
-        const a='—';
-        list.push(a);
-      }
+      if(list.length===0){ list.push('—'); }
 
       for(const a of list){
         if(!(a in sumMap)) sumMap[a]=0;
@@ -480,7 +509,6 @@
         const avg = (growthSumMap[a]||0) / (cntMap[a]||1);
         return Math.round((avg/5)*100);
       }
-      // گرد کردن برای نمایش
       const v = sumMap[a];
       if(metric==='unpaid') return Math.round(v);
       return Number(v.toFixed(2));
@@ -502,11 +530,7 @@
         options: {
           responsive:true, aspectRatio:2,
           scales: {
-            y: {
-              beginAtZero:true,
-              min:0,
-              ...(metric==='growthPct' ? {max:100} : {})
-            }
+            y: { beginAtZero:true, min:0, ...(metric==='growthPct' ? {max:100} : {}) }
           }
         }
       });
@@ -521,11 +545,7 @@
         options: {
           responsive:true, aspectRatio:2,
           scales: {
-            y: {
-              beginAtZero:true,
-              min:0,
-              ...(metric==='growthPct' ? {max:100} : {})
-            }
+            y: { beginAtZero:true, min:0, ...(metric==='growthPct' ? {max:100} : {}) }
           }
         }
       });
@@ -550,7 +570,82 @@
     drawProvince(); drawAssistant();
   }
 
-  // ===== لیست صفحه‌ای (بدون فیلترهای قبلی) =====
+  // ===== گزارش «اقساط پرداخت‌نشدهٔ سوان» (ماه شمسی) =====
+  function toMonthKeyJalali(x){
+    const d = new Date(x);
+    if (isNaN(d)) return null;
+    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
+    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
+    const mm = String(j.jm).padStart(2,'0');
+    return `${j.jy}/${mm}`;
+  }
+
+  function sumSwanUnpaidByMonth(rows){
+    const map = {}; // key=YYYY/MM (jalali) -> sum
+    for(const r of rows){
+      const inst = Array.isArray(r.instalments) ? r.instalments : [];
+      for(const it of inst){
+        const amt = Number(it?.amount||0);
+        const dt  = it?.date;
+        const status = it?.status;
+        const target = it?.target;
+        if(!amt || !dt) continue;
+        if(status==='done') continue;
+        if(target!=='swan') continue;
+        const key = toMonthKeyJalali(dt);
+        if(!key) continue;
+        map[key] = (map[key]||0) + amt;
+      }
+    }
+    const keys = Object.keys(map).sort((a,b)=> a<b ? 1 : -1); // نزولی
+    return keys.map(k=>({ month:k, total: map[k] }));
+  }
+
+  let chartSwanUnpaid;
+  function renderSwanUnpaid(all){
+    const rows = sumSwanUnpaidByMonth(all);
+    // جدول
+    const tb = document.querySelector('#tblSwanUnpaidByMonth tbody');
+    tb.innerHTML = rows.length ? '' : '<tr><td colspan="2" style="padding:8px;color:#777">داده‌ای یافت نشد.</td></tr>';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.month}</td>
+        <td style="text-align:left">${(r.total||0).toLocaleString('fa-IR')}</td>
+      `;
+      tb.appendChild(tr);
+    });
+
+    // چارت
+    const ctx = document.getElementById('chartSwanUnpaid').getContext('2d');
+    if(chartSwanUnpaid) chartSwanUnpaid.destroy();
+    chartSwanUnpaid = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: rows.map(r=>r.month),
+        datasets: [{ label:'جمع پرداخت‌نشدهٔ سوان (تومان)', data: rows.map(r=>r.total||0) }]
+      },
+      options:{
+        responsive:true, aspectRatio:2,
+        scales:{ y:{ beginAtZero:true, min:0 } }
+      }
+    });
+
+    // خروجی CSV
+    btnExportSwanUnpaid.onclick = ()=>{
+      if(!rows.length){ alert('موردی برای خروجی نیست.'); return; }
+      const head = 'ماه,مجموع_تومان';
+      const body = rows.map(r=> `${r.month},${r.total}`).join('\n');
+      const csv = head+'\n'+body;
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `swan_unpaid_monthly_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+    };
+  }
+
+  // ===== لیست صفحه‌ای =====
   let page = 0; const pageSize = 30;
   function resetPaging(){ page = 0; }
   prev.onclick = ()=>{ if(page>0){ page--; renderList(); } };
@@ -595,6 +690,7 @@
         list.appendChild(wrap);
       });
     }
+
     pageInfo.textContent = `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
   }
 
