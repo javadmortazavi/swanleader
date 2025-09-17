@@ -54,6 +54,18 @@
     .err{background:#ffebee;color:#c62828}
 
     .muted{color:#777}
+
+    /* NEW: KPI Cards */
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .kpi{background:#fff;border:1px solid #eee;border-radius:12px;padding:10px}
+    .kpi h3{margin:0 0 6px 0;font-size:13px;color:#607d8b}
+    .kpi .num{font-size:20px;font-weight:800}
+    @media (max-width:800px){ .kpis{grid-template-columns:1fr 1fr} }
+    @media (max-width:520px){ .kpis{grid-template-columns:1fr} }
+
+    /* NEW: row of actions under filters */
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .ghost{background:#eceff1;color:#263238}
   </style>
 </head>
 <body>
@@ -106,14 +118,46 @@
       </div>
     </div>
 
+    <!-- NEW: KPI cards -->
+    <div class="card">
+      <div class="kpis" id="kpisWrap" style="display:none">
+        <div class="kpi">
+          <h3>تعداد قراردادها</h3>
+          <div class="num" id="kpiContracts">0</div>
+        </div>
+        <div class="kpi">
+          <h3>مجموع مبلغ اقساط</h3>
+          <div class="num" id="kpiTotal">0</div>
+        </div>
+        <div class="kpi">
+          <h3>پرداخت‌شده</h3>
+          <div class="num" id="kpiPaid">0</div>
+        </div>
+        <div class="kpi">
+          <h3>باقی‌مانده</h3>
+          <div class="num" id="kpiRemain">0</div>
+        </div>
+        <div class="kpi">
+          <h3>نیوبلادهای باز</h3>
+          <div class="num" id="kpiOpen">0</div>
+        </div>
+        <div class="kpi">
+          <h3>مجموع سوان‌کوین</h3>
+          <div class="num" id="kpiCoins">0</div>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="filters">
         <input id="q" placeholder="جستجو: نام یا موبایل…">
         <input id="city" placeholder="استان/شهر…">
       </div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <div class="row-actions">
         <button id="btnApply" class="secondary">اعمال فیلتر</button>
         <button id="btnReset" class="secondary">ریست</button>
+        <!-- NEW: خروجی CSV از لیست فیلترشده -->
+        <button id="btnExport" class="ghost">خروجی CSV لیست</button>
       </div>
     </div>
 
@@ -135,8 +179,8 @@
   // ===== تب‌ها (ورود/ثبت‌نام) =====
   const loginPane  = document.getElementById('loginPane');
   const signupPane = document.getElementById('signupPane');
-  document.getElementById('tabLogin').onclick = ()=>{ loginPane.classList.remove('hidden'); signupPane.classList.add('hidden'); };
-  document.getElementById('tabSignup').onclick= ()=>{ signupPane.classList.remove('hidden'); loginPane.classList.add('hidden'); };
+  document.getElementById('tabLogin').onclick  = ()=>{ loginPane.classList.remove('hidden'); signupPane.classList.add('hidden'); };
+  document.getElementById('tabSignup').onclick = ()=>{ signupPane.classList.remove('hidden'); loginPane.classList.add('hidden'); };
 
   // ===== وضعیت UI =====
   const authCard = document.getElementById('authCard');
@@ -237,15 +281,53 @@
   document.getElementById('prev').onclick=()=>{ if(page>0){ page--; renderList(); } };
   document.getElementById('next').onclick=()=>{ if((page+1)*pageSize<cacheAll.length){ page++; renderList(); } };
 
+  // ===== محاسبه و نمایش KPI (NEW) =====
+  function renderKPI(rows){
+    let totalContracts = rows.length;
+    let totalAmount = 0;
+    let totalPaid = 0;
+    let openNewbloods = 0;
+    let coinsAll = 0;
+
+    rows.forEach(r=>{
+      const inst = Array.isArray(r.instalments) ? r.instalments : [];
+      let planPaid = 0, planTotal = 0, allDone = true;
+
+      inst.forEach(ins=>{
+        const amount = Number(ins?.amount)||0;
+        const paidAmount = Number(ins?.paidAmount)||0;
+        const status = (ins?.status)|| (paidAmount>=amount && amount>0 ? 'done' : (paidAmount>0 ? 'partial' : 'pending'));
+        planTotal += amount;
+        planPaid  += (status==='done' ? amount : paidAmount);
+        if(status!=='done') allDone = false;
+      });
+
+      totalAmount += planTotal;
+      totalPaid   += planPaid;
+      if(!allDone) openNewbloods += 1;
+
+      coinsAll += Array.isArray(r.coins) ? r.coins.length : 0;
+    });
+
+    const remain = Math.max(totalAmount - totalPaid, 0);
+
+    const fmt = n => (Number(n)||0).toLocaleString('fa-IR');
+    document.getElementById('kpiContracts').textContent = fmt(totalContracts);
+    document.getElementById('kpiTotal').textContent     = fmt(totalAmount);
+    document.getElementById('kpiPaid').textContent      = fmt(totalPaid);
+    document.getElementById('kpiRemain').textContent    = fmt(remain);
+    document.getElementById('kpiOpen').textContent      = fmt(openNewbloods);
+    document.getElementById('kpiCoins').textContent     = fmt(coinsAll);
+
+    document.getElementById('kpisWrap').style.display = 'grid';
+  }
+
   // ===== بارگذاری داده‌ها (فقط نیوبلادهای این استادیار) =====
   async function loadAll(){
     const name = (sessionStorage.getItem('assistantName')||'').trim();
     const email= (sessionStorage.getItem('assistantEmail')||'').trim();
     const idKey= name || email; // شناسه‌ی نمایشی این استادیار
 
-    // نکته: چون ستون assistants از نوع JSON است، where روی آن دقیق نیست، اما با LIKE کار می‌کند (رشته‌ای).
-    // بنابراین دو شرط می‌گذاریم: assistant LIKE ... OR assistants LIKE ...
-    // سپس نتیجه را کلاینتی باز هم دقیق‌تر فیلتر می‌کنیم.
     const like = idKey.replace(/'/g,"''"); // escape ساده
     const where = `(assistant LIKE '%${like}%') OR (assistants LIKE '%${like}%')`;
 
@@ -256,14 +338,14 @@
         const qb = Backendless.DataQueryBuilder.create()
                     .setWhereClause(where)
                     .setSortBy(['created DESC'])
-                    .setPageSize(100)          // محدودیت Backendless
+                    .setPageSize(100)
                     .setOffset(offset);
         chunk = await tb.find(qb);
         all.push(...chunk);
         offset += 100;
       }while(chunk.length===100);
 
-      // فیلتر دقیق کلاینتی: اگر assistants آرایه باشد، باید شامل name/email باشد
+      // فیلتر دقیق کلاینتی
       const needle = idKey;
       all = all.filter(r=>{
         const arr = Array.isArray(r.assistants)&&r.assistants.length
@@ -284,6 +366,7 @@
 
       cacheAll = all;
       renderList();
+      renderKPI(cacheAll); // NEW
     }catch(e){
       console.error(e);
       alert('خطا در بارگذاری داده‌ها: ' + (e.message||e));
@@ -309,7 +392,6 @@
           ? '<span class="badge badge-ok">قرارداد</span>'
           : '<span class="badge badge-no">بدون قرارداد</span>';
 
-        // نمایش همه استادیارها
         const assistants = (Array.isArray(r.assistants) && r.assistants.length)
           ? r.assistants.join('، ')
           : (r.assistant || '—');
@@ -339,6 +421,33 @@
     document.getElementById('pageInfo').textContent =
       `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
   }
+
+  // ===== خروجی CSV از لیست فعلی (NEW) =====
+  function toCSV(arr){
+    if(!arr.length) return '';
+    const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
+    const esc = v => {
+      if(v==null) return '';
+      const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      return `"${s.replace(/"/g,'""')}"`;
+    };
+    const head = cols.map(esc).join(',');
+    const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
+    return head + '\n' + rows;
+  }
+  function download(filename, text, mime='text/csv;charset=utf-8'){
+    const blob = new Blob([text], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    URL.revokeObjectURL(url); a.remove();
+  }
+  document.getElementById('btnExport').onclick = ()=>{
+    if(!cacheAll.length){ alert('لیستی برای خروجی وجود ندارد.'); return; }
+    const csv = toCSV(cacheAll);
+    const fname = `swan_assistant_list_${new Date().toISOString().slice(0,10)}.csv`;
+    download(fname, csv);
+  };
 </script>
 </body>
 </html>
