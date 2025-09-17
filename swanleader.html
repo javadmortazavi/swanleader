@@ -10,75 +10,74 @@
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 
-  <!-- jQuery + jalaali-js برای نمایش تاریخ شمسی -->
+  <!-- jQuery + jalaali-js -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
-  <!-- Chart.js برای نمودارها -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
-    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
+    :root{
+      --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#111; --muted:#61646b;
+      --fs:16.5px; --radius:14px; --shadow:0 10px 24px rgba(0,0,0,.06)
+    }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
-    header{background:#222;color:#fff;padding:12px;text-align:center}
-    header h1{margin:0;font-size:18px}
-    .container{max-width:1180px;margin:14px auto;padding:0 10px}
-    .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:12px}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif;font-size:var(--fs)}
+    header{background:#1f2937;color:#fff;padding:14px 12px;text-align:center}
+    header h1{margin:0;font-size:18px;letter-spacing:.2px}
 
-    label{display:block;margin-top:8px;font-weight:700}
-    input,button,select{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
+    .container{max-width:1180px;margin:16px auto;padding:0 12px}
+    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:12px;border:1px solid #e8ebef}
+
+    label{display:block;margin-top:8px;font-weight:800}
+    input,button,select{
+      width:100%;padding:1rem;border:1px solid #cfd8dc;border-radius:10px;margin-top:6px;
+      font-size:16px;color:#111;background:#fff
+    }
     button{background:var(--brand);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#607d8b}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media (max-width:760px){ .row{grid-template-columns:1fr} }
-
-    /* لاگین */
-    .loginwrap{max-width:420px;margin:30px auto}
-
-    /* نوار بالا + فیلترها */
-    .topbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-    .filters{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    @media (max-width:980px){ .filters{grid-template-columns:1fr 1fr} }
-    @media (max-width:520px){ .filters{grid-template-columns:1fr} }
     .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .muted{color:var(--muted)}
 
-    .advanced{margin-top:8px;padding:10px;border:1px dashed #cfd8dc;border-radius:10px;background:#fafafa}
-    .adv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    @media (max-width:980px){ .adv-grid{grid-template-columns:1fr 1fr} }
-    @media (max-width:520px){ .adv-grid{grid-template-columns:1fr} }
-
-    /* KPI ها */
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
-    .kpi{background:#fafafa;border:1px solid #eee;border-radius:12px;padding:10px}
-    .kpi .title{color:#777}
-    .kpi .val{font-size:20px;font-weight:900}
+    /* KPI */
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi{background:#fafafa;border:1px solid #e7eaee;border-radius:12px;padding:12px}
+    .kpi .title{color:#7a7f87}
+    .kpi .val{font-size:22px;font-weight:900}
     @media (max-width:900px){ .kpis{grid-template-columns:1fr 1fr} }
-    @media (max-width:520px){ .kpis{grid-template-columns:1fr} }
+    @media (max-width:560px){ .kpis{grid-template-columns:1fr} }
 
-    /* چارت ها */
+    /* Builder */
+    .builder{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    @media (max-width:1080px){ .builder{grid-template-columns:1fr 1fr} }
+    @media (max-width:560px){ .builder{grid-template-columns:1fr} }
+    .tile{border:1px solid #e7eaee;border-radius:12px;padding:12px;background:#fff}
+    .tile h3{margin:0 0 8px 0;font-size:14px;color:#607d8b}
+    .statlist{margin-top:8px;display:grid;gap:6px}
+    .statrow{display:flex;justify-content:space-between;gap:8px;background:#fafafa;border:1px solid #f0f2f5;border-radius:10px;padding:8px}
+    .statrow .k{color:#475569}
+    .statrow .v{font-weight:800}
+
+    /* Charts */
     .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:980px){ .charts{grid-template-columns:1fr} }
-    .chart-card{background:#fff;border:1px solid #eee;border-radius:12px;padding:12px}
+    .chart-card{background:#fff;border:1px solid #e7eaee;border-radius:12px;padding:12px}
+    .chart-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 
-    /* لیست */
-    .list{display:grid;gap:8px;margin-top:10px}
-    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
-    .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#444}
-    .item .meta{font-size:13px;color:#555}
+    /* List */
+    .list{display:grid;gap:8px;margin-top:8px}
+    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #e7eaee;border-radius:12px;background:#fff;padding:10px}
+    .item .line{display:flex;gap:8px;flex-wrap:wrap;color:#374151}
+    .item .meta{font-size:13px;color:#4b5563}
     .badge{padding:2px 6px;border-radius:8px;font-size:12px}
     .badge-ok{background:#e8f5e9;color:#1b5e20}
     .badge-no{background:#fff3e0;color:#ef6c00}
     .actions{display:flex;gap:6px}
-    .actions a,.actions button{padding:.55rem .8rem;border-radius:8px;text-decoration:none}
-    .actions a{background:#37474f;color:#fff}
+    .actions a{background:#37474f;color:#fff;padding:.55rem .8rem;border-radius:8px;text-decoration:none}
 
     .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
     .pager button{min-width:110px}
-
-    .msg{margin-top:8px;padding:.8rem;border-radius:10px;display:none}
-    .ok{background:#e0f7f4;color:#00695c}
-    .err{background:#ffebee;color:#c62828}
   </style>
 </head>
 <body>
@@ -89,21 +88,21 @@
 <div class="container">
 
   <!-- لاگین مدیر -->
-  <div class="card loginwrap" id="loginCard">
+  <div class="card" id="loginCard" style="max-width:420px;margin:24px auto">
     <h3 style="margin:0 0 8px 0">ورود مدیر</h3>
     <label>نام کاربری</label>
     <input id="admUser" placeholder="نام کاربری">
     <label>رمز عبور</label>
     <input id="admPass" type="password" placeholder="رمز عبور">
     <button id="btnAdminLogin" style="margin-top:10px">ورود</button>
-    <div id="loginMsg" class="msg"></div>
+    <div id="loginMsg" class="muted" style="margin-top:8px"></div>
   </div>
 
   <!-- داشبورد -->
   <div id="dashCard" style="display:none">
 
     <div class="card">
-      <div class="topbar">
+      <div class="inline" style="justify-content:space-between">
         <div class="inline">
           <button id="btnBackupJSON" class="secondary">بکاپ JSON</button>
           <button id="btnBackupCSV"  class="secondary">بکاپ CSV</button>
@@ -112,116 +111,99 @@
       </div>
     </div>
 
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">فیلترها</h3>
-      <div class="filters">
-        <input id="q" placeholder="جستجو: نام یا موبایل…">
-        <!-- استان: هم input قبلی را نگه می‌داریم هم dropdown جدید -->
-        <input id="prov" placeholder="استان…">
-        <select id="provSelect"></select>
-        <input id="city" placeholder="شهر…">
-      </div>
-      <div class="inline" style="margin-top:8px">
-        <input id="assistant" placeholder="استادیار…">
-        <label style="display:flex;align-items:center;gap:6px">
-          <input type="checkbox" id="onlyContracted"> فقط دارای قرارداد
-        </label>
-        <button id="btnApply" class="secondary">اعمال فیلتر</button>
-        <button id="btnReset" class="secondary">ریست</button>
-      </div>
-
-      <!-- فیلترهای پیشرفته -->
-      <div class="advanced">
-        <div class="inline" style="margin-bottom:8px">
-          <strong>فیلترهای پیشرفته</strong>
-          <small class="muted"> (اختیاری)</small>
-        </div>
-        <div class="adv-grid">
-          <input id="growthMin" type="number" min="0" max="5" step="1" placeholder="رشد حداقل (۰ تا ۵)">
-          <input id="growthMax" type="number" min="0" max="5" step="1" placeholder="رشد حداکثر (۰ تا ۵)">
-          <input id="coinsMin" type="number" min="0" step="1" placeholder="حداقل تعداد کوین">
-          <input id="asstExact" placeholder="نام دقیق استادیار (Exact)">
-          <input id="courseFromJ" placeholder="تاریخ دوره از (شمسی: ۱۴۰۳/۰۱/۰۱)">
-          <input id="courseToJ"   placeholder="تاریخ دوره تا (شمسی: ۱۴۰۳/۱۲/۲۹)">
-          <select id="marital">
-            <option value="">همه وضعیت‌های تاهل</option>
-            <option value="single">مجرد</option>
-            <option value="married">متاهل</option>
-          </select>
-          <input id="instagramHas" placeholder="اینستاگرام شامل (اختیاری)">
-        </div>
-      </div>
-    </div>
-
+    <!-- KPI کلی -->
     <div class="card">
       <div class="kpis">
-        <div class="kpi">
-          <div class="title">تعداد کل نیوبلادها</div>
-          <div id="kCount" class="val">0</div>
-        </div>
-        <div class="kpi">
-          <div class="title">میانگین سطح رشد</div>
-          <div id="kGrowth" class="val">0</div>
-        </div>
-        <div class="kpi">
-          <div class="title">کل سوان‌کوین ثبت‌شده</div>
-          <div id="kCoins" class="val">0</div>
-        </div>
-        <div class="kpi">
-          <div class="title">قراردادهای امضا شده</div>
-          <div id="kContracts" class="val">0</div>
-          <div class="muted" id="kContractsPct">0%</div>
-        </div>
+        <div class="kpi"><div class="title">تعداد کل نیوبلادها</div><div id="kCount" class="val">0</div></div>
+        <div class="kpi"><div class="title">میانگین سطح رشد</div><div id="kGrowth" class="val">0</div></div>
+        <div class="kpi"><div class="title">کل سوان‌کوین</div><div id="kCoins" class="val">0</div></div>
+        <div class="kpi"><div class="title">قراردادهای امضا شده</div><div id="kContracts" class="val">0</div><div class="muted" id="kContractsPct">0%</div></div>
       </div>
     </div>
 
+    <!-- سازنده آمار -->
+    <div class="card">
+      <h3 style="margin:0 0 10px 0;color:#374151">سازندهٔ آمار</h3>
+      <div class="builder">
+        <!-- استان -->
+        <div class="tile">
+          <h3>استان</h3>
+          <select id="selProvince"></select>
+          <div class="statlist" id="boxProvince"></div>
+        </div>
+        <!-- شهر -->
+        <div class="tile">
+          <h3>شهر</h3>
+          <select id="selCity"></select>
+          <div class="statlist" id="boxCity"></div>
+        </div>
+        <!-- استادیار -->
+        <div class="tile">
+          <h3>استادیار</h3>
+          <select id="selAssistant"></select>
+          <div class="statlist" id="boxAssistant"></div>
+        </div>
+        <!-- سایر فیلدها -->
+        <div class="tile">
+          <h3>سایر فیلدها</h3>
+          <select id="selOther">
+            <option value="">انتخاب کنید…</option>
+            <option value="married">وضعیت تاهل: متاهل</option>
+            <option value="single">وضعیت تاهل: مجرد</option>
+            <option value="contract_yes">قرارداد: امضا شده</option>
+            <option value="contract_no">قرارداد: بدون قرارداد</option>
+            <option value="int_anatomy">علاقه‌مندی: آناتومی</option>
+            <option value="int_ayurveda">علاقه‌مندی: آیورودا</option>
+            <option value="int_marketing">علاقه‌مندی: بازاریابی</option>
+          </select>
+          <div class="statlist" id="boxOther"></div>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px">* آمار هر باکس شامل: تعداد نیوبلاد، ٪ رشد، تعداد کوین، تعداد قرارداد، تعداد متاهل، تعداد علاقه‌مندان (در صورت مرتبط)، مجموع اقساط پرداخت‌نشده.</div>
+    </div>
+
+    <!-- نمودارها -->
     <div class="card">
       <div class="charts">
         <div class="chart-card">
-          <h3 style="margin:0 0 10px 0">آمار بر اساس استان</h3>
-          <canvas id="chartProvince" height="200"></canvas>
+          <div class="chart-toolbar">
+            <strong class="muted">نمودار استان</strong>
+            <select id="metricProvince">
+              <option value="count">تعداد نیوبلاد</option>
+              <option value="growthPct">٪ رشد</option>
+              <option value="coins">تعداد کوین</option>
+              <option value="married">تعداد متاهل</option>
+              <option value="contracts">تعداد قرارداد</option>
+              <option value="int_anatomy">علاقه‌مندی آناتومی</option>
+              <option value="int_ayurveda">علاقه‌مندی آیورودا</option>
+              <option value="int_marketing">علاقه‌مندی بازاریابی</option>
+              <option value="unpaid">اقساط پرداخت‌نشده (جمع تومان)</option>
+            </select>
+          </div>
+          <canvas id="chartProvince" height="220"></canvas>
         </div>
+
         <div class="chart-card">
-          <h3 style="margin:0 0 10px 0">آمار بر اساس استادیار</h3>
-          <canvas id="chartAssistant" height="200"></canvas>
+          <div class="chart-toolbar">
+            <strong class="muted">نمودار استادیار</strong>
+            <select id="metricAssistant">
+              <option value="count">تعداد نیوبلاد</option>
+              <option value="growthPct">٪ رشد</option>
+              <option value="coins">تعداد کوین</option>
+              <option value="married">تعداد متاهل</option>
+              <option value="contracts">تعداد قرارداد</option>
+              <option value="int_anatomy">علاقه‌مندی آناتومی</option>
+              <option value="int_ayurveda">علاقه‌مندی آیورودا</option>
+              <option value="int_marketing">علاقه‌مندی بازاریابی</option>
+              <option value="unpaid">اقساط پرداخت‌نشده (جمع تومان)</option>
+            </select>
+          </div>
+          <canvas id="chartAssistant" height="220"></canvas>
         </div>
       </div>
     </div>
 
-    <!-- ✅ گزارش مالی: اقساط (همان قبلی) -->
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">گزارش مالی اقساط</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <h4 style="margin:6px 0">مجموع اقساط ماهانه (شمسی)</h4>
-          <div class="muted" style="font-size:13px;margin-bottom:6px">فقط رکوردهای در حال نمایش (بعد از فیلترها)</div>
-          <table id="tblByMonth" style="width:100%;border-collapse:collapse">
-            <thead>
-              <tr>
-                <th style="text-align:right;border-bottom:1px solid #eee;padding:6px">ماه</th>
-                <th style="text-align:left;border-bottom:1px solid #eee;padding:6px">جمع (تومان)</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div>
-          <h4 style="margin:6px 0">مجموع اقساط به‌تفکیک استادیار</h4>
-          <div class="muted" style="font-size:13px;margin-bottom:6px">بدون تقسیم؛ هر استادیار تمام مبلغ نیوبلادهای خودش را می‌بیند</div>
-          <table id="tblByAssistant" style="width:100%;border-collapse:collapse">
-            <thead>
-              <tr>
-                <th style="text-align:right;border-bottom:1px solid #eee;padding:6px">استادیار</th>
-                <th style="text-align:left;border-bottom:1px solid #eee;padding:6px">جمع (تومان)</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <!-- /گزارش مالی -->
-
+    <!-- لیست -->
     <div class="card">
       <div class="list" id="list"></div>
       <div class="pager">
@@ -257,23 +239,21 @@
 
   document.getElementById('btnAdminLogin').onclick = async ()=>{
     const u = admUser.value.trim(), p = admPass.value.trim(), m = loginMsg;
-    m.style.display='block'; m.className='msg'; m.textContent='در حال بررسی…';
-    if(u!==ADMIN_FIXED_USER || p!==ADMIN_FIXED_PASS){
-      m.className='msg err'; m.textContent='یوزر/پس اشتباه'; return;
-    }
+    m.textContent='در حال بررسی…';
+    if(u!==ADMIN_FIXED_USER || p!==ADMIN_FIXED_PASS){ m.textContent='یوزر/پس اشتباه'; return; }
     try{
       await Backendless.UserService.login(ADMIN_BL_EMAIL, p, true);
       sessionStorage.setItem('isAdmin','1');
-      m.className='msg ok'; m.textContent='ورود موفق.';
+      m.textContent='ورود موفق.';
       showDash(); resetPaging(); loadAll(true);
-    }catch(e){ m.className='msg err'; m.textContent='خطا: ' + (e.message||e); }
+    }catch(e){ m.textContent='خطا: ' + (e.message||e); }
   };
   document.getElementById('btnLogout').onclick = async ()=>{
     try{ await Backendless.UserService.logout(); }catch(_){}
     sessionStorage.removeItem('isAdmin'); showLogin();
   };
 
-  // ===== ابزار تاریخ برای نمایش/ورود شمسی =====
+  // ===== ابزار کمکی تاریخ شمسی =====
   function toDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
   function toJalaliStr(d){
     d = toDate(d); if(!d) return "—";
@@ -281,367 +261,302 @@
     const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
     return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
   }
-  function jalaliStrToDate(str){
-    if(!str) return null;
-    const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-    if(!m) return null;
-    const jy=+m[1], jm=+m[2], jd=+m[3];
-    const g = jalaali.toGregorian(jy, jm, jd);
-    return new Date(g.gy, g.gm-1, g.gd);
+
+  // ===== مجموع‌ها و آمار =====
+  function sumUnpaid(instalments){
+    let s = 0;
+    for(const it of (instalments||[])){
+      const amt = Number(it?.amount||0);
+      const done = (it?.status==='done');
+      if(!done) s += (amt||0);
+    }
+    return s;
   }
-  const star = n => '★'.repeat(n||0);
-  const fmt  = n => (Number(n)||0).toLocaleString('fa-IR');
-
-  // ===== استان‌ها (Dropdown) =====
-  const IRAN_PROVINCES = [
-    { code: "EAZ", name: "آذربایجان شرقی" },
-    { code: "WAZ", name: "آذربایجان غربی" },
-    { code: "ARD", name: "اردبیل" },
-    { code: "ESF", name: "اصفهان" },
-    { code: "ALB", name: "البرز" },
-    { code: "ILM", name: "ایلام" },
-    { code: "BHR", name: "بوشهر" },
-    { code: "CHB", name: "چهارمحال و بختیاری" },
-    { code: "KHDJ", name: "خراسان جنوبی" },
-    { code: "KHR", name: "خراسان رضوی" },
-    { code: "KHN", name: "خراسان شمالی" },
-    { code: "KHU", name: "خوزستان" },
-    { code: "ZAN", name: "زنجان" },
-    { code: "SEM", name: "سمنان" },
-    { code: "SIS", name: "سیستان و بلوچستان" },
-    { code: "FA",  name: "فارس" },
-    { code: "QAZ", name: "قزوین" },
-    { code: "QOM", name: "قم" },
-    { code: "KRD", name: "کردستان" },
-    { code: "KRM", name: "کرمان" },
-    { code: "KRH", name: "کرمانشاه" },
-    { code: "KBD", name: "کهگیلویه و بویراحمد" },
-    { code: "GOL", name: "گلستان" },
-    { code: "GLN", name: "گیلان" },
-    { code: "LRS", name: "لرستان" },
-    { code: "MZN", name: "مازندران" },
-    { code: "MKZ", name: "مرکزی" },
-    { code: "HRM", name: "هرمزگان" },
-    { code: "HMD", name: "همدان" },
-    { code: "TEH", name: "تهران" },
-    { code: "YAZ", name: "یزد" }
-  ];
-  (function seedProvinceDropdown(){
-    const sel = document.getElementById('provSelect');
-    sel.innerHTML = '<option value="">(انتخاب استان)</option>' + IRAN_PROVINCES.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
-    sel.onchange = ()=>{ document.getElementById('prov').value = sel.value; };
-  })();
-
-  // ===== فیلترها =====
-  document.getElementById('btnApply').onclick = ()=>{ resetPaging(); loadAll(true); };
-  document.getElementById('btnReset').onclick = ()=>{
-    q.value=''; prov.value=''; provSelect.value=''; city.value='';
-    assistant.value=''; onlyContracted.checked=false;
-    growthMin.value=''; growthMax.value=''; coinsMin.value='';
-    asstExact.value=''; courseFromJ.value=''; courseToJ.value='';
-    marital.value=''; instagramHas.value='';
-    resetPaging(); loadAll(true);
-  };
-
-  // ===== صفحه‌بندی =====
-  let page = 0; const pageSize = 30;
-  function resetPaging(){ page = 0; }
-  prev.onclick = ()=>{ if(page>0){ page--; loadListOnly(); } };
-  next.onclick = ()=>{ if((page+1)*pageSize<cacheAll.length){ page++; loadListOnly(); } };
-
-  function buildWhere(){
-    const qv  = (q.value||'').trim();
-    const pv  = (prov.value||'').trim();
-    const ct  = (city.value||'').trim();
-    const onlyC = onlyContracted.checked;
-    const mar = (marital.value||'').trim();
-    const ig  = (instagramHas.value||'').trim();
-
-    let where = '1=1';
-    if(qv){ where += ` AND (name LIKE '%${qv}%' OR mobile LIKE '%${qv}%')`; }
-    if(pv){ where += ` AND province LIKE '%${pv}%'`; }
-    if(ct){ where += ` AND city LIKE '%${ct}%'`; }
-    if(mar){ where += ` AND marital_status = '${mar.replace(/'/g,"''")}'`; }
-    if(ig){ where += ` AND instagram LIKE '%${ig.replace(/'/g,"''")}%'`; }
-    if(onlyC){ where += ` AND contract_signed = true`; }
-
-    // توجه: فیلترهای عددی/تاریخ را در مرحلهٔ کلاینتی دقیق‌تر اعمال می‌کنیم
-    return where;
+  function metricsOf(rows){
+    const count = rows.length;
+    const coins = rows.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length : 0), 0);
+    const contracts = rows.filter(r=> !!r.contract_signed).length;
+    const married = rows.filter(r=> r.marital_status==='married').length;
+    const growthAvg = count ? (rows.reduce((s,r)=> s + (+r.growth||0),0)/count) : 0; // 0..5
+    const growthPct = Math.round((growthAvg/5)*100);
+    const intAnat = rows.filter(r=> Array.isArray(r.interests) && r.interests.includes('anatomy')).length;
+    const intAyur = rows.filter(r=> Array.isArray(r.interests) && r.interests.includes('ayurveda')).length;
+    const intMkt = rows.filter(r=> Array.isArray(r.interests) && r.interests.includes('marketing')).length;
+    const unpaid = rows.reduce((s,r)=> s + sumUnpaid(r.instalments), 0);
+    return { count, coins, contracts, married, growthPct, intAnat, intAyur, intMkt, unpaid };
   }
 
-  // ===== دادهٔ کامل (KPI/نمودار/لیست/گزارش مالی) =====
+  // ===== ساخت لیست یکتا از فیلدها =====
+  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
+  function getAllAssistantsFor(r){
+    const arr = Array.isArray(r.assistants)&&r.assistants.length ? r.assistants : (r.assistant ? [r.assistant] : []);
+    return arr;
+  }
+
+  // ===== دادهٔ کامل =====
   let cacheAll = [];
-  async function loadAll(refreshKPIsAndCharts=false){
-    const where = buildWhere();
+  async function loadAll(refresh=true){
     const tb = Backendless.Data.of('Newbloods');
     let offset=0, all=[], chunk=[];
     try{
       do{
         const qb = Backendless.DataQueryBuilder.create()
-                     .setWhereClause(where)
                      .setSortBy(['created DESC'])
-                     .setPageSize(100)
-                     .setOffset(offset);
+                     .setPageSize(100).setOffset(offset);
         chunk = await tb.find(qb);
         all.push(...chunk);
         offset += 100;
       }while(chunk.length===100);
 
-      // فیلتر «استادیار» روی assistant/assistants (کلاینتی دقیق) + فیلترهای پیشرفته
-      const asStr     = (assistant.value||'').trim();
-      const asExact   = (asstExact.value||'').trim();
-      const gmin      = Number(growthMin.value||'');
-      const gmax      = Number(growthMax.value||'');
-      const cmin      = Number(coinsMin.value||'');
-      const courseF   = jalaliStrToDate(courseFromJ.value);
-      const courseT   = jalaliStrToDate(courseToJ.value);
-
-      all = all.filter(r=>{
-        // assistant includes (fuzzy)
-        if(asStr){
-          const arr = Array.isArray(r.assistants)&&r.assistants.length ? r.assistants : (r.assistant ? [r.assistant] : []);
-          if(!arr.some(x => (x||'').includes(asStr))) return false;
-        }
-        // assistant exact
-        if(asExact){
-          const arr = Array.isArray(r.assistants)&&r.assistants.length ? r.assistants : (r.assistant ? [r.assistant] : []);
-          if(!arr.some(x => (x||'')===asExact)) return false;
-        }
-        // growth range
-        const gr = Number(r.growth||0);
-        if(!isNaN(gmin) && growthMin.value!=='' && gr < gmin) return false;
-        if(!isNaN(gmax) && growthMax.value!=='' && gr > gmax) return false;
-
-        // coins min
-        const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
-        if(!isNaN(cmin) && coinsMin.value!=='' && coinsCount < cmin) return false;
-
-        // course_date range
-        const cd = r.course_date ? new Date(r.course_date) : null;
-        if(courseF && (!cd || cd < courseF)) return false;
-        if(courseT && (!cd || cd > courseT)) return false;
-
-        return true;
-      });
-
       cacheAll = all;
-      if(refreshKPIsAndCharts){
+      if(refresh){
         updateKPIs(all);
-        drawCharts(all);          // ✅ نمودار با رشد درصدی و بدون «درصد قرارداد»
-        renderFinanceTables(all); // گزارش مالی
+        seedBuilderOptions(all);
+        renderBuilder(all);
+        drawCharts(all);
       }
-      await loadListOnly();
+      renderList();
     }catch(e){
-      console.error(e);
       alert('خطا در بارگذاری داده‌ها: ' + (e.message||e));
     }
   }
 
-  // ===== KPI ها =====
+  // ===== KPI کلی =====
   function updateKPIs(all){
-    const count = all.length;
-    const avgGrowth = count ? (all.reduce((s,r)=>s + (+r.growth||0),0)/count) : 0;
-    const totalCoins = all.reduce((s,r)=> s + (Array.isArray(r.coins)? r.coins.length:0), 0);
-    const contracts  = all.filter(r => !!r.contract_signed).length;
-
-    kCount.textContent     = fmt(count);
-    kGrowth.textContent    = (avgGrowth||0).toFixed(1);
-    kCoins.textContent     = fmt(totalCoins);
-    kContracts.textContent = fmt(contracts);
-    const pct = count ? Math.round((contracts / count) * 100) : 0;
+    const m = metricsOf(all);
+    kCount.textContent     = (m.count).toLocaleString('fa-IR');
+    kGrowth.textContent    = (m.growthPct/20).toFixed(1); // نمایش نزدیک به مقیاس 0..5
+    kCoins.textContent     = (m.coins).toLocaleString('fa-IR');
+    kContracts.textContent = (m.contracts).toLocaleString('fa-IR');
+    const pct = m.count ? Math.round((m.contracts / m.count) * 100) : 0;
     kContractsPct.textContent = pct + '%';
   }
+
+  // ===== سازنده آمار: آپشن‌ها =====
+  function seedBuilderOptions(all){
+    // Provinces
+    const provinces = ['(همه استان‌ها)', ...uniq(all.map(r=> (r.province||'—').trim()))];
+    selProvince.innerHTML = provinces.map((n,i)=> `<option value="${i===0?'':n}">${n}</option>`).join('');
+
+    // Cities
+    const cities = ['(همه شهرها)', ...uniq(all.map(r=> (r.city||'—').trim()))];
+    selCity.innerHTML = cities.map((n,i)=> `<option value="${i===0?'':n}">${n}</option>`).join('');
+
+    // Assistants
+    const assts = uniq(all.flatMap(getAllAssistantsFor));
+    selAssistant.innerHTML = ['(همه استادیارها)', ...assts].map((n,i)=> `<option value="${i===0?'':n}">${n||'—'}</option>`).join('');
+  }
+
+  // ===== سازنده آمار: رندر هر باکس =====
+  function renderStatsInto(el, rows, kind){
+    const m = metricsOf(rows);
+    const lines = [
+      ['تعداد نیوبلاد', m.count.toLocaleString('fa-IR')],
+      ['٪ رشد', m.growthPct + '%'],
+      ['تعداد کوین', m.coins.toLocaleString('fa-IR')],
+      ['تعداد قرارداد امضا شده', m.contracts.toLocaleString('fa-IR')],
+      ['تعداد متاهل', m.married.toLocaleString('fa-IR')],
+      ...(kind==='other' ? [] : [
+        ['علاقه‌مندی آناتومی', m.intAnat.toLocaleString('fa-IR')],
+        ['علاقه‌مندی آیورودا', m.intAyur.toLocaleString('fa-IR')],
+        ['علاقه‌مندی بازاریابی', m.intMkt.toLocaleString('fa-IR')],
+      ]),
+      ['اقساط پرداخت‌نشده (تومان)', m.unpaid.toLocaleString('fa-IR')],
+    ];
+    el.innerHTML = lines.map(([k,v])=> `<div class="statrow"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  }
+
+  function renderBuilder(all){
+    // Province box
+    const pv = selProvince.value;
+    const rowsP = pv ? all.filter(r=> (r.province||'—').trim()===pv) : all;
+    renderStatsInto(boxProvince, rowsP);
+
+    // City box
+    const cv = selCity.value;
+    const rowsC = cv ? all.filter(r=> (r.city||'—').trim()===cv) : all;
+    renderStatsInto(boxCity, rowsC);
+
+    // Assistant box (بدون کسری؛ حضور در رکورد کافی‌ست)
+    const av = selAssistant.value;
+    const rowsA = av ? all.filter(r=> getAllAssistantsFor(r).includes(av)) : all;
+    renderStatsInto(boxAssistant, rowsA);
+
+    // Other box
+    const ov = selOther.value;
+    let rowsO = all;
+    if(ov==='married') rowsO = all.filter(r=> r.marital_status==='married');
+    else if(ov==='single') rowsO = all.filter(r=> r.marital_status==='single');
+    else if(ov==='contract_yes') rowsO = all.filter(r=> !!r.contract_signed);
+    else if(ov==='contract_no') rowsO = all.filter(r=> !r.contract_signed);
+    else if(ov==='int_anatomy') rowsO = all.filter(r=> Array.isArray(r.interests)&&r.interests.includes('anatomy'));
+    else if(ov==='int_ayurveda') rowsO = all.filter(r=> Array.isArray(r.interests)&&r.interests.includes('ayurveda'));
+    else if(ov==='int_marketing') rowsO = all.filter(r=> Array.isArray(r.interests)&&r.interests.includes('marketing'));
+    renderStatsInto(boxOther, rowsO, 'other');
+  }
+
+  selProvince.onchange = ()=> renderBuilder(cacheAll);
+  selCity.onchange     = ()=> renderBuilder(cacheAll);
+  selAssistant.onchange= ()=> renderBuilder(cacheAll);
+  selOther.onchange    = ()=> renderBuilder(cacheAll);
 
   // ===== نمودارها =====
   let chartProvince, chartAssistant;
 
-  function aggBy(items, keyFn){
+  function aggByProvinceMetric(all, metric){
     const map = new Map();
-    for(const r of items){
-      const k = (keyFn(r) || '—').trim();
+    for(const r of all){
+      const k = (r.province||'—').trim();
       if(!map.has(k)) map.set(k, []);
       map.get(k).push(r);
     }
-    return map;
-  }
-
-  function buildProvinceDataset(all){
-    const g = aggBy(all, r=> r.province||'—');
-    const labels = [...g.keys()];
-    const counts = labels.map(l=> g.get(l).length);
-    const growthPct = labels.map(l=>{
-      const arr=g.get(l), c=arr.length;
-      const avg = c? (arr.reduce((s,r)=>s+(+r.growth||0),0)/c) : 0;
-      return Math.round((avg/5)*100); // ✅ رشد درصدی 0..100
+    const labels = [...map.keys()];
+    const vals = labels.map(l=>{
+      const rows = map.get(l);
+      const m = metricsOf(rows);
+      switch(metric){
+        case 'count': return m.count;
+        case 'growthPct': return m.growthPct;
+        case 'coins': return m.coins;
+        case 'married': return m.married;
+        case 'contracts': return m.contracts;
+        case 'int_anatomy': return m.intAnat;
+        case 'int_ayurveda': return m.intAyur;
+        case 'int_marketing': return m.intMkt;
+        case 'unpaid': return m.unpaid;
+        default: return 0;
+      }
     });
-    return { labels, counts, growthPct };
+    return { labels, vals };
   }
 
-  // === چند استادیاری: شمارش کسری 1/k برای هر استادیار در نمودار ===
-  function buildAssistantDataset(all){
-    const countMap = {};      // Σ(1/k)
-    const growthSumMap = {};  // Σ(growth * 1/k)
+  // کمک: توزیع کسری برای استادیار (۱/k)
+  function aggByAssistantMetricFractional(all, metric){
+    const sumMap = {}; // label -> value
+    const cntMap = {}; // برای growthAvg
+    const growthSumMap = {};
 
     for(const r of all){
-      const list = (Array.isArray(r.assistants) && r.assistants.length)
-        ? r.assistants
-        : (r.assistant ? [r.assistant] : []);
+      const list = getAllAssistantsFor(r);
       const k = list.length || 1;
       const w = 1 / k;
-      const growth = +r.growth || 0;
 
+      // آماده‌سازی
       if(list.length===0){
         const a='—';
-        countMap[a]=(countMap[a]||0)+1;
-        growthSumMap[a]=(growthSumMap[a]||0)+growth;
-      }else{
-        list.forEach(a=>{
-          countMap[a]=(countMap[a]||0)+w;
-          growthSumMap[a]=(growthSumMap[a]||0)+(growth*w);
-        });
+        list.push(a);
+      }
+
+      for(const a of list){
+        if(!(a in sumMap)) sumMap[a]=0;
+        if(metric==='growthPct'){
+          if(!(a in cntMap)) cntMap[a]=0;
+          if(!(a in growthSumMap)) growthSumMap[a]=0;
+          growthSumMap[a] += ((+r.growth||0) * w);
+          cntMap[a] += w;
+        }else if(metric==='count'){
+          sumMap[a] += w;
+        }else if(metric==='coins'){
+          sumMap[a] += (Array.isArray(r.coins) ? r.coins.length : 0) * w;
+        }else if(metric==='married'){
+          sumMap[a] += (r.marital_status==='married') ? w : 0;
+        }else if(metric==='contracts'){
+          sumMap[a] += (!!r.contract_signed) ? w : 0;
+        }else if(metric==='int_anatomy'){
+          sumMap[a] += (Array.isArray(r.interests)&&r.interests.includes('anatomy')) ? w : 0;
+        }else if(metric==='int_ayurveda'){
+          sumMap[a] += (Array.isArray(r.interests)&&r.interests.includes('ayurveda')) ? w : 0;
+        }else if(metric==='int_marketing'){
+          sumMap[a] += (Array.isArray(r.interests)&&r.interests.includes('marketing')) ? w : 0;
+        }else if(metric==='unpaid'){
+          sumMap[a] += sumUnpaid(r.instalments) * w;
+        }
       }
     }
 
-    const labels = Object.keys(countMap);
-    const counts = labels.map(a=> Number((countMap[a]).toFixed(3)));
-    const growthPct = labels.map(a=>{
-      const c=countMap[a]; const avg = c? (growthSumMap[a]/c) : 0;
-      return Math.round((avg/5)*100); // ✅ درصد رشد 0..100
+    const labels = Object.keys(sumMap).sort();
+    const vals = labels.map(a=>{
+      if(metric==='growthPct'){
+        const avg = (growthSumMap[a]||0) / (cntMap[a]||1);
+        return Math.round((avg/5)*100);
+      }
+      // گرد کردن برای نمایش
+      const v = sumMap[a];
+      if(metric==='unpaid') return Math.round(v);
+      return Number(v.toFixed(2));
     });
-
-    return { labels, counts, growthPct };
+    return { labels, vals };
   }
 
   function drawCharts(all){
-    const p = buildProvinceDataset(all);
-    const a = buildAssistantDataset(all);
-
     const ctxP = document.getElementById('chartProvince').getContext('2d');
     const ctxA = document.getElementById('chartAssistant').getContext('2d');
 
-    if(chartProvince) chartProvince.destroy();
-    if(chartAssistant) chartAssistant.destroy();
-
-    // استان: میله (تعداد) + خط (درصد رشد)
-    chartProvince = new Chart(ctxP, {
-      type: 'bar',
-      data: {
-        labels: p.labels,
-        datasets: [
-          { label:'تعداد', data: p.counts, yAxisID: 'y', type:'bar' },
-          { label:'درصد رشد', data: p.growthPct, yAxisID: 'y1', type:'line' }
-        ]
-      },
-      options: {
-        responsive:true, aspectRatio:2,
-        scales:{
-          y:  { beginAtZero:true, title:{display:true, text:'تعداد'} },
-          y1: { beginAtZero:true, min:0, max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'رشد (٪)'} }
+    function drawProvince(){
+      const metric = metricProvince.value;
+      const {labels, vals} = aggByProvinceMetric(all, metric);
+      if(chartProvince) chartProvince.destroy();
+      chartProvince = new Chart(ctxP, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: metricLabel(metric), data: vals }] },
+        options: {
+          responsive:true, aspectRatio:2,
+          scales: {
+            y: {
+              beginAtZero:true,
+              min:0,
+              ...(metric==='growthPct' ? {max:100} : {})
+            }
+          }
         }
-      }
-    });
-
-    // استادیار: میله (تعداد کسری) + خط (درصد رشد)
-    chartAssistant = new Chart(ctxA, {
-      data: {
-        labels: a.labels,
-        datasets: [
-          { label:'تعداد (کسری)', data: a.counts, yAxisID:'y', type:'bar' },
-          { label:'درصد رشد',    data: a.growthPct, yAxisID:'y1', type:'line' }
-        ]
-      },
-      options: {
-        responsive:true, aspectRatio:2,
-        scales:{
-          y:  { beginAtZero:true, title:{display:true, text:'تعداد'} },
-          y1: { beginAtZero:true, min:0, max:100, position:'right', grid:{drawOnChartArea:false}, title:{display:true, text:'رشد (٪)'} }
+      });
+    }
+    function drawAssistant(){
+      const metric = metricAssistant.value;
+      const {labels, vals} = aggByAssistantMetricFractional(all, metric);
+      if(chartAssistant) chartAssistant.destroy();
+      chartAssistant = new Chart(ctxA, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: metricLabel(metric), data: vals }] },
+        options: {
+          responsive:true, aspectRatio:2,
+          scales: {
+            y: {
+              beginAtZero:true,
+              min:0,
+              ...(metric==='growthPct' ? {max:100} : {})
+            }
+          }
         }
-      }
-    });
-  }
-
-  // ===== گزارش مالی: اقساط (تابع‌ها، بدون تغییر محتوایی) =====
-  function toMonthKeyJalali(x){
-    const d = new Date(x);
-    if (isNaN(d)) return null;
-    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
-    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
-    const mm = String(j.jm).padStart(2,'0');
-    return `${j.jy}/${mm}`;
-  }
-
-  function sumInstallmentsByMonth(rows){
-    const map = {};
-    for(const r of rows){
-      const inst = Array.isArray(r.instalments) ? r.instalments : [];
-      for(const it of inst){
-        const amt = Number(it?.amount||0);
-        const dt = it?.date;
-        if(!amt || !dt) continue;
-        const key = toMonthKeyJalali(dt);
-        if(!key) continue;
-        map[key] = (map[key]||0) + amt;
-      }
+      });
     }
-    const keys = Object.keys(map).sort((a,b)=> a<b ? 1 : -1); // نزولی
-    return keys.map(k=>({ month:k, total: map[k] }));
-  }
 
-  function sumInstallmentsByAssistant(rows){
-    const map = {};
-    for(const r of rows){
-      const inst = Array.isArray(r.instalments) ? r.instalments : [];
-      if(!inst.length) continue;
-      const sumForRecord = inst.reduce((s,it)=> s + (Number(it?.amount||0) || 0), 0);
-      if(!sumForRecord) continue;
-
-      const list = (Array.isArray(r.assistants) && r.assistants.length)
-        ? r.assistants
-        : (r.assistant ? [r.assistant] : []);
-
-      if(list.length===0){
-        map['—'] = (map['—']||0) + sumForRecord;
-      }else{
-        list.forEach(a=>{
-          const key = (a||'—').trim();
-          map[key] = (map[key]||0) + sumForRecord;
-        });
-      }
+    function metricLabel(m){
+      return ({
+        count:'تعداد نیوبلاد',
+        growthPct:'٪ رشد',
+        coins:'تعداد کوین',
+        married:'تعداد متاهل',
+        contracts:'تعداد قرارداد',
+        int_anatomy:'علاقه‌مندی آناتومی',
+        int_ayurveda:'علاقه‌مندی آیورودا',
+        int_marketing:'علاقه‌مندی بازاریابی',
+        unpaid:'اقساط پرداخت‌نشده'
+      })[m] || m;
     }
-    const entries = Object.entries(map).sort((a,b)=> b[1]-a[1]);
-    return entries.map(([assistant,total])=>({assistant,total}));
+
+    metricProvince.onchange = drawProvince;
+    metricAssistant.onchange = drawAssistant;
+    drawProvince(); drawAssistant();
   }
 
-  function renderFinanceTables(all){
-    // 1) ماهانه
-    const byMonth = sumInstallmentsByMonth(all).slice(0, 24);
-    const t1 = document.querySelector('#tblByMonth tbody');
-    t1.innerHTML = byMonth.length ? '' : '<tr><td colspan="2" style="padding:8px;color:#777">داده‌ای یافت نشد.</td></tr>';
-    byMonth.forEach(row=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="padding:6px;border-bottom:1px solid #f0f0f0">${row.month}</td>
-        <td style="padding:6px;border-bottom:1px solid #f0f0f0;text-align:left">${row.total.toLocaleString('fa-IR')}</td>
-      `;
-      t1.appendChild(tr);
-    });
+  // ===== لیست صفحه‌ای (بدون فیلترهای قبلی) =====
+  let page = 0; const pageSize = 30;
+  function resetPaging(){ page = 0; }
+  prev.onclick = ()=>{ if(page>0){ page--; renderList(); } };
+  next.onclick = ()=>{ if((page+1)*pageSize<cacheAll.length){ page++; renderList(); } };
 
-    // 2) به‌تفکیک استادیار
-    const byAsst = sumInstallmentsByAssistant(all);
-    const t2 = document.querySelector('#tblByAssistant tbody');
-    t2.innerHTML = byAsst.length ? '' : '<tr><td colspan="2" style="padding:8px;color:#777">داده‌ای یافت نشد.</td></tr>';
-    byAsst.forEach(row=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="padding:6px;border-bottom:1px solid #f0f0f0">${row.assistant}</td>
-        <td style="padding:6px;border-bottom:1px solid #f0f0f0;text-align:left">${row.total.toLocaleString('fa-IR')}</td>
-      `;
-      t2.appendChild(tr);
-    });
-  }
-
-  // ===== لیست صفحه‌ای =====
-  async function loadListOnly(){
+  function renderList(){
     const list = document.getElementById('list');
     const start = page*pageSize;
     const rows = cacheAll.slice(start, start+pageSize);
@@ -653,7 +568,6 @@
       rows.forEach(r=>{
         const coinsCount = Array.isArray(r.coins) ? r.coins.length : 0;
         const cd = r.course_date ? toJalaliStr(r.course_date) : '—';
-        const growthStars = star(+r.growth||0);
         const cityPart = [r.province, r.city].filter(Boolean).join(' / ');
         const badge = r.contract_signed
           ? '<span class="badge badge-ok">قرارداد</span>'
@@ -665,30 +579,22 @@
 
         const wrap = document.createElement('div');
         wrap.className = 'item';
+        const qs = new URLSearchParams({ objectId: r.objectId, assistant: (r.assistant||'') });
 
-        const left = document.createElement('div');
-        left.innerHTML = `
-          <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
-          <div class="meta">
-            ${cityPart||'—'} | استادیار(ها): ${assistants} | رشد: ${growthStars} | کوین: ${fmt(coinsCount)} | تاریخ دوره: ${cd}
+        wrap.innerHTML = `
+          <div>
+            <div class="line"><b>${r.name||'—'}</b> <span class="muted">(${r.mobile||'—'})</span> ${badge}</div>
+            <div class="meta">
+              ${cityPart||'—'} | استادیار(ها): ${assistants} | رشد: ${'★'.repeat(+r.growth||0)} | کوین: ${coinsCount} | تاریخ دوره: ${cd}
+            </div>
+          </div>
+          <div class="actions">
+            <a href="index.html?${qs.toString()}" target="_self">ویرایش</a>
           </div>
         `;
-
-        const actions = document.createElement('div');
-        actions.className = 'actions';
-        const aEdit = document.createElement('a');
-        const qs = new URLSearchParams({ objectId: r.objectId, assistant: (r.assistant||'') });
-        aEdit.href = 'index.html?' + qs.toString();
-        aEdit.textContent = 'ویرایش';
-        aEdit.target = '_self';
-        actions.appendChild(aEdit);
-
-        wrap.appendChild(left);
-        wrap.appendChild(actions);
         list.appendChild(wrap);
       });
     }
-
     pageInfo.textContent = `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
   }
 
@@ -742,9 +648,7 @@
   };
 
   // ===== شروع =====
-  if(sessionStorage.getItem('isAdmin')==='1'){
-    resetPaging(); loadAll(true);
-  }
+  if(sessionStorage.getItem('isAdmin')==='1'){ resetPaging(); loadAll(true); }
 </script>
 </body>
 </html>
