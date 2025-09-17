@@ -8,7 +8,7 @@
   <!-- Backendless SDK -->
   <script src="https://api.backendless.com/sdk/js/latest/backendless.min.js"></script>
 
-  <!-- jQuery + Persian Datepicker (نگه داشته شده ولی استفاده نمی‌کنیم) + jalaali-js -->
+  <!-- jQuery + Persian Datepicker (نگه داشته شده برای سازگاری، اما دیگر استفاده نمی‌کنیم) + jalaali-js -->
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
   <script src="https://cdn.jsdelivr.net/npm/persian-date/dist/persian-date.js"></script>
@@ -56,7 +56,9 @@
     .backup-bar{display:none;max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
     .backup-bar small{color:#666}
 
-    #assistantsTags span{background:#e8f5e9;color:#1b5e20;padding:4px 8px;border-radius:10px;display:inline-flex;gap:6px;align-items:center}
+    #assistantsTags .tag{background:#e8f5e9;color:#1b5e20;padding:6px 10px;border-radius:10px;display:inline-flex;gap:8px;align-items:center;margin:4px 6px 0 0}
+    #assistantsTags .tag small{display:block;color:#2e7d32;margin-top:2px}
+    #assistantsTags .remove{background:#c8e6c9;border:none;border-radius:8px;padding:0 6px;cursor:pointer}
 
     /* اعتبارسنجی تاریخِ اشتباه */
     .invalid{border-color:#e53935 !important; background:#ffebee}
@@ -72,8 +74,6 @@
     @media (max-width:820px){
       .installment{grid-template-columns:1fr}
       .installment>button{width:100%;order:99}
-      .coin-entry{grid-template-columns:1fr}
-  .coin-entry>button{width:100%;order:99}
     }
   </style>
 </head>
@@ -91,17 +91,28 @@
 </div>
 
 <form id="newbloodForm">
+  <!-- قرارداد -->
   <label style="display:flex;align-items:center;gap:8px">
     <input type="checkbox" id="contract_signed"> قرارداد امضا شده
   </label>
 
+  <!-- استادیاران -->
   <label>استادیاران</label>
   <div id="assistantsTags" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-  <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
-    <input type="text" id="assistantInput" placeholder="نام استادیار را بنویسید و + بزنید" style="flex:1">
-    <button type="button" class="secondary" onclick="addAssistant()">+ افزودن</button>
+
+  <!-- انتخاب از کاربران ثبت‌نام‌شده + حفظ ورودی دستی قبلی -->
+  <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">
+    <input type="text" id="assistantSearch" placeholder="جستجو: نام یا ایمیل…" style="flex:1;min-width:230px" oninput="filterAssistantOptions(this.value)">
+    <select id="assistantSelect" style="flex:1;min-width:230px">
+      <option value="">انتخاب از کاربران…</option>
+    </select>
+    <button type="button" class="secondary" onclick="addAssistantFromSelect()">+ افزودن</button>
+
+    <!-- ورودی دستی قبلی (حذف نشده) -->
+    <input type="text" id="assistantInput" placeholder="(اختیاری) نام استادیار به صورت دستی" style="flex:1;min-width:230px">
+    <button type="button" class="secondary" onclick="addAssistant()">+ افزودن دستی</button>
   </div>
-  <small class="muted">نکته: اولین استادیار به‌عنوان فیلد سازگاری «assistant» ذخیره می‌شود.</small>
+  <small class="muted">نکته: برای اتصال مطمئن، لطفاً استادیار را از کاربران انتخاب کنید. ورودی دستی برای سازگاری قبلی نگه داشته شده است. اولین استادیار به‌عنوان فیلد میراثی «assistant» ذخیره می‌شود.</small>
 
   <div class="row">
     <div>
@@ -149,6 +160,7 @@
   <label>نحوهٔ آشنایی با خانوادهٔ سوان</label>
   <textarea name="how_met" placeholder="مثلاً: معرفی دوست، اینستاگرام، شرکت در رویداد و..."></textarea>
 
+  <!-- علاقه‌مندی‌ها -->
   <label>علاقه‌مندی‌ها</label>
   <div class="row">
     <label><input type="checkbox" name="interests" value="anatomy"> آناتومی</label>
@@ -243,7 +255,7 @@
     }catch(_){}
   })();
 
-  // ===== Provinces (مرتب بر اساس الفبای فارسی) =====
+  // ===== استان‌ها (مرتب با الفبا) =====
   const IRAN_PROVINCES = [
     {code:"EAZ",name:"آذربایجان شرقی"},{code:"WAZ",name:"آذربایجان غربی"},{code:"ARW",name:"اردبیل"},
     {code:"ESF",name:"اصفهان"},{code:"ALB",name:"البرز"},{code:"ILM",name:"ایلام"},
@@ -264,10 +276,10 @@
   }
   seedProvinces('');
 
-  // ===== تاریخ: ورودی دستی + اعتبارسنجی =====
+  // ===== تاریخ دستی + اعتبارسنجی =====
   function fa2en(str){ return String(str||'').replace(/[۰-۹]/g, d=> '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); }
   function isValidJalaliStr(s){
-    if(!s) return true; // خالی = اوکی (اختیاری)
+    if(!s) return true;
     const m = fa2en(s.trim()).match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
     if(!m) return false;
     const jy=+m[1], jm=+m[2], jd=+m[3];
@@ -297,15 +309,13 @@
     const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
     return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
   }
-
-  // اتصال اعتبارسنجی به فیلدهای ثابت
   ['birthdate_j','course_date_j'].forEach(id=>{
     const el = document.getElementById(id);
     el.addEventListener('input', ()=>{ el.value = fa2en(el.value); markValidity(el); saveDraft(); });
     el.addEventListener('blur', ()=> markValidity(el));
   });
 
-  // ===== Stars =====
+  // ===== ستاره‌های رشد =====
   (function initStars(){
     const stars = document.querySelectorAll('#growthStars span');
     const out = document.getElementById('growthVal');
@@ -319,38 +329,120 @@
     });
   })();
 
-  // ===== Assistants =====
-  let assistantsSet = new Set();
+  // ===== انتخاب استادیار از کاربران (به‌علاوه ورودی دستی قبلی) =====
+  let ALL_USERS = []; // {objectId,name,email}
+  let assistantsEmails = new Set(); // ایمیل‌های انتخاب‌شده
+  let assistantsNames  = new Set(); // نام‌های دستی/نمایشی
+
+  async function loadAllUsers(){
+    try{
+      const Users = Backendless.Data.of('Users');
+      let off=0, chunk=[];
+      ALL_USERS = [];
+      do{
+        const qb = Backendless.DataQueryBuilder.create()
+                 .setPageSize(100).setOffset(off)
+                 .setProperties(['objectId','name','email'])
+                 .setSortBy(['name ASC']);
+        chunk = await Users.find(qb);
+        ALL_USERS.push(...chunk);
+        off += 100;
+      }while(chunk.length===100);
+      seedAssistantSelect(ALL_USERS);
+    }catch(e){ console.warn('load users failed', e); }
+  }
+  function seedAssistantSelect(arr){
+    const sel = document.getElementById('assistantSelect');
+    sel.innerHTML = `<option value="">انتخاب از کاربران…</option>` +
+      arr.map(u=>{
+        const disp = `${(u.name||'بدون‌نام')} — ${u.email||''}`;
+        return `<option value="${u.email||''}" data-name="${u.name||''}">${disp}</option>`;
+      }).join('');
+  }
+  function filterAssistantOptions(q){
+    q = (q||'').trim().toLowerCase();
+    const filtered = !q ? ALL_USERS : ALL_USERS.filter(u=>{
+      return (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
+    });
+    seedAssistantSelect(filtered);
+  }
   function renderAssistantTags(){
     const box = document.getElementById('assistantsTags');
     box.innerHTML = '';
-    assistantsSet.forEach(name=>{
-      const tag = document.createElement('span');
-      tag.innerHTML = `${name} <button type="button" onclick="removeAssistant('${name}')" style="background:#c8e6c9;border:none;border-radius:8px;padding:0 6px;cursor:pointer">×</button>`;
+
+    // نمایش ایمیل‌دارها
+    assistantsEmails.forEach(email=>{
+      const u = ALL_USERS.find(x=> (x.email||'')===email);
+      const name = u?.name || email;
+      const tag = document.createElement('div');
+      tag.className='tag';
+      tag.innerHTML = `
+        <div style="display:flex;gap:6px;align-items:center">
+          <b>${name}</b>
+          <button type="button" class="remove" onclick="removeAssistant('${email}')">×</button>
+        </div>
+        <small>${email}</small>
+      `;
+      box.appendChild(tag);
+    });
+
+    // نمایش نام‌های دستی که ایمیل ندارند
+    assistantsNames.forEach(name=>{
+      // اگر این نام با ایمیل نمایش داده شده، دوباره نشان نده
+      const existsByName = [...assistantsEmails].some(em=>{
+        const u = ALL_USERS.find(x=> (x.email||'')===em);
+        return (u?.name||'') === name;
+      });
+      if(existsByName) return;
+      const tag = document.createElement('div');
+      tag.className='tag';
+      tag.innerHTML = `
+        <div style="display:flex;gap:6px;align-items:center">
+          <b>${name}</b>
+          <button type="button" class="remove" onclick="removeAssistantByName('${name}')">×</button>
+        </div>
+      `;
       box.appendChild(tag);
     });
   }
+  function addAssistantFromSelect(){
+    const sel = document.getElementById('assistantSelect');
+    const email = sel.value;
+    if(!email) return;
+    const name  = sel.selectedOptions[0]?.dataset?.name || '';
+    assistantsEmails.add(email);
+    if(name) assistantsNames.add(name);
+    renderAssistantTags();
+    saveDraft();
+  }
+  // ورودی دستی (حذف نشده)
   function addAssistant(nameOpt){
     const inp = document.getElementById('assistantInput');
     const name = (nameOpt || inp.value || '').trim();
     if(!name) return;
-    assistantsSet.add(name);
+    assistantsNames.add(name);
     inp.value = '';
     renderAssistantTags();
     saveDraft();
   }
-  function removeAssistant(name){
-    assistantsSet.delete(name);
+  function removeAssistant(email){
+    assistantsEmails.delete(email);
+    renderAssistantTags();
+    saveDraft();
+  }
+  function removeAssistantByName(name){
+    assistantsNames.delete(name);
     renderAssistantTags();
     saveDraft();
   }
   (function seedAssistantFromURL(){
     const a = new URLSearchParams(location.search).get('assistant');
-    if(a){ addAssistant(decodeURIComponent(a).replace(/_/g,' ').trim()); }
+    if(a && a.includes('@')) assistantsEmails.add(decodeURIComponent(a).trim());
+    renderAssistantTags();
   })();
 
+  // ===== Helpers =====
   const toNumber = v => (v===''||v==null ? null : Number(v));
-
   async function uploadReceipt(file){
     const safe = (file.name||'receipt').replace(/\s+/g,'_');
     const fname = `${Date.now()}_${safe}`;
@@ -358,7 +450,7 @@
     return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
   }
 
-  // ===== Dynamic rows - Installments (با هدف: استادیار/سوان) =====
+  // ===== اقساط (target: assistant|swan) =====
   function addInstallment(rowData){
     const div=document.createElement('div');
     div.className='installment';
@@ -450,6 +542,26 @@
 
   // ===== حالت ویرایش =====
   let currentObjectId = new URLSearchParams(location.search).get('objectId') || null;
+
+  function applyAssistantsFromRecord(rec){
+    const emails = Array.isArray(rec.assistants_emails) ? rec.assistants_emails : [];
+    const names  = Array.isArray(rec.assistants_names)  ? rec.assistants_names  : [];
+
+    if(emails.length){
+      assistantsEmails = new Set(emails);
+    }
+    if(names.length){
+      assistantsNames = new Set(names);
+    }else{
+      // رکورد قدیمی: فقط اسم‌ها
+      const list = (Array.isArray(rec.assistants) && rec.assistants.length)
+        ? rec.assistants
+        : (rec.assistant ? [rec.assistant] : []);
+      list.forEach(n=> assistantsNames.add(n));
+    }
+    renderAssistantTags();
+  }
+
   if(currentObjectId){
     (async function loadExisting(){
       try{
@@ -457,9 +569,7 @@
 
         document.getElementById('contract_signed').checked = !!rec.contract_signed;
 
-        const list = (Array.isArray(rec.assistants) && rec.assistants.length) ? rec.assistants : (rec.assistant ? [rec.assistant] : []);
-        assistantsSet = new Set(list);
-        renderAssistantTags();
+        applyAssistantsFromRecord(rec);
 
         document.querySelector('[name="name"]').value = rec.name||'';
         document.querySelector('[name="mobile"]').value = rec.mobile||'';
@@ -506,7 +616,6 @@
 
     document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
   }else{
-    // فرم جدید: فقط seed استان‌ها
     seedProvinces('');
   }
 
@@ -521,20 +630,29 @@
     data.birthdate   = document.getElementById('birthdate_j').value;
     data.course_date = document.getElementById('course_date_j').value;
     data.growth = document.getElementById('growthVal').value;
-    data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
-    data.assistants = Array.from(assistantsSet);
 
+    data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
+
+    // استادیارها
+    data.assistants_emails = Array.from(assistantsEmails);
+    data.assistants_names  = Array.from(assistantsNames);
+    // سازگاری قبلی
+    data.assistants = data.assistants_names.length ? data.assistants_names
+                     : (Array.isArray(data.assistants_emails) ? data.assistants_emails : []);
+    data.assistant  = data.assistants_names[0] || data.assistants_emails[0] || '';
+
+    // اقساط
     data.instalments = Array.from(document.querySelectorAll('.installment')).map(row=>{
       const date = row.querySelector('.inst-date').value;
       const amount = row.querySelector('.inst-amount').value;
       const paid = row.querySelector('.inst-paid').checked;
       const receipt_url = row.dataset.currentUrl || null;
-      // خواندن هدف از رادیو
       const targetEl = row.querySelector('input[name^="inst-target-"]:checked');
       const target = targetEl ? targetEl.value : 'assistant';
       return { date, amount, status: (paid ? 'done' : 'pending'), receipt_url, target };
     });
 
+    // کوین‌ها
     data.coins = Array.from(document.querySelectorAll('.coin-entry')).map(row=>{
       const date = row.querySelector('.coin-date').value;
       const note = row.querySelector('.coin-note').value || '';
@@ -553,7 +671,9 @@
     try{
       const d = JSON.parse(raw);
       document.getElementById('contract_signed').checked = !!d.contract_signed;
-      if(d.assistants && d.assistants.length){ assistantsSet = new Set(d.assistants); renderAssistantTags(); }
+      if(Array.isArray(d.assistants_emails)) assistantsEmails = new Set(d.assistants_emails);
+      if(Array.isArray(d.assistants_names))  assistantsNames  = new Set(d.assistants_names);
+      renderAssistantTags();
 
       const setVal = (name,val)=>{ const el=document.querySelector(`[name="${name}"]`); if(el && val!=null) el.value = val; };
       setVal('name', d.name); setVal('mobile', d.mobile); setVal('instagram', d.instagram);
@@ -598,6 +718,9 @@
   document.getElementById('newbloodForm').addEventListener('input', saveDraft);
   document.getElementById('newbloodForm').addEventListener('change', saveDraft);
   window.addEventListener('beforeunload', saveDraft);
+  // بارگذاری کاربران برای Select
+  loadAllUsers();
+  // بازیابی پیش‌نویس (در صورت فرم جدید)
   restoreDraftIfAny();
 
   // ===== Submit =====
@@ -606,7 +729,7 @@
     const msg = document.getElementById('msg');
     msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ذخیره...';
 
-    // اعتبارسنجی تاریخ‌ها؛ اگر هرکدام غلط است، خطا
+    // اعتبارسنجی تاریخ‌ها
     const allDateInputs = [
       document.getElementById('birthdate_j'),
       document.getElementById('course_date_j'),
@@ -614,9 +737,7 @@
       ...document.querySelectorAll('.coin-date')
     ];
     let okAll = true;
-    allDateInputs.forEach(el=>{
-      if(!markValidity(el)) okAll = false;
-    });
+    allDateInputs.forEach(el=>{ if(!markValidity(el)) okAll = false; });
     if(!okAll){
       msg.className='msg err'; msg.textContent='❌ فرمت تاریخ را اصلاح کنید (فیلدهای قرمز).';
       return;
@@ -636,8 +757,12 @@
 
     data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
 
-    data.assistants = Array.from(assistantsSet);
-    data.assistant  = data.assistants[0] || '';
+    // استادیارها (ایمیل + نام) + سازگاری
+    data.assistants_emails = Array.from(assistantsEmails);
+    data.assistants_names  = Array.from(assistantsNames);
+    data.assistants = data.assistants_names.length ? data.assistants_names
+                   : (Array.isArray(data.assistants_emails) ? data.assistants_emails : []);
+    data.assistant  = data.assistants_names[0] || data.assistants_emails[0] || '';
 
     // اقساط
     const instRows = Array.from(document.querySelectorAll('.installment'));
@@ -683,7 +808,8 @@
         document.getElementById('refContainer').innerHTML='';
         document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
         document.getElementById('growthVal').value=0;
-        assistantsSet = new Set();
+        assistantsEmails = new Set();
+        assistantsNames  = new Set();
         renderAssistantTags();
         seedProvinces('');
       }
@@ -702,4 +828,3 @@
 
 </body>
 </html>
-
