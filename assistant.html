@@ -14,17 +14,22 @@
   <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.3/dist/jalaali.min.js"></script>
 
   <style>
-    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#222; --muted:#666 }
+    :root{ --brand:#009688; --bg:#f6f7fb; --card:#fff; --txt:#111; --muted:#555; --fs:17px }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:Tahoma,system-ui,sans-serif;font-size:var(--fs)}
     header{background:#222;color:#fff;text-align:center;padding:12px}
-    header h1{margin:0;font-size:18px}
+    header h1{margin:0;font-size:calc(var(--fs) + 1px)}
 
     .container{max-width:980px;margin:14px auto;padding:0 10px}
     .card{background:var(--card);border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.06);padding:12px;margin-bottom:12px}
 
-    label{display:block;margin-top:8px;font-weight:700}
-    input,button,select{width:100%;padding:.9rem;border:1px solid #dde1e6;border-radius:10px;margin-top:6px;font-size:16px}
+    label{display:block;margin-top:8px;font-weight:800;font-size:calc(var(--fs) - 1px);color:#111}
+    input,button,select{
+      width:100%;padding:1rem;border:1px solid #9ea7ad;border-radius:10px;
+      margin-top:6px;font-size:calc(var(--fs) + 1px);color:#111;background:#fff
+    }
+    input::placeholder, select::placeholder{color:#444}
+    input:focus, select:focus{outline:none;border-color:#00796b;box-shadow:0 0 0 3px rgba(0,121,107,.12)}
     button{background:var(--brand);color:#fff;border:none;cursor:pointer}
     button.secondary{background:#607d8b}
 
@@ -37,35 +42,38 @@
     @media (max-width:560px){ .filters{grid-template-columns:1fr} }
 
     .list{display:grid;gap:8px;margin-top:10px}
-    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #eee;border-radius:12px;background:#fff;padding:10px}
+    .item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid #d9dee2;border-radius:12px;background:#fff;padding:12px}
     .item .line{display:flex;gap:8px;flex-wrap:wrap}
-    .item .meta{font-size:13px;color:#555}
-    .badge{padding:2px 6px;border-radius:8px;font-size:12px}
+    .item .meta{font-size:calc(var(--fs) - 1px);color:#333}
+    .badge{padding:2px 6px;border-radius:8px;font-size:calc(var(--fs) - 3px)}
     .badge-ok{background:#e8f5e9;color:#1b5e20}
     .badge-no{background:#fff3e0;color:#ef6c00}
     .actions{display:flex;gap:6px}
-    .actions a{background:#37474f;color:#fff;padding:.55rem .8rem;border-radius:8px;text-decoration:none}
+    .actions a{background:#37474f;color:#fff;padding:.65rem .9rem;border-radius:8px;text-decoration:none}
 
     .pager{display:flex;gap:8px;justify-content:center;margin:10px 0}
     .pager button{min-width:110px}
 
-    .msg{margin-top:8px;padding:.8rem;border-radius:10px;display:none}
+    .msg{margin-top:8px;padding:.9rem;border-radius:10px;display:none}
     .ok{background:#e0f7f4;color:#00695c}
     .err{background:#ffebee;color:#c62828}
 
-    .muted{color:#777}
+    .muted{color:#555}
 
-    /* NEW: KPI Cards */
+    /* KPI Cards (بدون تغییر منطقی) */
     .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-    .kpi{background:#fff;border:1px solid #eee;border-radius:12px;padding:10px}
-    .kpi h3{margin:0 0 6px 0;font-size:13px;color:#607d8b}
-    .kpi .num{font-size:20px;font-weight:800}
+    .kpi{background:#fff;border:1px solid #d9dee2;border-radius:12px;padding:12px}
+    .kpi h3{margin:0 0 6px 0;font-size:calc(var(--fs) - 2px);color:#607d8b}
+    .kpi .num{font-size:calc(var(--fs) + 3px);font-weight:900}
     @media (max-width:800px){ .kpis{grid-template-columns:1fr 1fr} }
     @media (max-width:520px){ .kpis{grid-template-columns:1fr} }
 
-    /* NEW: row of actions under filters */
     .row-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .ghost{background:#eceff1;color:#263238}
+
+    /* A11Y controls */
+    .a11y{display:flex;gap:6px;align-items:center}
+    .a11y button{padding:.45rem .7rem;border-radius:8px}
   </style>
 </head>
 <body>
@@ -110,41 +118,26 @@
     <div class="card">
       <div class="topbar">
         <div class="muted" id="welcome"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <!-- دکمه افزودن نیوبلاد -->
-          <a id="btnAddNew" class="actions" href="#" style="background:#009688;color:#fff;padding:.65rem 1rem;border-radius:10px;text-decoration:none">+ افزودن نیوبلاد</a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="a11y">
+            <button id="fsMinus" class="ghost" type="button">A−</button>
+            <button id="fsPlus"  class="ghost" type="button">A+</button>
+          </div>
+          <a id="btnAddNew" class="actions" href="#" style="background:#009688;color:#fff;padding:.75rem 1rem;border-radius:10px;text-decoration:none">+ افزودن نیوبلاد</a>
           <button id="btnLogout" style="background:#e53935">خروج</button>
         </div>
       </div>
     </div>
 
-    <!-- NEW: KPI cards -->
+    <!-- KPI -->
     <div class="card">
       <div class="kpis" id="kpisWrap" style="display:none">
-        <div class="kpi">
-          <h3>تعداد قراردادها</h3>
-          <div class="num" id="kpiContracts">0</div>
-        </div>
-        <div class="kpi">
-          <h3>مجموع مبلغ اقساط</h3>
-          <div class="num" id="kpiTotal">0</div>
-        </div>
-        <div class="kpi">
-          <h3>پرداخت‌شده</h3>
-          <div class="num" id="kpiPaid">0</div>
-        </div>
-        <div class="kpi">
-          <h3>باقی‌مانده</h3>
-          <div class="num" id="kpiRemain">0</div>
-        </div>
-        <div class="kpi">
-          <h3>نیوبلادهای باز</h3>
-          <div class="num" id="kpiOpen">0</div>
-        </div>
-        <div class="kpi">
-          <h3>مجموع سوان‌کوین</h3>
-          <div class="num" id="kpiCoins">0</div>
-        </div>
+        <div class="kpi"><h3>تعداد قراردادها</h3><div class="num" id="kpiContracts">0</div></div>
+        <div class="kpi"><h3>مجموع مبلغ اقساط</h3><div class="num" id="kpiTotal">0</div></div>
+        <div class="kpi"><h3>پرداخت‌شده</h3><div class="num" id="kpiPaid">0</div></div>
+        <div class="kpi"><h3>باقی‌مانده</h3><div class="num" id="kpiRemain">0</div></div>
+        <div class="kpi"><h3>نیوبلادهای باز</h3><div class="num" id="kpiOpen">0</div></div>
+        <div class="kpi"><h3>مجموع سوان‌کوین</h3><div class="num" id="kpiCoins">0</div></div>
       </div>
     </div>
 
@@ -156,7 +149,6 @@
       <div class="row-actions">
         <button id="btnApply" class="secondary">اعمال فیلتر</button>
         <button id="btnReset" class="secondary">ریست</button>
-        <!-- NEW: خروجی CSV از لیست فیلترشده -->
         <button id="btnExport" class="ghost">خروجی CSV لیست</button>
       </div>
     </div>
@@ -176,11 +168,21 @@
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // ===== تب‌ها (ورود/ثبت‌نام) =====
+  // ===== تب‌ها =====
   const loginPane  = document.getElementById('loginPane');
   const signupPane = document.getElementById('signupPane');
   document.getElementById('tabLogin').onclick  = ()=>{ loginPane.classList.remove('hidden'); signupPane.classList.add('hidden'); };
   document.getElementById('tabSignup').onclick = ()=>{ signupPane.classList.remove('hidden'); loginPane.classList.add('hidden'); };
+
+  // ===== UI Scale A+/A- =====
+  const root = document.documentElement;
+  function applyScale(){
+    const s = Number(localStorage.getItem('uiScale')||1);
+    root.style.setProperty('--fs', Math.max(14, Math.min(22, 17*s)) + 'px');
+  }
+  document.getElementById('fsPlus').onclick = ()=>{ const s=Number(localStorage.getItem('uiScale')||1)+0.1; localStorage.setItem('uiScale', s.toFixed(2)); applyScale(); };
+  document.getElementById('fsMinus').onclick= ()=>{ const s=Number(localStorage.getItem('uiScale')||1)-0.1; localStorage.setItem('uiScale', s.toFixed(2)); applyScale(); };
+  applyScale();
 
   // ===== وضعیت UI =====
   const authCard = document.getElementById('authCard');
@@ -188,17 +190,12 @@
   function showAuth(){ authCard.classList.remove('hidden'); dashCard.classList.add('hidden'); }
   function showDash(){ authCard.classList.add('hidden'); dashCard.classList.remove('hidden'); }
 
-  // ===== ابزار تاریخ شمسی (نمایش در لیست) =====
+  // ===== تاریخ شمسی =====
   function toDate(x){ if(!x) return null; const d=new Date(x); return isNaN(d)?null:d; }
-  function toJalaliStr(d){
-    d = toDate(d); if(!d) return "—";
-    const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()};
-    const j= jalaali.toJalaali(g.gy,g.gm,g.gd);
-    return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
-  }
+  function toJalaliStr(d){ d = toDate(d); if(!d) return "—"; const g={gy:d.getFullYear(),gm:d.getMonth()+1,gd:d.getDate()}; const j= jalaali.toJalaali(g.gy,g.gm,g.gd); return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`; }
   const star = n => '★'.repeat(n||0);
 
-  // ===== ذخیره نام/ایمیل استادیار در سشن =====
+  // ===== سشن استادیار =====
   function setAssistantSession(u){
     const displayName = (u && (u.name||'').trim()) || '';
     const email = (u && (u.email||'').trim()) || '';
@@ -219,10 +216,9 @@
       const u = await Backendless.UserService.login(email, pass, true);
       setAssistantSession(u);
       showDash();
-      resetPaging(); await loadAll(); // بارگذاری لیست
+      resetPaging(); await loadAll();
       msg.className='msg ok'; msg.textContent='ورود موفق.';
     }catch(e){
-      console.error(e);
       msg.className='msg err'; msg.textContent = 'خطا در ورود: ' + (e.message||e);
     }
   };
@@ -245,12 +241,11 @@
       resetPaging(); await loadAll();
       msg.className='msg ok'; msg.textContent='ثبت‌نام و ورود موفق.';
     }catch(e){
-      console.error(e);
       msg.className='msg err'; msg.textContent = 'خطا در ثبت‌نام: ' + (e.message||e);
     }
   };
 
-  // ===== از قبل لاگین بوده؟ =====
+  // ===== لاگین قبلی =====
   (async function autoLogin(){
     try{
       const u = await Backendless.UserService.getCurrentUser();
@@ -274,14 +269,13 @@
     resetPaging(); loadAll();
   };
 
-  // ===== صفحه‌بندی کلاینتی =====
+  // ===== صفحه‌بندی =====
   let page=0, pageSize=30, cacheAll=[];
   function resetPaging(){ page=0; }
-
   document.getElementById('prev').onclick=()=>{ if(page>0){ page--; renderList(); } };
   document.getElementById('next').onclick=()=>{ if((page+1)*pageSize<cacheAll.length){ page++; renderList(); } };
 
-  // ===== محاسبه و نمایش KPI (NEW) =====
+  // ===== KPI (بدون paidAmount؛ بر اساس status) =====
   function renderKPI(rows){
     let totalContracts = rows.length;
     let totalAmount = 0;
@@ -295,10 +289,9 @@
 
       inst.forEach(ins=>{
         const amount = Number(ins?.amount)||0;
-        const paidAmount = Number(ins?.paidAmount)||0;
-        const status = (ins?.status)|| (paidAmount>=amount && amount>0 ? 'done' : (paidAmount>0 ? 'partial' : 'pending'));
+        const status = (ins?.status) || (amount>0 ? 'pending' : 'pending');
         planTotal += amount;
-        planPaid  += (status==='done' ? amount : paidAmount);
+        if(status==='done') planPaid += amount;
         if(status!=='done') allDone = false;
       });
 
@@ -310,25 +303,23 @@
     });
 
     const remain = Math.max(totalAmount - totalPaid, 0);
-
     const fmt = n => (Number(n)||0).toLocaleString('fa-IR');
-    document.getElementById('kpiContracts').textContent = fmt(totalContracts);
-    document.getElementById('kpiTotal').textContent     = fmt(totalAmount);
-    document.getElementById('kpiPaid').textContent      = fmt(totalPaid);
-    document.getElementById('kpiRemain').textContent    = fmt(remain);
-    document.getElementById('kpiOpen').textContent      = fmt(openNewbloods);
-    document.getElementById('kpiCoins').textContent     = fmt(coinsAll);
-
+    kpiContracts.textContent = fmt(totalContracts);
+    kpiTotal.textContent     = fmt(totalAmount);
+    kpiPaid.textContent      = fmt(totalPaid);
+    kpiRemain.textContent    = fmt(remain);
+    kpiOpen.textContent      = fmt(openNewbloods);
+    kpiCoins.textContent     = fmt(coinsAll);
     document.getElementById('kpisWrap').style.display = 'grid';
   }
 
-  // ===== بارگذاری داده‌ها (فقط نیوبلادهای این استادیار) =====
+  // ===== داده‌ها (فقط نیوبلادهای این استادیار) =====
   async function loadAll(){
     const name = (sessionStorage.getItem('assistantName')||'').trim();
     const email= (sessionStorage.getItem('assistantEmail')||'').trim();
-    const idKey= name || email; // شناسه‌ی نمایشی این استادیار
+    const idKey= name || email;
 
-    const like = idKey.replace(/'/g,"''"); // escape ساده
+    const like = idKey.replace(/'/g,"''");
     const where = `(assistant LIKE '%${like}%') OR (assistants LIKE '%${like}%')`;
 
     const tb = Backendless.Data.of('Newbloods');
@@ -345,7 +336,6 @@
         offset += 100;
       }while(chunk.length===100);
 
-      // فیلتر دقیق کلاینتی
       const needle = idKey;
       all = all.filter(r=>{
         const arr = Array.isArray(r.assistants)&&r.assistants.length
@@ -354,26 +344,20 @@
         return arr.some(x => (x||'').toString().includes(needle));
       });
 
-      // فیلترهای جستجو/شهر
       const q  = (document.getElementById('q').value||'').trim();
       const ct = (document.getElementById('city').value||'').trim();
-      if(q){
-        all = all.filter(r => ((r.name||'').includes(q) || (r.mobile||'').includes(q)));
-      }
-      if(ct){
-        all = all.filter(r => ((r.city||'').includes(ct) || (r.province||'').includes(ct)));
-      }
+      if(q){ all = all.filter(r => ((r.name||'').includes(q) || (r.mobile||'').includes(q))); }
+      if(ct){ all = all.filter(r => ((r.city||'').includes(ct) || (r.province||'').includes(ct))); }
 
       cacheAll = all;
       renderList();
-      renderKPI(cacheAll); // NEW
+      renderKPI(cacheAll);
     }catch(e){
-      console.error(e);
       alert('خطا در بارگذاری داده‌ها: ' + (e.message||e));
     }
   }
 
-  // ===== رندر لیست صفحه‌ای =====
+  // ===== رندر لیست =====
   function renderList(){
     const list = document.getElementById('list');
     const rows = cacheAll.slice(page*pageSize,(page+1)*pageSize);
@@ -396,7 +380,6 @@
           ? r.assistants.join('، ')
           : (r.assistant || '—');
 
-        // لینک ویرایش با پارامتر assistant فعلی
         const qs = new URLSearchParams({
           objectId: r.objectId,
           assistant: encodeURIComponent(myNameOrEmail)
@@ -422,7 +405,7 @@
       `صفحه ${rows.length ? (page+1) : 0} از ${Math.max(1, Math.ceil(cacheAll.length/pageSize))}`;
   }
 
-  // ===== خروجی CSV از لیست فعلی (NEW) =====
+  // ===== خروجی CSV =====
   function toCSV(arr){
     if(!arr.length) return '';
     const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
