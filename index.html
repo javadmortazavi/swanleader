@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>فرم ثبت نیوبلاد - Swan Family</title>
+  <title>فرم ثبت نیوبلاد - Swan Family (نسخه Patch با تغییرات درخواستی)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Backendless SDK -->
@@ -21,7 +21,7 @@
     body{font-family:Tahoma,system-ui,sans-serif;background:#f5f5f5;margin:0;padding:0}
     header{background:#222;color:#fff;text-align:center;padding:12px}
     header h1{margin:0;font-size:18px}
-    form{background:#fff;max-width:980px;margin:18px auto;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+    form{background:#fff;max-width:1100px;margin:18px auto;padding:18px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
     label{display:block;margin-top:12px;font-weight:700}
     input,select,textarea{width:100%;padding:.6rem;border:1px solid #dedede;border-radius:10px;margin-top:6px}
     textarea{min-height:90px}
@@ -38,7 +38,7 @@
     .installment,.coin-entry,.referred-entry{
       background:#f0f0f0;border-radius:10px;padding:.7rem;display:grid;gap:.5rem;align-items:center;margin:.4rem 0
     }
-    .installment{grid-template-columns:repeat(4, minmax(160px,1fr))}
+    .installment{grid-template-columns:repeat(6, minmax(160px,1fr))} /* ستون‌های بیشتر برای فیلدهای جدید */
     .coin-entry{grid-template-columns:minmax(160px,1fr) minmax(220px,2fr) auto}
     .referred-entry{grid-template-columns:1fr auto}
     .installment>button,.coin-entry>button,.referred-entry>button{background:#e53935}
@@ -51,16 +51,31 @@
     .err{background:#ffebee;color:#c62828}
 
     /* نوار بکاپ فقط برای ادمین؛ پیش‌فرض پنهان */
-    .backup-bar{display:none;max-width:980px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
+    .backup-bar{display:none;max-width:1100px;margin:0 auto 12px;background:#fff;padding:10px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06);gap:8px;flex-wrap:wrap;align-items:center}
     .backup-bar small{color:#666}
 
     /* تگ‌های استادیاران */
     #assistantsTags span{background:#e8f5e9;color:#1b5e20;padding:4px 8px;border-radius:10px;display:inline-flex;gap:6px;align-items:center}
 
-    @media (max-width:900px){ .row{grid-template-columns:1fr} }
+    /* NEW: پنل KPI بالای فرم */
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:1100px;margin:12px auto}
+    .kpi .card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 8px 20px rgba(0,0,0,.06)}
+    .kpi .card h3{margin:0 0 6px 0;font-size:14px;color:#607d8b}
+    .kpi .card .num{font-size:22px;font-weight:800}
+
+    /* NEW: پنل ادمین برای فیلتر/گزارش */
+    .admin-panel{display:none;max-width:1100px;margin:12px auto;background:#fff;padding:12px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.06)}
+    .admin-panel h2{margin:0 0 8px 0;font-size:16px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .table{width:100%;border-collapse:collapse;margin-top:10px}
+    .table th,.table td{border:1px solid #eee;padding:8px;font-size:13px}
+
+    @media (max-width:900px){ .row{grid-template-columns:1fr} .kpi{grid-template-columns:1fr 1fr} .grid-4{grid-template-columns:1fr 1fr} }
     @media (max-width:700px){
       .installment,.coin-entry,.referred-entry{grid-template-columns:1fr}
       .installment>button,.coin-entry>button,.referred-entry>button{width:100%;order:99}
+      .kpi{grid-template-columns:1fr}
+      .grid-4{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -69,6 +84,32 @@
 <header>
   <h1>فرم ثبت نیوبلاد</h1>
 </header>
+
+<!-- NEW: پنل KPI (خلاصه‌ی وضعیت این رکورد/کاربر) -->
+<section class="kpi" id="kpiPanel" style="display:none">
+  <div class="card"><h3>سوان‌کوین این پرونده</h3><div class="num" id="kpiCoins">0</div></div>
+  <div class="card"><h3>مجموع اقساط</h3><div class="num" id="kpiInstCount">0</div></div>
+  <div class="card"><h3>پرداخت‌شده</h3><div class="num" id="kpiPaid">0</div></div>
+  <div class="card"><h3>باقی‌مانده</h3><div class="num" id="kpiRemain">0</div></div>
+</section>
+
+<!-- NEW: پنل گزارش ادمین -->
+<section class="admin-panel" id="adminPanel">
+  <h2>داشبورد مدیریت (Leader/Admin)</h2>
+  <div class="grid-4">
+    <select id="filterProvince">
+      <option value="">همهٔ استان‌ها</option>
+    </select>
+    <input type="text" id="filterAssistant" placeholder="نام استادیار">
+    <input type="text" id="filterFromJ" class="pdate-input" placeholder="از تاریخ (شمسی)">
+    <input type="text" id="filterToJ" class="pdate-input" placeholder="تا تاریخ (شمسی)">
+  </div>
+  <div class="actions" style="margin-top:10px">
+    <button type="button" class="secondary" id="btnRunReport">اجرای گزارش</button>
+    <button type="button" class="secondary" id="btnExportReport">خروجی CSV</button>
+  </div>
+  <div id="adminTableWrap"></div>
+</section>
 
 <!-- نوار بکاپ (فقط وقتی ادمین لاگین است نمایش داده می‌شود) -->
 <div class="backup-bar" id="backupBar">
@@ -170,8 +211,10 @@
 
   <div class="row">
     <div>
-      <label>استان</label>
-      <input type="text" name="province">
+      <label>استان (Dropdown)</label>
+      <select id="provinceSelect"></select>
+      <!-- فیلد قبلی province حذف نمی‌شود؛ با انتخاب dropdown مقداردهی می‌شود. -->
+      <input type="hidden" name="province" id="provinceHidden">
     </div>
     <div>
       <label>شهر</label>
@@ -193,8 +236,8 @@
   </div>
   <input type="hidden" name="growth" id="growthVal" value="0">
 
-  <!-- اقساط -->
-  <label>اقساط <span class="muted">(برای هر قسط می‌توانید فیش پرداختی آپلود کنید)</span></label>
+  <!-- اقساط: فیلدهای جدید status + paidAmount + تیک اتمام -->
+  <label>اقساط <span class="muted">(برای هر قسط می‌توانید فیش پرداختی آپلود کنید. با تیک «اتمام واریزی»، وضعیت همان قسط done می‌شود.)</span></label>
   <div class="installments" id="instContainer"></div>
   <button type="button" class="secondary" onclick="addInstallment()">+ افزودن قسط</button>
 
@@ -220,25 +263,81 @@
 </form>
 
 <script>
-  // ===== تنظیمات ادمین برای نمایش بکاپ =====
+  // ===== تنظیمات ادمین برای نمایش بکاپ و داشبورد =====
   const ADMIN_NAME  = "جواد مرتضوی";
-  const ADMIN_EMAIL = "admin@swanfamily.app"; // یا ایمیلی که در Users برای ادمین ساختی
+  const ADMIN_EMAIL = "admin@swanfamily.app"; // به ایمیل ادمین خودت تغییر بده
 
   // ===== Backendless =====
   Backendless.initApp("8D939181-02F9-4505-92A9-57A80D713F65", "3EE7C64D-2CCD-4852-BFC3-F1949A4A73C8");
 
-  // نمایش نوار بکاپ فقط اگر ادمین لاگین باشد
-  (async function showBackupIfAdmin(){
+  // ===== استان‌ها (Dropdown) =====
+  const IRAN_PROVINCES = [
+    { code: "TEH", name: "تهران" },
+    { code: "KHR", name: "خراسان رضوی" },
+    { code: "ESF", name: "اصفهان" },
+    { code: "FAR", name: "فارس" },
+    { code: "ALB", name: "البرز" },
+    { code: "MZN", name: "مازندران" },
+    { code: "QOM", name: "قم" },
+    { code: "GLN", name: "گیلان" },
+    { code: "WAZ", name: "آذربایجان غربی" },
+    { code: "EAZ", name: "آذربایجان شرقی" },
+    { code: "KRH", name: "کرمانشاه" },
+    { code: "KRM", name: "کرمان" },
+    { code: "BKH", name: "خراسان جنوبی" },
+    { code: "BKN", name: "خراسان شمالی" },
+    { code: "YZD", name: "یزد" },
+    { code: "SMN", name: "سمنان" },
+    { code: "QAZ", name: "قزوین" },
+    { code: "ZNJ", name: "زنجان" },
+    { code: "HMD", name: "همدان" },
+    { code: "LRS", name: "لرستان" },
+    { code: "CHB", name: "چهارمحال و بختیاری" },
+    { code: "KBD", name: "کهگیلویه و بویراحمد" },
+    { code: "BHR", name: "بوشهر" },
+    { code: "HRM", name: "هرمزگان" },
+    { code: "ILM", name: "ایلام" },
+    { code: "MKZ", name: "مرکزی" },
+    { code: "KRD", name: "کردستان" },
+    { code: "GZN", name: "گلستان" },
+    { code: "ARW", name: "اردبیل" },
+    { code: "SBN", name: "سیستان و بلوچستان" },
+    { code: "KHU", name: "خوزستان" }
+  ];
+
+  function seedProvinceDropdown(){
+    const sel = document.getElementById('provinceSelect');
+    sel.innerHTML = '<option value="">انتخاب استان</option>' + IRAN_PROVINCES.map(p=>`<option value="${p.code}">${p.name}</option>`).join('');
+    sel.onchange = ()=>{
+      const code = sel.value;
+      const found = IRAN_PROVINCES.find(p=>p.code===code);
+      document.getElementById('provinceHidden').value = found ? found.name : '';
+    };
+  }
+  seedProvinceDropdown();
+
+  // نمایش نوار بکاپ و پنل ادمین فقط اگر ادمین لاگین باشد
+  (async function showAdminBits(){
     try{
       const u = await Backendless.UserService.getCurrentUser();
       const isAdmin = !!u && ((u.name||"")===ADMIN_NAME || (u.email||"")===ADMIN_EMAIL);
-      if(isAdmin){ document.getElementById('backupBar').style.display = 'flex'; }
-    }catch(_){}
-  })();
+      if(isAdmin){
+        document.getElementById('backupBar').style.display = 'flex';
+        document.getElementById('adminPanel').style.display = 'block';
+        // پر کردن استان‌های فیلتر پنل ادمین
+        const fSel = document.getElementById('filterProvince');
+        IRAN_PROVINCES.forEach(p=>{
+          const opt=document.createElement('option'); opt.value=p.name; opt.textContent=p.name; fSel.appendChild(opt);
+        });
+      }
+    }catch(_){}}
+  )();
 
   // ===== Persian datepickers =====
   $('#birthdate_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
   $('#course_date_j').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
+  $('#filterFromJ').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
+  $('#filterToJ').persianDatepicker({ format:'YYYY/MM/DD', autoClose:true });
 
   // ===== Growth stars =====
   (function initStars(){
@@ -272,16 +371,10 @@
     inp.value = '';
     renderAssistantTags();
   }
-  function removeAssistant(name){
-    assistantsSet.delete(name);
-    renderAssistantTags();
-  }
-  // اگر از پنل استادیار آمده باشد، او را خودکار اضافه کن
+  function removeAssistant(name){ assistantsSet.delete(name); renderAssistantTags(); }
   (function seedAssistantFromURL(){
     const a = new URLSearchParams(location.search).get('assistant');
-    if(a){
-      addAssistant(decodeURIComponent(a).replace(/_/g,' ').trim());
-    }
+    if(a){ addAssistant(decodeURIComponent(a).replace(/_/g,' ').trim()); }
   })();
 
   // ===== Helpers =====
@@ -290,7 +383,7 @@
     const m = String(str).trim().match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
     if(!m) return null;
     const jy=+m[1], jm=+m[2], jd=+m[3];
-    const g = window.jalaali.toGregorian(jy, jm, jd); // {gy, gm, gd}
+    const g = window.jalaali.toGregorian(jy, jm, jd);
     return new Date(g.gy, g.gm-1, g.gd);
   }
   function toJalaliStr(d){
@@ -310,51 +403,84 @@
     return res?.fileURL || res?.url || (typeof res === 'string' ? res : null);
   }
 
+  // ===== KPI محاسبه آنی در فرم =====
+  function refreshKPI(){
+    try{
+      const coins = Array.from(document.querySelectorAll('.coin-entry')).length;
+      const instRows = Array.from(document.querySelectorAll('.installment'));
+      let paid = 0, total = 0;
+      instRows.forEach(row=>{
+        const amount = toNumber($(row).find('.inst-amount').val())||0;
+        total += amount;
+        const status = $(row).find('.inst-done')[0]?.checked ? 'done' : 'pending';
+        const paidAmount = status==='done' ? amount : (toNumber($(row).find('.inst-paid').val())||0);
+        paid += paidAmount;
+      });
+      const remain = Math.max(total - paid, 0);
+      document.getElementById('kpiCoins').textContent = coins;
+      document.getElementById('kpiInstCount').textContent = instRows.length;
+      document.getElementById('kpiPaid').textContent = paid.toLocaleString('fa-IR');
+      document.getElementById('kpiRemain').textContent = remain.toLocaleString('fa-IR');
+      document.getElementById('kpiPanel').style.display = 'grid';
+    }catch(_){}
+  }
+
   // ===== Dynamic rows =====
   function addInstallment(rowData){
     const div=document.createElement('div');
     div.className='installment';
     div.innerHTML=`
-      <input type="text" class="pdate-input inst-date" placeholder="تاریخ قسط (شمسی)">
-      <input type="number" class="inst-amount" placeholder="مبلغ (تومان)">
+      <input type=\"text\" class=\"pdate-input inst-date\" placeholder=\"تاریخ قسط (شمسی)\">
+      <input type=\"number\" class=\"inst-amount\" placeholder=\"مبلغ (تومان)\">
       <div>
-        <input type="file" class="inst-file" accept="image/*,application/pdf">
-        <div class="muted curr-link" style="margin-top:4px"></div>
+        <input type=\"file\" class=\"inst-file\" accept=\"image/*,application/pdf\">
+        <div class=\"muted curr-link\" style=\"margin-top:4px\"></div>
       </div>
-      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+      <label style=\"display:flex;align-items:center;gap:6px\"><input type=\"checkbox\" class=\"inst-done\"> اتمام واریزی</label>
+      <div><input type=\"number\" class=\"inst-paid\" placeholder=\"پرداخت‌شده (تومان)\"></div>
+      <button type=\"button\" onclick=\"this.parentNode.remove(); refreshKPI()\">حذف</button>`;
     document.getElementById('instContainer').appendChild(div);
     const dp = $(div.querySelector('.inst-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+
+    // رویدادها برای KPI
+    $(div).on('input change', 'input', refreshKPI);
+
     if(rowData){
       if(rowData.date) $(div).find('.inst-date').val(toJalaliStr(rowData.date));
       if(rowData.amount!=null) $(div).find('.inst-amount').val(rowData.amount);
+      if(rowData.paidAmount!=null) $(div).find('.inst-paid').val(rowData.paidAmount);
+      if(rowData.status==='done') $(div).find('.inst-done')[0].checked = true;
       if(rowData.receipt_url){
         div.dataset.currentUrl = rowData.receipt_url;
-        div.querySelector('.curr-link').innerHTML = `<a href="${rowData.receipt_url}" target="_blank">مشاهده فیش فعلی</a>`;
+        div.querySelector('.curr-link').innerHTML = `<a href=\"${rowData.receipt_url}\" target=\"_blank\">مشاهده فیش فعلی</a>`;
       }
     }
+    refreshKPI();
   }
 
   function addCoin(rowData){
     const div=document.createElement('div');
     div.className='coin-entry';
     div.innerHTML=`
-      <input type="text" class="pdate-input coin-date" placeholder="تاریخ کوین (شمسی)">
-      <input type="text" class="coin-note" placeholder="توضیح (اختیاری)">
-      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+      <input type=\"text\" class=\"pdate-input coin-date\" placeholder=\"تاریخ کوین (شمسی)\">
+      <input type=\"text\" class=\"coin-note\" placeholder=\"توضیح (اختیاری)\">
+      <button type=\"button\" onclick=\"this.parentNode.remove(); refreshKPI()\">حذف</button>`;
     document.getElementById('coinsContainer').appendChild(div);
     $(div.querySelector('.coin-date')).persianDatepicker({format:'YYYY/MM/DD',autoClose:true});
+    $(div).on('input change', 'input', refreshKPI);
     if(rowData){
       if(rowData.date) $(div).find('.coin-date').val(toJalaliStr(rowData.date));
       if(rowData.note) $(div).find('.coin-note').val(rowData.note);
     }
+    refreshKPI();
   }
 
   function addReferred(nameVal){
     const div=document.createElement('div');
     div.className='referred-entry';
     div.innerHTML=`
-      <input type="text" class="ref-name" placeholder="نام نیوبلاد معرفی‌شده">
-      <button type="button" onclick="this.parentNode.remove()">حذف</button>`;
+      <input type=\"text\" class=\"ref-name\" placeholder=\"نام نیوبلاد معرفی‌شده\">
+      <button type=\"button\" onclick=\"this.parentNode.remove()\">حذف</button>`;
     document.getElementById('refContainer').appendChild(div);
     if(nameVal) $(div).find('.ref-name').val(nameVal);
   }
@@ -366,17 +492,12 @@
       try{
         const rec = await Backendless.Data.of('Newbloods').findById(currentObjectId);
 
-        // قرارداد
         document.getElementById('contract_signed').checked = !!rec.contract_signed;
 
-        // استادیاران
         const list = (Array.isArray(rec.assistants) && rec.assistants.length)
-          ? rec.assistants
-          : (rec.assistant ? [rec.assistant] : []);
-        assistantsSet = new Set(list);
-        renderAssistantTags();
+          ? rec.assistants : (rec.assistant ? [rec.assistant] : []);
+        assistantsSet = new Set(list); renderAssistantTags();
 
-        // فیلدها
         document.querySelector('[name="name"]').value = rec.name||'';
         document.querySelector('[name="mobile"]').value = rec.mobile||'';
         document.querySelector('[name="instagram"]').value = rec.instagram||'';
@@ -390,37 +511,28 @@
         $('#course_date_j').val(toJalaliStr(rec.course_date));
         document.querySelector('[name="course_location"]').value = rec.course_location||'';
         document.querySelector('[name="referrer"]').value = rec.referrer||'';
-        document.querySelector('[name="province"]').value = rec.province||'';
+        // استان: اگر مقدار متنی قبلی داشتیم، در dropdown معادلش را انتخاب کنیم
+        const provName = rec.province||'';
+        document.getElementById('provinceHidden').value = provName;
+        const found = IRAN_PROVINCES.find(p=>p.name===provName);
+        if(found){ document.getElementById('provinceSelect').value = found.code; }
         document.querySelector('[name="city"]').value = rec.city||'';
         document.querySelector('[name="prepayment"]').value = rec.prepayment||'';
 
-        // رشد
         const gv = +rec.growth||0;
         document.getElementById('growthVal').value = gv;
         document.querySelectorAll('#growthStars span').forEach((s,i)=> s.classList.toggle('selected', i < gv));
 
-        // اقساط
         (Array.isArray(rec.instalments) ? rec.instalments : []).forEach(addInstallment);
-
-        // کوین‌ها
         (Array.isArray(rec.coins) ? rec.coins : []).forEach(addCoin);
-
-        // معرفی‌شده‌ها
         (Array.isArray(rec.referred_people) ? rec.referred_people : []).forEach(addReferred);
 
-        // علاقه‌مندی‌ها
         const ints = Array.isArray(rec.interests) ? rec.interests : [];
-        ints.forEach(v=>{
-          const el = document.querySelector(`input[name="interests"][value="${v}"]`);
-          if(el) el.checked = true;
-        });
-      }catch(e){
-        console.error(e);
-        alert('خطا در بارگذاری رکورد: ' + (e.message||e));
-      }
-    })();
+        ints.forEach(v=>{ const el = document.querySelector(`input[name="interests"][value="${v}"]`); if(el) el.checked = true; });
 
-    // در حالت ویرایش، متن دکمه را تغییر بده
+        refreshKPI();
+      }catch(e){ console.error(e); alert('خطا در بارگذاری رکورد: ' + (e.message||e)); }
+    })();
     document.getElementById('submitBtn').textContent = 'به‌روزرسانی';
   }
 
@@ -431,36 +543,30 @@
     msg.style.display='block'; msg.className='msg'; msg.textContent='در حال ذخیره...';
 
     const fd = new FormData(e.target);
-    const data = {};
-    fd.forEach((v,k)=> data[k]=v);
+    const data = {}; fd.forEach((v,k)=> data[k]=v);
 
-    // قرارداد
     data.contract_signed = document.getElementById('contract_signed').checked;
-
-    // تاریخ‌ها: شمسی → میلادی
     data.birthdate   = jalaliStrToDate($('#birthdate_j').val());
     data.course_date = jalaliStrToDate($('#course_date_j').val());
-
-    // سطح رشد / پیش‌پرداخت
     data.growth = toNumber(document.getElementById('growthVal').value) || 0;
     data.prepayment = toNumber(data.prepayment);
-
-    // علاقه‌مندی‌ها → آرایه
     data.interests = Array.from(document.querySelectorAll('input[name="interests"]:checked')).map(i=>i.value);
-
-    // استادیاران
     data.assistants = Array.from(assistantsSet);
-    data.assistant  = data.assistants[0] || ''; // سازگاری نسخه‌های قبلی
+    data.assistant  = data.assistants[0] || '';
 
-    // اقساط (با آپلود فیش؛ اگر فایل جدید نبود، لینک فعلی باقی می‌ماند)
+    // اقساط (با فیلدهای جدید: status, paidAmount)
     const instRows = Array.from(document.querySelectorAll('.installment'));
     const instPromises = instRows.map(async row=>{
       const date = jalaliStrToDate($(row).find('.inst-date').val());
       const amount = toNumber($(row).find('.inst-amount').val());
+      const paidAmountField = toNumber($(row).find('.inst-paid').val())||0;
+      const done = $(row).find('.inst-done')[0]?.checked;
+      const status = done ? 'done' : (paidAmountField>0 ? 'partial' : 'pending');
       const file = row.querySelector('.inst-file')?.files?.[0];
       let receipt_url = row.dataset.currentUrl || null;
       if(file){ try{ receipt_url = await uploadReceipt(file); }catch(e){ console.warn('upload failed',e); } }
-      return (date || amount || receipt_url) ? { date, amount, receipt_url } : null;
+      const paidAmount = done ? (amount||0) : paidAmountField;
+      return (date || amount || receipt_url || paidAmount>0) ? { date, amount, paidAmount, status, receipt_url } : null;
     });
     data.instalments = (await Promise.all(instPromises)).filter(Boolean);
 
@@ -472,19 +578,22 @@
     }).filter(Boolean);
 
     // معرفی‌شده‌ها
-    data.referred_people = Array.from(document.querySelectorAll('.ref-name'))
-      .map(i=>i.value.trim()).filter(Boolean);
+    data.referred_people = Array.from(document.querySelectorAll('.ref-name')).map(i=>i.value.trim()).filter(Boolean);
+
+    // وضعیت کلی پلن: اگر تمام اقساط done باشند
+    const allDone = Array.isArray(data.instalments) && data.instalments.length>0 && data.instalments.every(x=>x.status==='done');
+    data.isCompleted = !!allDone;
+    data.completedAt = allDone ? new Date() : null;
 
     try{
-      // اگر در حالت ویرایش هستیم
-      if(currentObjectId){
-        data.objectId = currentObjectId;
-      }
-      await Backendless.Data.of('Newbloods').save(data);
+      if(currentObjectId){ data.objectId = currentObjectId; }
+      const saved = await Backendless.Data.of('Newbloods').save(data);
       msg.className='msg ok'; msg.textContent = currentObjectId ? '✅ اطلاعات به‌روزرسانی شد.' : '✅ اطلاعات ذخیره شد.';
 
+      // NEW: به‌روزرسانی آمار تجمیعی استادیار (AssistantAggregates)
+      try{ await recomputeAssistantAggregate(data.assistant); }catch(ex){ console.warn('aggregate failed', ex); }
+
       if(!currentObjectId){
-        // reset فقط در حالت ثبت جدید
         e.target.reset();
         $('#birthdate_j').val(''); $('#course_date_j').val('');
         document.getElementById('instContainer').innerHTML='';
@@ -492,14 +601,61 @@
         document.getElementById('refContainer').innerHTML='';
         document.querySelectorAll('#growthStars span').forEach(s=>s.classList.remove('selected'));
         document.getElementById('growthVal').value=0;
-        assistantsSet = new Set();
-        renderAssistantTags();
+        assistantsSet = new Set(); renderAssistantTags();
+        refreshKPI();
       }
-    }catch(err){
-      console.error(err);
-      msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err);
-    }
+    }catch(err){ console.error(err); msg.className='msg err'; msg.textContent='❌ خطا در ذخیره: ' + (err.message||err); }
   });
+
+  // ===== Aggregate per Assistant (Client-side Job + Table: AssistantAggregates) =====
+  async function recomputeAssistantAggregate(assistantName){
+    if(!assistantName) return;
+    // همه رکوردهای نیوبلاد مربوط به این استادیار
+    const tb = Backendless.Data.of('Newbloods');
+    const where = `assistant = '${assistantName.replace(/'/g, "''")}'`;
+    const qb = Backendless.DataQueryBuilder.create().setWhereClause(where).setPageSize(100);
+    const all = []; let page=0, chunk=[];
+    do{ qb.setOffset(page*100); chunk = await tb.find(qb); all.push(...chunk); page++; }while(chunk.length===100);
+
+    let totalContracts=0,totalInstallments=0,totalAmount=0,totalPaid=0,openNewbloods=0;
+    for(const rec of all){
+      totalContracts += 1;
+      const inst = Array.isArray(rec.instalments)? rec.instalments : [];
+      let planPaid=0; let planTotal=0; let allDone=true;
+      for(const ins of inst){
+        totalInstallments += 1;
+        planTotal += +ins.amount||0;
+        planPaid  += +ins.paidAmount||0;
+        if(ins.status !== 'done') allDone=false;
+      }
+      totalAmount += planTotal;
+      totalPaid   += planPaid;
+      if(!allDone) openNewbloods += 1;
+    }
+    const totalRemaining = Math.max(totalAmount - totalPaid, 0);
+
+    // خواندن swanCoins از مجموع کوین‌های همین استادیار (اختیاری)
+    let swanCoins = 0;
+    for(const rec of all){ swanCoins += Array.isArray(rec.coins)? rec.coins.length : 0; }
+
+    const payload = {
+      assistant: assistantName,
+      totalContracts,
+      totalInstallments,
+      totalAmount,
+      totalPaid,
+      totalRemaining,
+      openNewbloods,
+      swanCoins,
+      updatedAt: new Date()
+    };
+    // upsert در جدول AssistantAggregates
+    const aggTB = Backendless.Data.of('AssistantAggregates');
+    const qb2 = Backendless.DataQueryBuilder.create().setWhereClause(`assistant='${assistantName.replace(/'/g, "''")}'`).setPageSize(1);
+    const ex = await aggTB.find(qb2);
+    if(ex && ex[0]){ payload.objectId = ex[0].objectId; }
+    await aggTB.save(payload);
+  }
 
   // ====== بکاپ دستی: JSON & CSV (فقط ادمین) ======
   async function fetchAllNewbloods(){
@@ -507,12 +663,8 @@
     let page = 0, pageSize = 100, chunk = [];
     const tb = Backendless.Data.of('Newbloods');
     do{
-      const qb = Backendless.DataQueryBuilder.create()
-                  .setPageSize(pageSize).setOffset(page*pageSize)
-                  .setSortBy(['created DESC']);
-      chunk = await tb.find(qb);
-      store.push(...chunk);
-      page++;
+      const qb = Backendless.DataQueryBuilder.create().setPageSize(pageSize).setOffset(page*pageSize).setSortBy(['created DESC']);
+      chunk = await tb.find(qb); store.push(...chunk); page++;
     }while(chunk.length === pageSize);
     return store;
   }
@@ -520,39 +672,73 @@
   function download(filename, text, mime='application/json'){
     const blob = new Blob([text], {type:mime});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
-    URL.revokeObjectURL(url); a.remove();
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
   }
 
-  async function backupJSON(){
-    try{
-      const data = await fetchAllNewbloods();
-      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`;
-      download(fname, JSON.stringify(data, null, 2), 'application/json');
-    }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); }
+  async function backupJSON(){ try{ const data = await fetchAllNewbloods(); const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.json`; download(fname, JSON.stringify(data, null, 2), 'application/json'); }catch(e){ alert('خطا در بکاپ JSON'); console.error(e); } }
+
+  function toCSV(arr){ if(!arr.length) return ''; const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))]; const esc = v => { if(v==null) return ''; const s = typeof v === 'object' ? JSON.stringify(v) : String(v); return `"${s.replace(/"/g,'""')}"`; }; const head = cols.map(esc).join(','); const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n'); return head + '\n' + rows; }
+  async function backupCSV(){ try{ const data = await fetchAllNewbloods(); const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`; download(fname, toCSV(data), 'text/csv;charset=utf-8'); }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); } }
+
+  // ===== Admin Report (Monthly + Filters) =====
+  function toISODate(jstr){ const d = jalaliStrToDate(jstr); return d ? d.toISOString() : null; }
+
+  async function runAdminReport(){
+    const prov = document.getElementById('filterProvince').value.trim();
+    const assistant = document.getElementById('filterAssistant').value.trim();
+    const fromISO = toISODate($('#filterFromJ').val());
+    const toISO   = toISODate($('#filterToJ').val());
+
+    let whereParts = [];
+    if(prov) whereParts.push(`province='${prov.replace(/'/g,"''")}'`);
+    if(assistant) whereParts.push(`assistant='${assistant.replace(/'/g,"''")}'`);
+    if(fromISO) whereParts.push(`created >= '${fromISO}'`);
+    if(toISO)   whereParts.push(`created <= '${toISO}'`);
+
+    const tb = Backendless.Data.of('Newbloods');
+    const qb = Backendless.DataQueryBuilder.create().setPageSize(200).setWhereClause(whereParts.join(' AND ')).setSortBy(['created DESC']);
+    const rows = await tb.find(qb);
+
+    // ساخت جدول ماهانه
+    const byMonth = new Map();
+    function ym(d){ const dt=new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`; }
+
+    for(const r of rows){
+      const inst = Array.isArray(r.instalments)? r.instalments : [];
+      for(const ins of inst){
+        const key = ins.date ? ym(ins.date) : (r.created? ym(r.created):'unknown');
+        if(!byMonth.has(key)) byMonth.set(key,{ month:key, total:0, paid:0, count:0, done:0, pending:0 });
+        const bucket = byMonth.get(key);
+        const amt= +ins.amount||0; const pad= +ins.paidAmount||0; const st=ins.status||'pending';
+        bucket.total += amt; bucket.paid += pad; bucket.count += 1; if(st==='done') bucket.done+=1; else bucket.pending+=1;
+      }
+    }
+
+    const arr = [...byMonth.values()].sort((a,b)=> a.month.localeCompare(b.month));
+
+    // رندر جدول
+    const wrap = document.getElementById('adminTableWrap');
+    if(!arr.length){ wrap.innerHTML = '<p class="muted">داده‌ای یافت نشد.</p>'; return; }
+    let html = '<table class="table"><thead><tr><th>ماه</th><th>تعداد اقساط</th><th>تمام‌شده</th><th>باز</th><th>مجموع مبلغ</th><th>پرداخت‌شده</th><th>باقی‌مانده</th></tr></thead><tbody>';
+    arr.forEach(r=>{
+      const remain = Math.max(r.total - r.paid, 0);
+      html += `<tr><td>${r.month}</td><td>${r.count}</td><td>${r.done}</td><td>${r.pending}</td><td>${r.total.toLocaleString('fa-IR')}</td><td>${r.paid.toLocaleString('fa-IR')}</td><td>${remain.toLocaleString('fa-IR')}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+
+    // ذخیره آخرین نتیجه برای خروجی CSV
+    window.__lastAdminReport = arr;
   }
 
-  function toCSV(arr){
-    if(!arr.length) return '';
-    const cols = [...new Set(arr.flatMap(o=>Object.keys(o)))];
-    const esc = v => {
-      if(v==null) return '';
-      const s = typeof v === 'object' ? JSON.stringify(v) : String(v);
-      return `"${s.replace(/"/g,'""')}"`;
-    };
-    const head = cols.map(esc).join(',');
-    const rows = arr.map(o=> cols.map(c=>esc(o[c])).join(',')).join('\n');
-    return head + '\n' + rows;
-  }
-
-  async function backupCSV(){
-    try{
-      const data = await fetchAllNewbloods();
-      const fname = `swanfamily_newbloods_${new Date().toISOString().slice(0,10)}.csv`;
-      download(fname, toCSV(data), 'text/csv;charset=utf-8');
-    }catch(e){ alert('خطا در بکاپ CSV'); console.error(e); }
-  }
+  document.getElementById('btnRunReport')?.addEventListener('click', runAdminReport);
+  document.getElementById('btnExportReport')?.addEventListener('click', ()=>{
+    const arr = window.__lastAdminReport || [];
+    if(!arr.length){ alert('اول گزارش را اجرا کن.'); return; }
+    const csv = toCSV(arr);
+    const fname = `swan_admin_report_${new Date().toISOString().slice(0,10)}.csv`;
+    download(fname, csv, 'text/csv;charset=utf-8');
+  });
 </script>
 
 </body>
