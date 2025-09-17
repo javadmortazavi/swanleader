@@ -74,7 +74,12 @@
     @media (max-width:820px){
       .installment{grid-template-columns:1fr}
       .installment>button{width:100%;order:99}
-    }
+      .coin-entry {
+  grid-template-columns: 1fr;   /* همه‌ی ورودی‌ها زیر هم */
+}
+.coin-entry > button {
+  width: 100%; order: 99;       /* دکمه حذف هم بیاد زیر */
+}
   </style>
 </head>
 <body>
@@ -828,3 +833,4 @@
 
 </body>
 </html>
+
